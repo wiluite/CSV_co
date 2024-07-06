@@ -34,10 +34,4 @@ include/config.h
 cmake-build*
 .idea*
 build
-build2
-build3
-*.acer
-*.ini
 exe
-include/csv_co/csvkit
-include/csv_co/tmp
