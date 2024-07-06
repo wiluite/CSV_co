@@ -1,6 +1,4 @@
 include_directories(../include ../include/csv_co/external ${CMAKE_BINARY_DIR}/include ../utils/csvkit/include ../utils/csvkit/external/multiprecision/include)
-#link_directories(${CMAKE_BINARY_DIR}/external/simdutf)
-#link_directories(${CMAKE_BINARY_DIR}/external/simdutf)
 
 add_definitions( -DONLY_C_LOCALE=1 )
 if (MSVC)
@@ -30,8 +28,6 @@ add_executable(csvkit_core_test csvkit_core_test.cpp)
 target_link_libraries(csvkit_core_test libcppp-reiconv.static -lpthread)
 add_test(csvkit_core_test csvkit_core_test)
 
-
-if (true)
 add_executable(csvclean_bad_skip_lines_test csvclean_bad_skip_lines_test.cpp csvclean_test_funcs.h)
 target_link_libraries(csvclean_bad_skip_lines_test libcppp-reiconv.static)
 add_custom_command(
@@ -424,5 +420,4 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv.gz
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv.gz)
 
-endif()
 enable_testing ()
