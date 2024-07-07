@@ -1,3 +1,8 @@
+///
+/// \file   include/csv_co/external/enum_data_type.h
+/// \author From Vince's CSV Parser
+/// \brief  Type name detection, borrowed from Howard Hinnant's code base.
+
 #pragma once
 namespace vince_csv {
     /** Enumerates the different CSV field types that are

@@ -1,5 +1,5 @@
 ///
-/// \file   reader.hpp
+/// \file   include/csv_co/reader.hpp
 /// \author wiluite
 /// \brief  CSV_co reader class and facilities.
 

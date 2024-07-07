@@ -1,6 +1,6 @@
 ///
-/// \file   external/type_name.h
-/// \author wiluite
+/// \file   include/csv_co/external/type_name.h
+/// \author Howard Hinnant
 /// \brief  Type name detection, borrowed from Howard Hinnant's code base.
 
 #ifndef CSV_CO_TYPE_NAME_H
