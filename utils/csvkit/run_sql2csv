@@ -1,0 +1,2 @@
+export SOCI_BACKENDS_PATH=../../lib
+./sql2csv
