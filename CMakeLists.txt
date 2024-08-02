@@ -25,6 +25,13 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+if (IO_CSVKIT_UTILS) # Some C stuff (before any added C++ definitions)
+configure_file(CMakeLists.txt.soci.obligate.dependency1.in external_deps/CMakeLists.txt)
+file(COPY ${CMAKE_SOURCE_DIR}/utils/csvkit/external/csvsql_sqlite3/src DESTINATION "${CMAKE_BINARY_DIR}/external_deps")
+execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" . WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/external_deps" )
+execute_process(COMMAND "${CMAKE_COMMAND}" --build . WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/external_deps" )
+endif()
+
 #if (NOT MSVC)
 #    set(CMAKE_CXX_FLAGS_DEBUG "-g")
 #    set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -march=native ")
@@ -94,8 +101,6 @@ if (NOT MSVC)
     endif()
 endif()
 
-include_directories(external/multiprecision/include)
-
 if(MSVC)
     add_definitions(-DIS_MSVC=true)
     add_definitions(/WX)
@@ -138,14 +143,16 @@ else()
     endif()
 endif()
 
+if (IO_CSVKIT_UTILS)
+    add_subdirectory(utils/csvkit/external/soci)
+endif()
+
+include_directories(external/multiprecision/include)
+
 add_subdirectory(example)
 add_subdirectory(benchmark)
 if (MSVC)
     add_compile_options(/utf-8)
-endif()
-
-if (IO_CSVKIT_UTILS)
-    add_subdirectory(utils/csvkit/external/soci)
 endif()
 
 add_subdirectory(utils/csvkit)

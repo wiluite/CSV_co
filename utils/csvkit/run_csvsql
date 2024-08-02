@@ -1,2 +1,2 @@
 export SOCI_BACKENDS_PATH=../../lib
-./csvsql
+./csvsql --help

@@ -1,7 +1,7 @@
 add_subdirectory(external/cppp-reiconv-v2.1.0)
 add_subdirectory(external/simdutf)
 
-include_directories(../../include ../../include/csv_co/external ${CMAKE_BINARY_DIR}/include include external/multiprecision/include external/soci/include)
+include_directories(../../include ../../include/csv_co/external ${CMAKE_BINARY_DIR}/include include external/multiprecision/include)
 
 add_definitions( -DONLY_C_LOCALE=1 )
 if (MSVC)
@@ -15,21 +15,27 @@ if (MSVC)
 else()
     add_definitions(-Wno-old-style-cast)
     add_definitions(-Wno-narrowing)
-    add_definitions(-Wno-parentheses-equality)
 endif()
 
 find_package(Threads REQUIRED)
 
 if (IO_CSVKIT_UTILS)
-
-add_executable(csvsql csvsql.cpp)
-
-target_include_directories(csvsql
+    add_executable(csvsql csvsql.cpp)
+    message(${CMAKE_BINARY_DIR})
+    target_include_directories(csvsql
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include ${POSTGRESQL_INCLUDE_DIR} ${SQLITE3_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR})
+        ${CMAKE_BINARY_DIR}/external/soci/include
+        ${POSTGRESQL_INCLUDE_DIR}
+        ${SQLITE3_INCLUDE_DIR}
+        ${MYSQL_INCLUDE_DIR}
+        ${FIREBIRD_INCLUDE_DIR}
+    )
 
-target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf
+target_link_libraries(csvsql PRIVATE
+        libcppp-reiconv.static
+        simdutf
         soci_core
+#        soci_sqlite3
 )
 add_custom_command(
         TARGET csvsql POST_BUILD

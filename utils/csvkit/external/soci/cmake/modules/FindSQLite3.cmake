@@ -13,13 +13,12 @@
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
 ###############################################################################
-
+#message( ${BINARY_DIR_FOR_SOCI})
 find_path(SQLITE3_INCLUDE_DIR
   NAMES sqlite3.h
   PATH_PREFIXES sqlite sqlite3
   PATHS
-  /usr/include
-  /usr/local/include
+  ${CMAKE_BINARY_DIR}/external_deps/src
   $ENV{LIB_DIR}/include
   $ENV{LIB_DIR}/include/sqlite
   $ENV{LIB_DIR}/include/sqlite3
@@ -31,12 +30,11 @@ find_path(SQLITE3_INCLUDE_DIR
   ${SQLITE_ROOT_DIR}/include
   $ENV{OSGEO4W_ROOT}/include)
 
-set(SQLITE3_NAMES sqlite3_i sqlite3 sqlite3-static)
+set(SQLITE3_NAMES csvsql_sqlite3)
 find_library(SQLITE3_LIBRARY
   NAMES ${SQLITE3_NAMES}
   PATHS
-  /usr/lib
-  /usr/local/lib
+  ${CMAKE_BINARY_DIR}/external_deps
   $ENV{LIB_DIR}/lib
   $ENV{ProgramFiles}/SQLite/*/lib
   $ENV{ProgramFiles}/SQLite3/*/lib

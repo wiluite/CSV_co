@@ -26,8 +26,8 @@
 
 int main() {
     try {
-        using namespace soci;
-    } catch (soci::soci_error const &err) {
+        //using namespace soci;
+    } catch (std::exception /*soci::soci_error*/ const &err) {
         std::cout << "ERROR!\n";
     }
 }
