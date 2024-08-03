@@ -179,7 +179,7 @@ namespace csvsort {
     template <class R, class Args, bool Quoted_or_not=csv_co::quoted>
     class compromise_table_MxN {
     public:
-        using element_type = typename std::decay_t<R>::template csvkit_cell_span<Quoted_or_not>;
+        using element_type = typename std::decay_t<R>::template typed_span<Quoted_or_not>;
     private:
         using field_array = std::vector<element_type>;
         using table = std::vector<field_array>;

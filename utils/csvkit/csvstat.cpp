@@ -16,9 +16,9 @@ using namespace ::csvkit::cli;
 
 namespace csvstat {
 
-    using nt_unquoting_cell_type = notrimming_reader_type::csvkit_cell_span<csv_co::unquoted>;
+    using nt_unquoting_cell_type = notrimming_reader_type::typed_span<csv_co::unquoted>;
     using nt_unquoting_tuple = std::tuple<nt_unquoting_cell_type, std::reference_wrapper<notrimming_reader_type>>;
-    using sis_unquoting_cell_type = skipinitspace_reader_type::csvkit_cell_span<csv_co::unquoted>;
+    using sis_unquoting_cell_type = skipinitspace_reader_type::typed_span<csv_co::unquoted>;
     using sis_unquoting_tuple = std::tuple<sis_unquoting_cell_type, std::reference_wrapper<skipinitspace_reader_type>>;
 
     struct Args : ARGS_positional_1 {

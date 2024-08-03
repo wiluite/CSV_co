@@ -611,7 +611,7 @@ namespace csvkit::cli {
         max_field_size_checker(Reader const &, ARGS const & args, unsigned columns, init_row ir) 
             : args_(args), columns_(columns), current_row(ir()) {
             if (args_.maxfieldsize != max_unsigned_limit) {
-                cell_span_check_impl = [&] (typename Reader::template csvkit_cell_span<csv_co::unquoted> const & span) {
+                cell_span_check_impl = [&] (typename Reader::template typed_span<csv_co::unquoted> const & span) {
                     static_assert(std::is_const_v<std::remove_reference_t<decltype(span)>>);
                     check_tmpl(span);
                 };
@@ -620,14 +620,14 @@ namespace csvkit::cli {
                     check_tmpl(s);
                 };
             } else {
-                cell_span_check_impl = [] (typename Reader::template csvkit_cell_span<csv_co::unquoted> const &) {};
+                cell_span_check_impl = [] (typename Reader::template typed_span<csv_co::unquoted> const &) {};
                 string_check_impl = [] (std::string const & s) {};
             }
         }
 
         inline void check(typename Reader::cell_span const & cell_span) {
             // works for numeric-locale-embedded cells only.
-            cell_span_check_impl(typename Reader::template csvkit_cell_span<csv_co::unquoted>{cell_span});
+            cell_span_check_impl(typename Reader::template typed_span<csv_co::unquoted>{cell_span});
         }
         void check(std::string const & s) {
             // works for any strings from cells that may be numeric-locale-free.
@@ -645,7 +645,7 @@ namespace csvkit::cli {
             increment_row();
         }
 
-        std::function<void (typename Reader::template csvkit_cell_span<csv_co::unquoted> const &)> cell_span_check_impl;
+        std::function<void (typename Reader::template typed_span<csv_co::unquoted> const &)> cell_span_check_impl;
         std::function<void (std::string const & )> string_check_impl;
         ARGS const & args_;
         unsigned columns_;
@@ -722,8 +722,8 @@ namespace csvkit::cli {
 
     static_assert(!std::is_copy_constructible_v<fixed_array_2d_replacement<std::string>>);
     static_assert(!std::is_copy_assignable_v<fixed_array_2d_replacement<std::string>>);
-    static_assert(std::is_move_constructible<fixed_array_2d_replacement<typename notrimming_reader_type::template csvkit_cell_span<csv_co::quoted>>>::value);
-    static_assert(std::is_move_assignable<fixed_array_2d_replacement<typename notrimming_reader_type::template csvkit_cell_span<csv_co::quoted>>>::value);
+    static_assert(std::is_move_constructible<fixed_array_2d_replacement<typename notrimming_reader_type::template typed_span<csv_co::quoted>>>::value);
+    static_assert(std::is_move_assignable<fixed_array_2d_replacement<typename notrimming_reader_type::template typed_span<csv_co::quoted>>>::value);
 
     constexpr const char * bad_locale_message = "Your development tool, operation system, standard library, or combination thereof does not allow this particular locale to be used within this utility.";
     std::locale & cell_numeric_locale(char const * const name) {
@@ -744,31 +744,31 @@ namespace csvkit::cli {
     void imbue_numeric_locale(auto & reader, auto const & args) {
         using reader_type = std::decay_t<decltype(reader)>;
 
-        using unquoted_elem_type = typename reader_type::template csvkit_cell_span<csv_co::unquoted>;
+        using unquoted_elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
         unquoted_elem_type::imbue_num_locale(cell_numeric_locale(args.num_locale.c_str()));
 
-        using quoted_elem_type = typename reader_type::template csvkit_cell_span<csv_co::quoted>;
+        using quoted_elem_type = typename reader_type::template typed_span<csv_co::quoted>;
         quoted_elem_type::imbue_num_locale(cell_numeric_locale(args.num_locale.c_str()));
     }
 
     void maxprecision_policy(auto & reader, auto const & args) {
         using reader_type = std::decay_t<decltype(reader)>;
 
-        using unquoted_elem_type = typename reader_type::template csvkit_cell_span<csv_co::unquoted>;
+        using unquoted_elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
         unquoted_elem_type::maxprecision_flag(args.no_mdp);
 
-        using quoted_elem_type = typename reader_type::template csvkit_cell_span<csv_co::quoted>;
+        using quoted_elem_type = typename reader_type::template typed_span<csv_co::quoted>;
         quoted_elem_type::maxprecision_flag(args.no_mdp);
     }
 
     void setup_date_parser_backend(auto & reader, auto const & args) {
         using reader_type = std::decay_t<decltype(reader)>;
 
-        using unquoted_elem_type = typename reader_type::template csvkit_cell_span<csv_co::unquoted>;
+        using unquoted_elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
         unquoted_elem_type::setup_date_parser_backend(!args.date_lib_parser ? 
             unquoted_elem_type::date_parser_backend_t::compiler_supported : unquoted_elem_type::date_parser_backend_t::date_lib_supported);
 
-        using quoted_elem_type = typename reader_type::template csvkit_cell_span<csv_co::quoted>;
+        using quoted_elem_type = typename reader_type::template typed_span<csv_co::quoted>;
         quoted_elem_type::setup_date_parser_backend(!args.date_lib_parser ? 
             quoted_elem_type::date_parser_backend_t::compiler_supported : quoted_elem_type::date_parser_backend_t::date_lib_supported);
     }
@@ -782,7 +782,7 @@ namespace csvkit::cli {
 
     /// Detect types and blanks presence in columns
     template <typename Reader, typename Args>
-    auto detect_types_and_blanks(Reader & reader, Args const & args, fixed_array_2d_replacement<typename Reader::template csvkit_cell_span<csv_co::unquoted>> & table) {
+    auto detect_types_and_blanks(Reader & reader, Args const & args, fixed_array_2d_replacement<typename Reader::template typed_span<csv_co::unquoted>> & table) {
 
         update_null_values(args.null_value);
 
@@ -891,7 +891,7 @@ namespace csvkit::cli {
         if (!reader.cols())
             throw std::runtime_error("Typify(). Columns == 0. Vain to do next actions!"); // well, vain to do rest things
 
-        fixed_array_2d_replacement<typename Reader::template csvkit_cell_span<csv_co::unquoted>> table(header.size(), reader.rows());
+        fixed_array_2d_replacement<typename Reader::template typed_span<csv_co::unquoted>> table(header.size(), reader.rows());
 
         auto c_row{0u};
         auto c_col{0u};

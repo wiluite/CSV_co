@@ -79,7 +79,7 @@ namespace csvjson {
         using header_type = decltype(header);
         check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
 
-        using elem_type = typename std::decay_t<decltype(reader)>::template csvkit_cell_span<unquoted>;
+        using elem_type = typename std::decay_t<decltype(reader)>::template typed_span<unquoted>;
         unsigned key_idx {};
         if (!geojson and !args.key.empty()) {
             auto const key_iter = std::find(std::begin(header), std::end(header), args.key);

@@ -265,7 +265,7 @@ int main() {
                             },
                             [&](auto &row) {
                                 if (crow++ == 1) {
-                                    using cell_type = notrimming_reader_type::csvkit_cell_span<csv_co::unquoted>;
+                                    using cell_type = notrimming_reader_type::typed_span<csv_co::unquoted>;
 
                                     //TODO: do conversion operators
                                     expect(cell_type(row[1]).str() == "state");
@@ -298,7 +298,7 @@ int main() {
                             },
                             [&](auto &row) {
                                 if (crow++ == 1) {
-                                    using cell_type = notrimming_reader_type::csvkit_cell_span<csv_co::unquoted>;
+                                    using cell_type = notrimming_reader_type::typed_span<csv_co::unquoted>;
                                     expect(cell_type(row[1]).str() == "nsn");
                                     expect(cell_type(row[2]).str() == "Text");
                                     expect(cell_type(row[6]).str().empty());

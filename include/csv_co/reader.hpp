@@ -1530,9 +1530,9 @@ namespace csv_co {
                 skip_rows<ParseChunkSize>(rows_to_skip);
         }
 
-        /// Bridge from cell_span to the csvkit cell span with type support 
+        /// Bridge from cell_span to the csv kit cell span with type support 
         template <bool Unquoted>
-        class csvkit_cell_span : protected cell_span {
+        class typed_span : protected cell_span {
         private:
             mutable long double value = 0;                                    /**< Cached numeric value */
             mutable vince_csv::DataType type_ = vince_csv::DataType::UNKNOWN; /**< Cached data type value */
@@ -1548,7 +1548,7 @@ namespace csv_co {
             using cell_span::e;
 
         public:
-            using class_type = csvkit_cell_span<Unquoted>;
+            using class_type = typed_span<Unquoted>;
             using reader_type = reader;
 
             /// What can be migrated may be migrated
@@ -1558,34 +1558,34 @@ namespace csv_co {
             using cell_span::raw_string_view;
 
             /// Construction by defaault
-            csvkit_cell_span() = default;
+            typed_span() = default;
             /// Construction from the cell_span
-            explicit csvkit_cell_span(cell_span const &cs);
+            explicit typed_span(cell_span const &cs);
             /// Construction from string
-            explicit csvkit_cell_span(std::string const & s);
+            explicit typed_span(std::string const & s);
 
             /// Assignment from the cell_span
-            csvkit_cell_span &operator=(cell_span const &) noexcept;
+            typed_span &operator=(cell_span const &) noexcept;
 
             /// Comparison of two typeaware cells
-            [[nodiscard]] auto compare(csvkit_cell_span const &other) const -> int;
+            [[nodiscard]] auto compare(typed_span const &other) const -> int;
 
             template <bool U>
             struct rebind {
-                using other = csvkit_cell_span<U>;
+                using other = typed_span<U>;
             };
 
-            /// Convert csvkit_cell_span<false> to csvkit_cell_span<true>, reset data type only once!
+            /// Convert typed_span<false> to typed_span<true>, reset data type only once!
             /*no explicit*/ 
-            operator csvkit_cell_span<!Unquoted> const & () const {
+            operator typed_span<!Unquoted> const & () const {
                 if (!rebind_conversion) {
                     type_ = vince_csv::DataType::UNKNOWN;
                     rebind_conversion = true;
                 }
-                return reinterpret_cast<csvkit_cell_span<!Unquoted> const &>(*this);
+                return reinterpret_cast<typed_span<!Unquoted> const &>(*this);
             }
             
-            friend std::ostream& operator<< (std::ostream& os, csvkit_cell_span const& cs) {
+            friend std::ostream& operator<< (std::ostream& os, typed_span const& cs) {
                 if constexpr (!Unquoted)
                     os << cs.operator cell_string();
                 else
@@ -1663,14 +1663,14 @@ namespace csv_co {
 
             struct datetime_format_proc {
                 explicit datetime_format_proc(std::string const & extra_dt_fmt);
-                auto operator()(csvkit_cell_span const & ccs) const;
+                auto operator()(typed_span const & ccs) const;
             private:
                 mutable std::vector<std::string> formats;
             };
 
             struct date_format_proc {
                 explicit date_format_proc (std::string const & extra_date_fmt);
-                auto operator()(csvkit_cell_span const & ccs) const;
+                auto operator()(typed_span const & ccs) const;
             private:
                 mutable std::vector<std::string> formats;
             };
@@ -1691,20 +1691,20 @@ namespace csv_co {
             static void setup_date_parser_backend(date_parser_backend_t) noexcept;
         };
 
-        static_assert(std::is_move_constructible_v<csvkit_cell_span<true>>);
-        static_assert(std::is_move_assignable_v<csvkit_cell_span<true>>);
-        static_assert(std::is_copy_constructible_v<csvkit_cell_span<true>>);
-        static_assert(std::is_copy_assignable_v<csvkit_cell_span<true>>);
-        static_assert(std::is_move_constructible_v<csvkit_cell_span<false>>);
-        static_assert(std::is_move_assignable_v<csvkit_cell_span<false>>);
-        static_assert(std::is_copy_constructible_v<csvkit_cell_span<false>>);
-        static_assert(std::is_copy_assignable_v<csvkit_cell_span<false>>);
-        static_assert(sizeof(csvkit_cell_span<false>) == sizeof(csvkit_cell_span<true>));
+        static_assert(std::is_move_constructible_v<typed_span<true>>);
+        static_assert(std::is_move_assignable_v<typed_span<true>>);
+        static_assert(std::is_copy_constructible_v<typed_span<true>>);
+        static_assert(std::is_copy_assignable_v<typed_span<true>>);
+        static_assert(std::is_move_constructible_v<typed_span<false>>);
+        static_assert(std::is_move_assignable_v<typed_span<false>>);
+        static_assert(std::is_copy_constructible_v<typed_span<false>>);
+        static_assert(std::is_copy_assignable_v<typed_span<false>>);
+        static_assert(sizeof(typed_span<false>) == sizeof(typed_span<true>));
 #if defined(_MSC_VER)
-        static_assert(sizeof(csvkit_cell_span<false>) == 32); 
+        static_assert(sizeof(typed_span<false>) == 32);
         static_assert(sizeof(long double) == 8);
 #else
-        static_assert(sizeof(csvkit_cell_span<false>) ==  48);
+        static_assert(sizeof(typed_span<false>) == 48);
         static_assert(sizeof(long double) == 16);
 #endif
         static_assert(sizeof(vince_csv::DataType) == 4);

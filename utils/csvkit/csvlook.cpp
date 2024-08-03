@@ -89,7 +89,7 @@ namespace csvlook {
         });
 
         using reader_type = std::decay_t<decltype(reader)>;
-        using elem_type = typename reader_type::template csvkit_cell_span<csv_co::unquoted>;
+        using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
 
         try {
             auto detect_max_sizes = [&] {

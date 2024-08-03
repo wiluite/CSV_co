@@ -1,7 +1,7 @@
 ///
 /// \file   utils/csvkit/include/reader-bridge-impl.h
 /// \author wiluite
-/// \brief  Definitions of the csvkit_cell_span template methods.
+/// \brief  Definitions of the typed_span template methods.
 
 #pragma once
 
@@ -31,7 +31,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    inline bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::to_C_locale(std::string & s) const {
+    inline bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::to_C_locale(std::string & s) const {
         std::erase_if(s, [&](char x) {
             return x == std::use_facet<std::numpunct<char>>(num_locale()).thousands_sep();
         });
@@ -51,7 +51,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    inline unsigned char reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::get_precision(std::string & rep) const {
+    inline unsigned char reader<T, Q, D, L, M, E>::typed_span<Unquoted>::get_precision(std::string & rep) const {
         class precision_calculator {
             std::function<unsigned char(std::string &)> fun_impl;
         public:
@@ -82,7 +82,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    inline bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::can_be_money(std::string const & s) const {
+    inline bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::can_be_money(std::string const & s) const {
         // if no money thing is present in this locale, just exit;
         if (std::use_facet<std::moneypunct<char>>(num_locale()).curr_symbol().empty())
             return false;
@@ -102,7 +102,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    inline void reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::get_num_from_money() const {
+    inline void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::get_num_from_money() const {
         std::stringstream in(str());
         in.imbue(num_locale());
         std::string double_rep;
@@ -155,7 +155,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    void reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::get_value() const {
+    void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::get_value() const {
         // Check to see if value has been cached previously, if not evaluate it
         if (type_ == vince_csv::DataType::UNKNOWN) {
             assert (type_ == vince_csv::DataType::UNKNOWN);
@@ -189,18 +189,18 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::csvkit_cell_span(cell_span const &cs) 
+    reader<T, Q, D, L, M, E>::typed_span<Unquoted>::typed_span(cell_span const &cs)
         : cell_span(cs.b, cs.e), type_{vince_csv::DataType::UNKNOWN} {}
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::csvkit_cell_span(std::string const & s) 
+    reader<T, Q, D, L, M, E>::typed_span<Unquoted>::typed_span(std::string const & s)
         : cell_span(s.begin(), s.end()), type_{vince_csv::DataType::UNKNOWN} {}
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    typename reader<T, Q, D, L, M, E>::template csvkit_cell_span<Unquoted> &
-    reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::operator=(cell_span const &cs) noexcept {
+    typename reader<T, Q, D, L, M, E>::template typed_span<Unquoted> &
+    reader<T, Q, D, L, M, E>::typed_span<Unquoted>::operator=(cell_span const &cs) noexcept {
         b = cs.b;
         e = cs.e;
         type_ = vince_csv::DataType::UNKNOWN;
@@ -209,7 +209,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    [[nodiscard]] auto reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::compare(csvkit_cell_span const &other) const -> int {
+    [[nodiscard]] auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::compare(typed_span const &other) const -> int {
         if constexpr (!Unquoted)
             return cell_string(*this).compare(cell_string(other));
         else
@@ -218,7 +218,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    long double reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::num() const {
+    long double reader<T, Q, D, L, M, E>::typed_span<Unquoted>::num() const {
         auto maybe_exception_l = [&] {
             if (type_ < vince_csv::DataType::CSV_INT8) {
                 std::string s;
@@ -239,14 +239,14 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    inline bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::unsafe_bool() const noexcept {
+    inline bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::unsafe_bool() const noexcept {
         assert(type_ != vince_csv::DataType::UNKNOWN);
         return value;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::is_nil() const {
+    constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_nil() const {
         return type() == vince_csv::DataType::CSV_NULL;
     }
 
@@ -257,7 +257,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::is_null() const {
+    bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_null() const {
         auto const _ = is_nil();
         if (!_) {
             if (type_ == vince_csv::DataType::CSV_STRING)
@@ -268,13 +268,13 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::is_str() const {
+    constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_str() const {
         return type() == vince_csv::DataType::CSV_STRING;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::is_num() const {
+    constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_num() const {
         return type() >= vince_csv::DataType::CSV_INT8;
     }
 
@@ -285,7 +285,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::is_boolean() const {
+    bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_boolean() const {
         type();
         if (type_ == vince_csv::DataType::CSV_INT8 && (value == 0 or value == 1)) {
             return true;
@@ -305,40 +305,40 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::is_int() const {
+    constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_int() const {
         return (type() >= vince_csv::DataType::CSV_INT8) && (type() <= vince_csv::DataType::CSV_INT64);
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr bool reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::is_float() const {
+    constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_float() const {
         return type() == vince_csv::DataType::CSV_DOUBLE;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr vince_csv::DataType reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::type() const {
+    constexpr vince_csv::DataType reader<T, Q, D, L, M, E>::typed_span<Unquoted>::type() const {
         get_value();
         return type_;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr unsigned reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::str_size_in_symbols() const {
+    constexpr unsigned reader<T, Q, D, L, M, E>::typed_span<Unquoted>::str_size_in_symbols() const {
         get_value();
         return unsafe_str_size_in_symbols();
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr unsigned reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::unsafe_str_size_in_symbols() const {
+    constexpr unsigned reader<T, Q, D, L, M, E>::typed_span<Unquoted>::unsafe_str_size_in_symbols() const {
         assert(type_ != vince_csv::DataType::UNKNOWN);
         return csvkit::str_symbols(str());
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr auto reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::str() const {
+    constexpr auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::str() const {
         if constexpr (!Unquoted)
             return this->operator cell_string();
         else
@@ -347,33 +347,33 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    auto reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::datetime(std::string const &extra_dt_fmt) const {
+    auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::datetime(std::string const &extra_dt_fmt) const {
         static datetime_format_proc datetime_fmt_proc(extra_dt_fmt);
         return datetime_fmt_proc(*this);
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    auto reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::date(std::string const &extra_date_fmt) const {
+    auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::date(std::string const &extra_date_fmt) const {
         static date_format_proc date_fmt_proc(extra_date_fmt);    
         return date_fmt_proc(*this);
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    void reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::imbue_num_locale(std::locale & num_loc) noexcept {
+    void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::imbue_num_locale(std::locale & num_loc) noexcept {
         num_locale_ = &num_loc;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    void reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::maxprecision_flag(bool flag) noexcept {
+    void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::maxprecision_flag(bool flag) noexcept {
         no_maxprecision = flag;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    std::locale& reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::num_locale() {
+    std::locale& reader<T, Q, D, L, M, E>::typed_span<Unquoted>::num_locale() {
         if (!num_locale_)
             throw exception(std::string{"Locale for "} + std::string(type_name<class_type>()) + " is not set.");
         return *num_locale_;
@@ -381,20 +381,20 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    unsigned char reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::precision() const noexcept {
+    unsigned char reader<T, Q, D, L, M, E>::typed_span<Unquoted>::precision() const noexcept {
         return prec;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    inline auto reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::date_datetime_call_operator_implementation(auto const & ccs, auto & formats) {
+    inline auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::date_datetime_call_operator_implementation(auto const & ccs, auto & formats) {
         static class parser {
-            std::function<std::tuple<bool, date::sys_seconds>(csvkit_cell_span const &, std::vector<std::string> &)> fun_impl;
+            std::function<std::tuple<bool, date::sys_seconds>(typed_span const &, std::vector<std::string> &)> fun_impl;
         public:
             parser() {
                 using namespace std::chrono; 
                 if (date_parser_backend == date_parser_backend_t::date_lib_supported) {
-                    fun_impl = [&](csvkit_cell_span const & ccs, std::vector<std::string> & formats) -> std::tuple<bool, date::sys_seconds> {
+                    fun_impl = [&](typed_span const & ccs, std::vector<std::string> & formats) -> std::tuple<bool, date::sys_seconds> {
 
                         date::sys_seconds tp;
                         std::string ccs_trimmed = ccs;
@@ -414,7 +414,7 @@ namespace csv_co {
                         return std::tuple{false, date::sys_seconds{}};
                     };
                 } else {
-                    fun_impl = [&](csvkit_cell_span const & ccs, std::vector<std::string> & formats) -> std::tuple<bool, date::sys_seconds> {
+                    fun_impl = [&](typed_span const & ccs, std::vector<std::string> & formats) -> std::tuple<bool, date::sys_seconds> {
                         std::tm calendar = {};
                         std::stringstream ss;
                         ss.imbue(num_locale());
@@ -436,7 +436,7 @@ namespace csv_co {
                     };
                 }
             }
-            auto parse(csvkit_cell_span const & ccs, std::vector<std::string> & formats) {
+            auto parse(typed_span const & ccs, std::vector<std::string> & formats) {
                 return fun_impl(ccs, formats);
             }
         } p;
@@ -446,7 +446,7 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::datetime_format_proc::datetime_format_proc(std::string const & extra_dt_fmt) {
+    reader<T, Q, D, L, M, E>::typed_span<Unquoted>::datetime_format_proc::datetime_format_proc(std::string const & extra_dt_fmt) {
         if (!extra_dt_fmt.empty()) {
             formats.emplace_back(extra_dt_fmt);
             formats.emplace_back("%Y-%m-%d %H:%M:%S");
@@ -459,13 +459,13 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    auto reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::datetime_format_proc::operator()(csvkit_cell_span const & ccs) const {
+    auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::datetime_format_proc::operator()(typed_span const & ccs) const {
         return date_datetime_call_operator_implementation(ccs, formats);
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::date_format_proc::date_format_proc(std::string const & extra_date_fmt) {
+    reader<T, Q, D, L, M, E>::typed_span<Unquoted>::date_format_proc::date_format_proc(std::string const & extra_date_fmt) {
         if (!extra_date_fmt.empty()) {
             formats.emplace_back(extra_date_fmt);
             formats.emplace_back("%Y-%m-%d");
@@ -476,13 +476,13 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    auto reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::date_format_proc::operator()(csvkit_cell_span const & ccs) const {
+    auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::date_format_proc::operator()(typed_span const & ccs) const {
         return date_datetime_call_operator_implementation(ccs, formats);
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    void reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::setup_date_parser_backend(date_parser_backend_t value) noexcept {
+    void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::setup_date_parser_backend(date_parser_backend_t value) noexcept {
         date_parser_backend = value;
     }
 
@@ -780,14 +780,14 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    auto reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::timedelta_tuple() const {
+    auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::timedelta_tuple() const {
         time_parser t_parser;
         return t_parser.parse((*this).str()) ? std::tuple{true, t_parser.str()} : std::tuple{false, std::string{}};
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    long double reader<T, Q, D, L, M, E>::csvkit_cell_span<Unquoted>::timedelta_seconds() const {
+    long double reader<T, Q, D, L, M, E>::typed_span<Unquoted>::timedelta_seconds() const {
         time_parser t_parser;
         t_parser.parse((*this).str());
         return t_parser;

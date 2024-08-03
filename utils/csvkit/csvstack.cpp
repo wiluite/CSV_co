@@ -77,7 +77,7 @@ namespace csvstack {
                     auto col = 0u;
                     std::for_each(elem.begin(), elem.end()-1, [&](auto const & e) {
                         if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>) {
-                            using elem_type = typename std::decay_t<T>::reader_type::template csvkit_cell_span<csv_co::unquoted>;
+                            using elem_type = typename std::decay_t<T>::reader_type::template typed_span<csv_co::unquoted>;
                             static_assert(std::is_same_v<std::decay_t<decltype(e)>, std::string>);
                             print_func(elem_type{e}, col++, types_n_blanks, args);
                             os << ',';
@@ -85,7 +85,7 @@ namespace csvstack {
                             os << e << ',';
                     });
                     if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>) {
-                        using elem_type = typename std::decay_t<T>::reader_type::template csvkit_cell_span<csv_co::unquoted>;
+                        using elem_type = typename std::decay_t<T>::reader_type::template typed_span<csv_co::unquoted>;
                         static_assert(std::is_same_v<std::decay_t<decltype(elem.back())>, std::string>);
                         print_func(elem_type{elem.back()}, col, types_n_blanks, args);
                     } else

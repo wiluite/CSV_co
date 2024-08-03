@@ -296,7 +296,7 @@ public:
 
     // Bridge between CSV reader and CSV kit
     template <bool Unquoted>
-    class csvkit_cell_span : protected cell_span {
+    class typed_span : protected cell_span {
         ...   
     };
 };

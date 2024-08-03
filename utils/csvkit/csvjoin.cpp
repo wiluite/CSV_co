@@ -86,10 +86,10 @@ namespace csvjoin::detail {
 
     static_assert(
             std::is_move_constructible<reader_fake<notrimming_reader_type, typename notrimming_reader_type::template
-            csvkit_cell_span<csv_co::quoted>>>::value);
+            typed_span<csv_co::quoted>>>::value);
     static_assert(
             std::is_move_assignable<reader_fake<notrimming_reader_type, typename notrimming_reader_type::template
-            csvkit_cell_span<csv_co::quoted>>>::value);
+            typed_span<csv_co::quoted>>>::value);
 
     auto parse_join_column_names(auto &&join_string) {
         std::istringstream stream(join_string);
@@ -127,7 +127,7 @@ namespace csvjoin::detail {
                     auto col = 0u;
                     std::for_each(elem.begin(), elem.end()-1, [&](auto const & e) {
                         if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>) {
-                            using elem_type = typename std::decay_t<T>::reader_type::template csvkit_cell_span<csv_co::unquoted>;
+                            using elem_type = typename std::decay_t<T>::reader_type::template typed_span<csv_co::unquoted>;
                             static_assert(std::is_same_v<std::decay_t<decltype(e)>, std::string>);
                             print_func(elem_type{e}, col++, types_n_blanks, args);
                             os << ',';
@@ -135,7 +135,7 @@ namespace csvjoin::detail {
                             os << e << ',';
                     });
                     if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>) {
-                        using elem_type = typename std::decay_t<T>::reader_type::template csvkit_cell_span<csv_co::unquoted>;
+                        using elem_type = typename std::decay_t<T>::reader_type::template typed_span<csv_co::unquoted>;
                         static_assert(std::is_same_v<std::decay_t<decltype(elem.back())>, std::string>);
                         print_func(elem_type{elem.back()}, col, types_n_blanks, args);
                     } else
@@ -160,14 +160,14 @@ namespace csvjoin::detail {
                 auto col = 0u;
                 std::for_each(span.begin(), span.end()-1, [&](auto const & e) {
                     if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>) {
-                        using elem_type = typename std::decay_t<decltype(e)>::reader_type::template csvkit_cell_span<csv_co::unquoted>;
+                        using elem_type = typename std::decay_t<decltype(e)>::reader_type::template typed_span<csv_co::unquoted>;
                         print_func(elem_type{e}, col++, types_n_blanks, args);
                         os << ',';
                     } else
                         os << e.operator csv_co::cell_string() << ',';
                 });
                 if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>) {
-                    using elem_type = typename std::decay_t<decltype(span.back())>::reader_type::template csvkit_cell_span<csv_co::unquoted>;
+                    using elem_type = typename std::decay_t<decltype(span.back())>::reader_type::template typed_span<csv_co::unquoted>;
                     print_func(elem_type{span.back()}, col, types_n_blanks, args);
                 } else   
                     os << (span.back()).operator csv_co::cell_string();
@@ -420,7 +420,7 @@ namespace csvjoin::detail {
 
                 if (can_compare()) {
                     using namespace ::csvkit::cli::compare::detail; 
-                    using elem_t = typename std::decay_t<decltype(std::get<0>(deq.front()))>::template csvkit_cell_span<quoted>;
+                    using elem_t = typename std::decay_t<decltype(std::get<0>(deq.front()))>::template typed_span<quoted>;
 #if !defined(__clang__) || __clang_major__ >= 16
                     auto [_, fun] = obtain_compare_functionality<elem_t>(blanks0[c_ids[0]] >= blanks1[c_ids[1]] ? std::vector<unsigned>{c_ids[0]} : std::vector<unsigned>{c_ids[1]}
                     , blanks0[c_ids[0]] >= blanks1[c_ids[1]] ? std::tuple{types0, blanks0} : std::tuple{types1, blanks1}, args)[0];
@@ -502,7 +502,7 @@ namespace csvjoin::detail {
                 (void)recalculate_types_blanks; // it is really used (Clang bug!)
                 if (can_compare()) {
                     using namespace ::csvkit::cli::compare::detail;
-                    using elem_t = typename std::decay_t<decltype(std::get<0>(deq.front()))>::template csvkit_cell_span<quoted>;
+                    using elem_t = typename std::decay_t<decltype(std::get<0>(deq.front()))>::template typed_span<quoted>;
 #if !defined(__clang__) || __clang_major__ >= 16
                     auto [_, fun] = obtain_compare_functionality<elem_t>(blanks0[c_ids[0]] >= blanks1[c_ids[1]] ? std::vector<unsigned>{c_ids[0]} : std::vector<unsigned>{c_ids[1]}
                     , blanks0[c_ids[0]] >= blanks1[c_ids[1]] ? std::tuple{types0, blanks0} : std::tuple{types1, blanks1}, args)[0];
@@ -605,7 +605,7 @@ namespace csvjoin::detail {
                 bool recalculate_types_blanks = false;
                 if (can_compare()) {
                     using namespace ::csvkit::cli::compare::detail; 
-                    using elem_t = typename std::decay_t<decltype(std::get<0>(deq.front()))>::template csvkit_cell_span<quoted>;
+                    using elem_t = typename std::decay_t<decltype(std::get<0>(deq.front()))>::template typed_span<quoted>;
 #if !defined(__clang__) || __clang_major__ >= 16
                     auto [_, fun] = obtain_compare_functionality<elem_t>(blanks0[c_ids[0]] >= blanks1[c_ids[1]] ? std::vector<unsigned>{c_ids[0]} : std::vector<unsigned>{c_ids[1]}
                     , blanks0[c_ids[0]] >= blanks1[c_ids[1]] ? std::tuple{types0, blanks0} : std::tuple{types1, blanks1}, args)[0];
