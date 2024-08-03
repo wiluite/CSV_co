@@ -143,6 +143,7 @@ int main() {
                 expect(not span.is_float());
                 expect(span.is_int());
                 expect(not span.is_nil());
+                expect(not span.is_boolean());
                 expect(nothrow([&] { span.num(); }));
                 expect(span.num() == 123456789);
                 expect(span.precision() == 0);
@@ -193,41 +194,53 @@ int main() {
             expect(reader<init_space_trim_pol>::typed_span<unquoted>{reader<init_space_trim_pol>::cell_span{cs}}.is_null());
         };
 
-        cs = " 01 ";
-        reader<>::typed_span<quoted> ccs1{reader<>::cell_span{cs}};
-        expect(ccs1.is_boolean());
-        expect(ccs1.unsafe_bool() == 1);
-        cs = " 0 ";
-        reader<>::typed_span<quoted> ccs2{reader<>::cell_span{cs}};
-        expect(ccs2.is_boolean());
-        expect(ccs2.unsafe_bool() == 0);
+        "booleans tests"_test = [&cs] {
+            cs = R"( 01 )";
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num());
+            }
 
-        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_num());
-        cs = " 10 ";
-        expect(!reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_boolean());
-        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_num());
-        cs = "\" T \"";
-        reader<>::typed_span<unquoted> ccs3{reader<>::cell_span{cs.begin(), cs.end()}};
-        expect(ccs3.is_boolean());
-        expect(ccs3.unsafe_bool() == 1);
+            cs = R"( 0 )";
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                expect(span.is_boolean() and span.unsafe_bool() == 0 and span.is_num());
+            }
 
-        expect(!reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_boolean());
-        cs = " \"TrUe \" ";
-        reader<>::typed_span<unquoted> ccs4{reader<>::cell_span{cs.begin(), cs.end()}};
-        expect(ccs4.is_boolean());
-        expect(ccs4.unsafe_bool() == 1);
+            cs = R"( " 01 " )";
+            expect(not ((reader<>::typed_span<quoted>) {reader<>::cell_span{cs}}).is_boolean());
+            {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num());
+            }
 
-        expect(!reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_boolean());
-        cs = "\" F \"";
-        expect(reader<csv_co::trim_policy::alltrim>::typed_span<unquoted>{
-                reader<csv_co::trim_policy::alltrim>::cell_span{cs.begin(), cs.end()}}.is_boolean());
-        expect(!reader<csv_co::trim_policy::alltrim>::typed_span<quoted>{
-                reader<csv_co::trim_policy::alltrim>::cell_span{cs.begin(), cs.end()}}.is_boolean());
-        cs = " T ";
-        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_boolean());
-        expect(reader<csv_co::trim_policy::alltrim>::typed_span<quoted>{
-                reader<csv_co::trim_policy::alltrim>::cell_span{cs.begin(), cs.end()}}.is_boolean());
-        
+            cs = R"( " 0 " )";
+            expect(not ((reader<>::typed_span<quoted>) {reader<>::cell_span{cs}}).is_boolean());
+            {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                expect(span.is_boolean() and span.unsafe_bool() == 0 and span.is_num());
+            }
+
+            cs = R"(  TrUe  )";
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num());
+            }
+
+            cs = R"( "TrUe " )";
+            expect(not ((reader<>::typed_span<quoted>) {reader<>::cell_span{cs}}).is_boolean());
+            {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num() and span.num() == 1);
+            }
+
+            cs = R"( " F" )";
+            using policy = csv_co::trim_policy::alltrim;
+            expect(reader<policy>::typed_span<unquoted>{reader<policy>::cell_span{cs}}.is_boolean());
+            expect(not reader<policy>::typed_span<quoted>{reader<policy>::cell_span{cs}}.is_boolean());
+
+        };
+
     };
 
     "generate column names"_test = [] {
