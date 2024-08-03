@@ -121,56 +121,91 @@ int main() {
         reader<::csvkit::cli::trim_policy::init_space_trim>::typed_span<quoted>::imbue_num_locale(loc);
         reader<::csvkit::cli::trim_policy::init_space_trim>::typed_span<unquoted>::imbue_num_locale(loc);
 
-        cell_string cs = " \"123456789  \"         ";
-        {
-            reader<>::typed_span<quoted> csvkit_field{reader<>::cell_span{cs}};
-            expect(csvkit_field.type() == vince_csv::DataType::CSV_STRING);
-            expect(not csvkit_field.is_num());
-            expect(csvkit_field.is_str());
-            expect(not csvkit_field.is_float());
-            expect(not csvkit_field.is_int());
-            expect(not csvkit_field.is_nil());
-            expect(not csvkit_field.is_boolean());
-            expect(throws([&] { csvkit_field.num(); }));
-        }
-        {
-            reader<>::typed_span<unquoted> csvkit_field{reader<>::cell_span{cs}};
-            expect(csvkit_field.type() == vince_csv::DataType::CSV_INT32);
-            expect(csvkit_field.is_num());
-            expect(not csvkit_field.is_str());
-            expect(not csvkit_field.is_float());
-            expect(csvkit_field.is_int());
-            expect(not csvkit_field.is_nil());
-            expect(nothrow([&] { csvkit_field.num(); }));
-            expect(csvkit_field.num() == 123456789);
-            expect(csvkit_field.precision() == 0);
-        }
-        cs = " \"12345678e-1  \"         ";
-        {
-            reader<>::typed_span<unquoted> csvkit_field{reader<>::cell_span{cs}};
-            expect(csvkit_field.is_float());
-            expect(csvkit_field.num() > 1234567.8 and csvkit_field.num() < 1234567.9);
-        }
+        cell_string cs;
 
-        cs = "  \"  \" ";
-        expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_nil());
-        cs = "  \"  \" ";
-        expect(!reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_nil());
-        cs = " \"    \"  ";
-        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_str());
+        "check types"_test = [&cs] {
+            cs = " \"123456789  \"         ";
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                expect(span.type() == vince_csv::DataType::CSV_STRING);
+                expect(not span.is_num());
+                expect(span.is_str());
+                expect(not span.is_float());
+                expect(not span.is_int());
+                expect(not span.is_nil());
+                expect(not span.is_boolean());
+                expect(throws([&] { span.num(); }));
+            } {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                expect(span.type() == vince_csv::DataType::CSV_INT32);
+                expect(span.is_num());
+                expect(not span.is_str());
+                expect(not span.is_float());
+                expect(span.is_int());
+                expect(not span.is_nil());
+                expect(nothrow([&] { span.num(); }));
+                expect(span.num() == 123456789);
+                expect(span.precision() == 0);
+
+                cs = " \"12345678e-1  \"         ";
+                {
+                    reader<>::typed_span<unquoted> float_span{reader<>::cell_span{cs}};
+                    expect(float_span.is_float());
+                    expect(float_span.num() > 1234567.8 and float_span.num() < 1234567.9);
+                }
+            }
+        };
+
+        "nils and nulls tests"_test = [&cs] {
+            cs = "  \"  \" ";
+            expect(not reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_nil());
+            expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs}}.is_nil());
+
+            cs = " . "; // this NULL is a responsibility of vince_csv (fortunately)
+            expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_null());
+            expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_nil());
+            expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs}}.is_null());
+            expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs}}.is_nil());
+
+            cs = " \" . \" ";
+            expect(not reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_null());
+            expect(not reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_nil());
+            expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs}}.is_null());
+            expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs}}.is_nil());
+
+            using cr_trim_pol = ::csvkit::cli::trim_policy::crtrim;
+            using init_space_trim_pol = ::csvkit::cli::trim_policy::init_space_trim;
+
+            cs = " N/a ";
+            expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_null());
+            expect(reader<cr_trim_pol>::typed_span<quoted>{reader<cr_trim_pol>::cell_span{cs}}.is_null());
+            expect(reader<init_space_trim_pol>::typed_span<quoted>{reader<init_space_trim_pol>::cell_span{cs}}.is_null());
+            expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs}}.is_null());
+            expect(reader<cr_trim_pol>::typed_span<unquoted>{reader<cr_trim_pol>::cell_span{cs}}.is_null());
+            expect(reader<init_space_trim_pol>::typed_span<unquoted>{reader<init_space_trim_pol>::cell_span{cs}}.is_null());
+
+            cs = " \"N/a\" ";
+            expect(not reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_null());
+            expect(not reader<cr_trim_pol>::typed_span<quoted>{reader<cr_trim_pol>::cell_span{cs}}.is_null());
+            expect(not reader<init_space_trim_pol>::typed_span<quoted>{reader<init_space_trim_pol>::cell_span{cs}}.is_null());
+            expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs}}.is_null());
+            expect(reader<cr_trim_pol>::typed_span<unquoted>{reader<cr_trim_pol>::cell_span{cs}}.is_null());
+            expect(reader<init_space_trim_pol>::typed_span<unquoted>{reader<init_space_trim_pol>::cell_span{cs}}.is_null());
+        };
+
         cs = " 01 ";
-        reader<>::typed_span<quoted> ccs1{reader<>::cell_span{cs.begin(), cs.end()}};
+        reader<>::typed_span<quoted> ccs1{reader<>::cell_span{cs}};
         expect(ccs1.is_boolean());
         expect(ccs1.unsafe_bool() == 1);
         cs = " 0 ";
-        reader<>::typed_span<quoted> ccs2{reader<>::cell_span{cs.begin(), cs.end()}};
+        reader<>::typed_span<quoted> ccs2{reader<>::cell_span{cs}};
         expect(ccs2.is_boolean());
         expect(ccs2.unsafe_bool() == 0);
 
-        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_num());
+        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_num());
         cs = " 10 ";
-        expect(!reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_boolean());
-        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_num());
+        expect(!reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_boolean());
+        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs}}.is_num());
         cs = "\" T \"";
         reader<>::typed_span<unquoted> ccs3{reader<>::cell_span{cs.begin(), cs.end()}};
         expect(ccs3.is_boolean());
@@ -192,49 +227,7 @@ int main() {
         expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_boolean());
         expect(reader<csv_co::trim_policy::alltrim>::typed_span<quoted>{
                 reader<csv_co::trim_policy::alltrim>::cell_span{cs.begin(), cs.end()}}.is_boolean());
-
-        // is_null
-        cs = " n/A ";
-        using cr_trim_pol = ::csvkit::cli::trim_policy::crtrim;
-        using init_space_trim_pol = ::csvkit::cli::trim_policy::init_space_trim;
-        //static_assert(std::is_same_v<cr_trim_pol, init_space_trim_pol>);
-        expect(reader<cr_trim_pol>::typed_span<quoted>(reader<cr_trim_pol>::cell_span{cs}).is_null());
-        expect(reader<cr_trim_pol>::typed_span<quoted>{reader<cr_trim_pol>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(reader<cr_trim_pol>::typed_span<unquoted>{reader<cr_trim_pol>::cell_span{cs.begin(), cs.end()}}.is_null());
-        //using init_space_trim_pol = ::csvkit::cli::trim_policy::init_space_trim;
-        expect(reader<init_space_trim_pol>::typed_span<quoted>{reader<init_space_trim_pol>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(reader<init_space_trim_pol>::typed_span<unquoted>{reader<init_space_trim_pol>::cell_span{cs.begin(), cs.end()}}.is_null());
-
-        cs = " \"N/a\" ";
-        expect(!reader<cr_trim_pol>::typed_span<quoted>{reader<cr_trim_pol>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(!reader<init_space_trim_pol>::typed_span<quoted>{reader<init_space_trim_pol>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(reader<cr_trim_pol>::typed_span<unquoted>{reader<cr_trim_pol>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(reader<init_space_trim_pol>::typed_span<unquoted>{reader<init_space_trim_pol>::cell_span{cs.begin(), cs.end()}}.is_null());
-
-        cs = " . "; // this NULL is a responsibility of vince_csv (fortunately)
-        expect(reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(reader<csv_co::trim_policy::alltrim>::typed_span<quoted>{
-                reader<csv_co::trim_policy::alltrim>::cell_span{cs.begin(), cs.end()}
-        }.is_nil());
-        expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(reader<csv_co::trim_policy::alltrim>::typed_span<unquoted>{
-                reader<csv_co::trim_policy::alltrim>::cell_span{cs.begin(), cs.end()}
-        }.is_nil());
-
-        cs = " \" . \" ";
-        //---!
-        expect(!reader<>::typed_span<quoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(!reader<csv_co::trim_policy::alltrim>::typed_span<quoted>{
-                reader<csv_co::trim_policy::alltrim>::cell_span{cs.begin(), cs.end()}
-        }.is_nil());
-        //---
-
-        expect(reader<>::typed_span<unquoted>{reader<>::cell_span{cs.begin(), cs.end()}}.is_null());
-        expect(reader<csv_co::trim_policy::alltrim>::typed_span<unquoted>{
-                reader<csv_co::trim_policy::alltrim>::cell_span{cs.begin(), cs.end()}
-        }.is_nil());
-
+        
     };
 
     "generate column names"_test = [] {
