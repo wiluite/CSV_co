@@ -88,7 +88,7 @@ namespace csvsort {
             auto print_func = [&](auto && elem, std::size_t col) {
                 using e_type = std::decay_t<decltype(elem)>;
                 static_assert(e_type::is_quoted());
-                typename e_type::template rebind<csv_co::unquoted>::other const unquoted_elem = elem;
+                typename e_type::template rebind<csv_co::unquoted>::other const & unquoted_elem = elem;
                 using unquoted_elem_type = std::decay_t<decltype(unquoted_elem)>;
                 static_assert(unquoted_elem_type::is_unquoted());
 
@@ -102,13 +102,11 @@ namespace csvsort {
                     return;
                 }
 
-                assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
                 using func_type = std::function<std::string(unquoted_elem_type const &, std::any const&)>;
 
                 static std::array<func_type, static_cast<std::size_t>(column_type::sz) - 1> type2func {
                         compose_bool<unquoted_elem_type>
-                        , [&](unquoted_elem_type const &, std::any const & info) {
-                            assert(!unquoted_elem.is_null());
+                        , [&args](unquoted_elem_type const & e, std::any const & info) {
 
                             static std::ostringstream ss;
                             ss.str({});
@@ -118,7 +116,7 @@ namespace csvsort {
                             // the thousands separators and replaces the decimal point with its
                             // C-locale equivalent. Thus, the number actually written to the file
                             // is output, and we have to do some tricks.
-                            auto const value = unquoted_elem.num();
+                            auto const value = e.num();
 
                             if (std::isnan(value))
                                 ss << "NaN";
@@ -126,21 +124,18 @@ namespace csvsort {
                                 ss << (value > 0 ? "Infinity" : "-Infinity");
                             else {
                                 if (args.num_locale != "C") {
-                                    //std::string s = another_rep.str();
-                                    std::string s = unquoted_elem.str();
-                                    //another_rep.to_C_locale(s);
-                                    unquoted_elem.to_C_locale(s);
+                                    std::string s = e.str();
+                                    e.to_C_locale(s);
                                     ss << s;
                                 } else
-                                    //ss << another_rep.str();
-                                    ss << unquoted_elem.str();
+                                    ss << e.str();
                             }
                             return ss.str();
                         }
                         , compose_datetime<unquoted_elem_type>
                         , compose_date<unquoted_elem_type>
-                        , [&](unquoted_elem_type const &, std::any const &) {
-                            auto const str = std::get<1>(unquoted_elem.timedelta_tuple());
+                        , [](unquoted_elem_type const & e, std::any const &) {
+                            auto const str = std::get<1>(e.timedelta_tuple());
                             return str.find(',') != std::string::npos ? "\"" + str +'"' : str;
                         }
                 };
@@ -155,8 +150,8 @@ namespace csvsort {
             }
 
             unsigned col = 0;
-            std::for_each(row.begin(), row.end() - 1, [&](auto & e) {
-                print_func(e, col++);
+            std::for_each(row.begin(), row.end() - 1, [&](auto & elem) {
+                print_func(elem, col++);
                 os << ',';   
             });
             print_func(row.back(), col);
@@ -169,8 +164,8 @@ namespace csvsort {
                 if (args.linenumbers)
                     os << "line_number,";
 
-                std::for_each(printable.begin(), printable.end()-1, [&](auto const & e) {
-                    os << e << ',';
+                std::for_each(printable.begin(), printable.end()-1, [&](auto const & elem) {
+                    os << elem << ',';
                 });
                 os << printable.back();
                 print_LF(os);
@@ -211,8 +206,8 @@ namespace csvsort {
             reader.run_rows([&] (auto & row_span) {
                 check_max_size<establish_new_checker>(reader, args, header_to_strings<unquoted>(row_span), ir);
                 unsigned i = 0;
-                for (auto & e : row_span)
-                    impl_ref[row][i++] = e;
+                for (auto & elem : row_span)                                        
+                    impl_ref[row][i++] = elem;
                 row++;
             });
         }
@@ -223,14 +218,11 @@ namespace csvsort {
         [[nodiscard]] auto cend() const { return impl->cend(); }
         auto begin() { return impl->begin(); }
         auto end() { return impl->end(); }
-
         compromise_table_MxN (compromise_table_MxN && other) noexcept = default;
-        compromise_table_MxN & operator=(compromise_table_MxN && other) noexcept = default;
+        auto operator=(compromise_table_MxN && other) noexcept -> compromise_table_MxN & = default;
     };
     static_assert(!std::is_copy_constructible<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
-    static_assert(!std::is_copy_assignable<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
     static_assert(std::is_move_constructible<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
-    static_assert(std::is_move_assignable<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
 
     void sort(auto & reader_reference, auto const & args) {
         using namespace csv_co;
@@ -261,7 +253,7 @@ namespace csvsort {
             if (args.r)
                 std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::greater<>()));
             else
-                std::sort(/*poolstl::par, */table.begin(), table.end(), sort_comparator(std::move(cfa), std::less<>()));
+                std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::less<>()));
 
             std::ostringstream oss;
             printer p(oss);
