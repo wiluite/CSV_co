@@ -1559,6 +1559,7 @@ namespace csv_co {
 
             /// Construction by defaault
             typed_span() = default;
+
             /// Construction from the cell_span
             explicit typed_span(cell_span const &cs);
             /// Construction from string
@@ -1566,6 +1567,12 @@ namespace csv_co {
 
             /// Assignment from the cell_span
             typed_span &operator=(cell_span const &) noexcept;
+            static constexpr bool is_unquoted() noexcept {
+                return Unquoted;
+            }
+            static constexpr bool is_quoted() noexcept {
+                return !Unquoted;
+            }
 
             /// Comparison of two typeaware cells
             [[nodiscard]] auto compare(typed_span const &other) const -> int;

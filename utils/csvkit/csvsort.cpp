@@ -35,7 +35,7 @@ namespace csvsort {
         CFA cfa_;
         C cpp_cmp;
     public:
-        bool operator ()(auto & a, auto & b) {
+        bool operator()(auto & a, auto & b) {
             for (auto & elem : cfa_) {
 #if !defined(__clang__) || __clang_major__ >= 16
                 auto & [col, fun] = elem;
@@ -45,9 +45,8 @@ namespace csvsort {
 #endif
                 static int result;
                 std::visit([&](auto & c_cmp) { result = c_cmp(a[col], b[col]); }, fun);
-                if (!result)
-                    continue;
-                return cpp_cmp(result,0);
+                if (result)
+                    return cpp_cmp(result, 0);
             }
             return false;
         }
@@ -87,25 +86,29 @@ namespace csvsort {
             };
 
             auto print_func = [&](auto && elem, std::size_t col) {
-                using elem_type = std::decay_t<decltype(elem)>;
-                bool const is_null = elem.is_null();
+                using e_type = std::decay_t<decltype(elem)>;
+                static_assert(e_type::is_quoted());
+                typename e_type::template rebind<csv_co::unquoted>::other const unquoted_elem = elem;
+                using unquoted_elem_type = std::decay_t<decltype(unquoted_elem)>;
+                static_assert(unquoted_elem_type::is_unquoted());
+
+                bool const is_null = unquoted_elem.is_null();
                 if (types[col] == column_type::text_t or (!args.blanks && is_null)) {
-                    auto compose_text = [&](auto const & e) -> std::string {
-                        typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
-                        std::string unquoted = another_rep.str();
-                        return unquoted.find(',') == std::string::npos ? unquoted : another_rep; // another_rep casts to original string by default
+                    auto compose_text = [&]() -> std::string {
+                        std::string unquoted = unquoted_elem.str();
+                        return unquoted.find(',') == std::string::npos ? unquoted : unquoted_elem; // unquoted_elem casts to original string by default
                     };
-                    os << (!args.blanks && is_null ? "" : compose_text(elem));
+                    os << (!args.blanks && is_null ? "" : compose_text());
                     return;
                 }
 
                 assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
-                using func_type = std::function<std::string(elem_type const &, std::any)>;
+                using func_type = std::function<std::string(unquoted_elem_type const &, std::any const&)>;
 
                 static std::array<func_type, static_cast<std::size_t>(column_type::sz) - 1> type2func {
-                        compose_bool<elem_type>
-                        , [&](elem_type const & e, std::any const & info) {
-                            assert(!e.is_null());
+                        compose_bool<unquoted_elem_type>
+                        , [&](unquoted_elem_type const &, std::any const & info) {
+                            assert(!unquoted_elem.is_null());
 
                             static std::ostringstream ss;
                             ss.str({});
@@ -115,8 +118,7 @@ namespace csvsort {
                             // the thousands separators and replaces the decimal point with its
                             // C-locale equivalent. Thus, the number actually written to the file
                             // is output, and we have to do some tricks.
-                            typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
-                            auto const value = another_rep.num();
+                            auto const value = unquoted_elem.num();
 
                             if (std::isnan(value))
                                 ss << "NaN";
@@ -124,25 +126,27 @@ namespace csvsort {
                                 ss << (value > 0 ? "Infinity" : "-Infinity");
                             else {
                                 if (args.num_locale != "C") {
-                                    std::string s = another_rep.str();
-                                    another_rep.to_C_locale(s);
+                                    //std::string s = another_rep.str();
+                                    std::string s = unquoted_elem.str();
+                                    //another_rep.to_C_locale(s);
+                                    unquoted_elem.to_C_locale(s);
                                     ss << s;
                                 } else
-                                    ss << another_rep.str();
+                                    //ss << another_rep.str();
+                                    ss << unquoted_elem.str();
                             }
                             return ss.str();
                         }
-                        , compose_datetime<elem_type>
-                        , compose_date<elem_type>
-                        , [&](elem_type const & e, std::any const &) {
-                            typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
-                            auto const str = std::get<1>(another_rep.timedelta_tuple());
+                        , compose_datetime<unquoted_elem_type>
+                        , compose_date<unquoted_elem_type>
+                        , [&](unquoted_elem_type const &, std::any const &) {
+                            auto const str = std::get<1>(unquoted_elem.timedelta_tuple());
                             return str.find(',') != std::string::npos ? "\"" + str +'"' : str;
                         }
                 };
 
                 auto const type_index = static_cast<std::size_t>(types[col]) - 1;
-                print_func_impl(type2func[type_index](elem, std::any{}));
+                print_func_impl(type2func[type_index](unquoted_elem, std::any{}));
             };
 
             if (args.linenumbers) {
@@ -151,8 +155,8 @@ namespace csvsort {
             }
 
             unsigned col = 0;
-            std::for_each(row.begin(), row.end() - 1, [&](auto & elem) {
-                print_func(elem, col++);
+            std::for_each(row.begin(), row.end() - 1, [&](auto & e) {
+                print_func(e, col++);
                 os << ',';   
             });
             print_func(row.back(), col);
@@ -165,8 +169,8 @@ namespace csvsort {
                 if (args.linenumbers)
                     os << "line_number,";
 
-                std::for_each(printable.begin(), printable.end()-1, [&](auto const & elem) {
-                    os << elem << ',';
+                std::for_each(printable.begin(), printable.end()-1, [&](auto const & e) {
+                    os << e << ',';
                 });
                 os << printable.back();
                 print_LF(os);
@@ -207,8 +211,8 @@ namespace csvsort {
             reader.run_rows([&] (auto & row_span) {
                 check_max_size<establish_new_checker>(reader, args, header_to_strings<unquoted>(row_span), ir);
                 unsigned i = 0;
-                for (auto & elem : row_span)                                        
-                    impl_ref[row][i++] = elem;
+                for (auto & e : row_span)
+                    impl_ref[row][i++] = e;
                 row++;
             });
         }
@@ -219,11 +223,14 @@ namespace csvsort {
         [[nodiscard]] auto cend() const { return impl->cend(); }
         auto begin() { return impl->begin(); }
         auto end() { return impl->end(); }
+
         compromise_table_MxN (compromise_table_MxN && other) noexcept = default;
-        auto operator=(compromise_table_MxN && other) noexcept -> compromise_table_MxN & = default;
+        compromise_table_MxN & operator=(compromise_table_MxN && other) noexcept = default;
     };
     static_assert(!std::is_copy_constructible<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
+    static_assert(!std::is_copy_assignable<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
     static_assert(std::is_move_constructible<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
+    static_assert(std::is_move_assignable<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
 
     void sort(auto & reader_reference, auto const & args) {
         using namespace csv_co;
@@ -240,22 +247,21 @@ namespace csvsort {
             return;
         }
 
-        try {  
-            //using namespace ::csvkit::cli::compare::detail;
+        try {
+            args.columns = args.columns == "all columns" ? "" : args.columns;
+            std::string not_columns;
+            auto const ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes{not_columns});
 
             // Filling in data to sort.
             // It is sufficient to have csv_co::quoted cell_spans in it, because comparison is quite sophisticated and takes it into account
             compromise_table_MxN table(reader, args);
 
-            args.columns = args.columns == "all columns" ? "" : args.columns;    
-            std::string not_columns;
-            auto const ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes{not_columns});
             auto const types_blanks = std::get<1>(typify(reader, args, typify_option::typify_without_precisions));
             auto cfa = ::csvkit::cli::compare::detail::obtain_compare_functionality<std::decay_t<decltype(table[0][0])>>(ids, types_blanks, args);
             if (args.r)
                 std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::greater<>()));
             else
-                std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::less<>()));
+                std::sort(/*poolstl::par, */table.begin(), table.end(), sort_comparator(std::move(cfa), std::less<>()));
 
             std::ostringstream oss;
             printer p(oss);

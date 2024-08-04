@@ -18,13 +18,13 @@ namespace csvkit::cli::compare::detail {
     private:
         template <class ElemType>
         static inline int compare_blanks_no_I_when_blanks (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             return elem1.operator UElemType const& ().compare(elem2.operator UElemType const& ());
         }
 
         template <class ElemType>
         static inline int compare_no_blanks_no_I_when_blanks (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             auto const e1_is_null = elem1.operator UElemType const &().is_null();
             auto const e2_is_null = elem2.operator UElemType const &().is_null();
             return (e1_is_null && e2_is_null) ? 0 : (e1_is_null ? 1 : (e2_is_null ? -1 : Native::native_compare(elem1, elem2)));
@@ -32,7 +32,7 @@ namespace csvkit::cli::compare::detail {
 
         template <class ElemType>
         static int compare_no_blanks_I_when_blanks (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             auto const e1_is_null = elem1.operator UElemType const &().is_null();
             auto const e2_is_null = elem2.operator UElemType const &().is_null();
             return e1_is_null && e2_is_null ? 0 : (e1_is_null ? 1 : (e2_is_null ? -1 : compare_blanks_no_I_when_blanks(elem1, elem2)));
@@ -66,12 +66,12 @@ namespace csvkit::cli::compare::detail {
     protected:
         template <class ElemType>
         static int native_compare (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             UElemType const & ue1 = elem1;
             UElemType const & ue2 = elem2;
             auto const e1 = (ue1.is_boolean(), ue1.unsafe_bool());
             auto const e2 = (ue2.is_boolean(), ue2.unsafe_bool());
-            return (e1==e2) ? 0 : (e1 < e2 ? -1 : 1);
+            return e1 == e2 ? 0 : (e1 < e2 ? -1 : 1);
         }
         explicit bool_compare_impl(auto const & ) {}
         bool_compare_impl() = default;
@@ -81,7 +81,7 @@ namespace csvkit::cli::compare::detail {
     protected:
         template <class ElemType>
         static int native_compare (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             auto const e1 = elem1.operator UElemType const&().timedelta_seconds();
             auto const e2 = elem2.operator UElemType const&().timedelta_seconds();
             return e1 == e2 ? 0 : (e1 < e2 ? -1 : 1);
@@ -94,7 +94,7 @@ namespace csvkit::cli::compare::detail {
     protected:
         template <class ElemType>
         static int native_compare (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             auto const e1 = elem1.operator UElemType const&().num();
             auto const e2 = elem2.operator UElemType const&().num();
             return e1 == e2 ? 0 : (e1 < e2 ? -1 : 1);
@@ -107,7 +107,7 @@ namespace csvkit::cli::compare::detail {
     protected:  
         template <class ElemType>
         static inline int native_compare (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             auto const e1 = std::get<1>(elem1.operator UElemType const&().datetime(datetime_compare_impl::datetime_fmt));
             auto const e2 = std::get<1>(elem2.operator UElemType const&().datetime(datetime_compare_impl::datetime_fmt));
             return e1 == e2 ? 0 : (e1 < e2 ? -1 : 1);
@@ -128,7 +128,7 @@ namespace csvkit::cli::compare::detail {
     protected:
         template <class ElemType>
         static inline int native_compare (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             auto const e1 = std::get<1>(elem1.operator UElemType const&().date(date_compare_impl::date_fmt));
             auto const e2 = std::get<1>(elem2.operator UElemType const&().date(date_compare_impl::date_fmt));
             return e1 == e2 ? 0 : (e1 < e2 ? -1 : 1);
@@ -149,7 +149,7 @@ namespace csvkit::cli::compare::detail {
     protected:
         template <class ElemType>
         static int native_compare (ElemType const & elem1, ElemType const & elem2) {
-            using UElemType = typename ElemType::template rebind<true>::other;
+            using UElemType = typename ElemType::template rebind<csv_co::unquoted>::other;
             return elem1.operator UElemType const& ().compare(elem2.operator UElemType const& ());
         }
         explicit text_compare_impl (auto &) {}
