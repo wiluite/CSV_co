@@ -154,22 +154,25 @@ namespace csvkit::cli {
         std::vector<std::string> & files = arg("The CSV files to operate on.").multi_argument().set_default(std::vector<std::string>{});
     };
 
-    // TODO: add test
     /// Quickly checks a CSV source for matrix shape
-    void quick_check(auto & r, auto const & args) {
+    void quick_check(auto && r, auto const & args) {
         auto cols = 0u;
         auto row = 1ul;
 
-        std::map<unsigned const, unsigned> cols_map;
+        std::unordered_map<unsigned , unsigned> cols_map;
         r.run_spans([&](auto e) {
             cols++;
         }, [&] {
             if (!cols_map.contains(cols))
-                cols_map[cols] = row + args.skip_lines;
+                cols_map[cols] = row + args.skip_lines; // write current line to column's quantity not yet present.
             cols = 0;
             row++;
         });
+
         if (cols_map.size() > 1) {
+            if (cols_map.contains(1))
+                throw std::runtime_error(std::string("The document has 1 column at ") + std::to_string(cols_map[1]) + " row...");
+
             std::string error_message = "The document has different numbers of columns :";
             for (auto const & e : cols_map) {
                 if (e.first == 1 and e.second == row + args.skip_lines - 1)
@@ -182,10 +185,6 @@ namespace csvkit::cli {
                     continue;
                 error_message += (" " + std::to_string(e.second));
             }
-
-            if (cols_map.size() == 2 and cols_map.contains(1) and cols_map[1] == row + args.skip_lines - 1)
-                return; // this is ok: "type file.csv | csvlook", then last '\n' is encountered
-
             error_message += "...\nEither use/reuse the -K option for alignment, or use the csvclean utility to fix it.";
 
             throw std::runtime_error(error_message.c_str());

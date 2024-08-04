@@ -71,6 +71,41 @@ int main() {
         };
     }
 
+    "quick_check"_test = [] {
+
+        struct Args {
+            std::size_t skip_lines = 0;
+        } args;
+
+        expect(nothrow([&] { quick_check(reader<> ("a,b,c\n1,2,3"), args); }));
+        expect(nothrow([&] { quick_check(reader<> ("a,b,c\n1,2,3\n"), args); }));
+
+        expect(throws([&] { quick_check(reader<> ("a,b,c\n1,3"), args); }));
+        try {quick_check(reader<> ("a,b,c\n1,3"), args);} catch(std::exception const & e) {
+            expect(std::string(e.what()) == R"(The document has different numbers of columns : 2 3 at least at rows : 2 1...
+Either use/reuse the -K option for alignment, or use the csvclean utility to fix it.)");
+        }
+
+        expect(throws([&] { quick_check(reader<> ("a,b,c\n1,2,3,4"), args); }));
+        try {quick_check(reader<> ("a,b,c\n1,2,3,4"), args);} catch(std::exception const & e) {
+            expect(std::string(e.what()) == R"(The document has different numbers of columns : 4 3 at least at rows : 2 1...
+Either use/reuse the -K option for alignment, or use the csvclean utility to fix it.)");
+        }
+
+        expect(throws([&] { quick_check(reader<>("a,b,c\n1,2,3\n\n"), args); }));
+        try {quick_check(reader<> ("a,b,c\n1,2,3\n\n"), args);} catch(std::runtime_error const & e) {
+            expect(std::string(e.what()) == R"(The document has 1 column at 3 row...)");
+        }
+        // special case of the common case above also detected
+        try {quick_check(reader<> ("a\n1,2\n"), args);} catch(std::runtime_error const & e) {
+            expect(std::string(e.what()) == R"(The document has 1 column at 1 row...)");
+        }
+
+        // no wrong document if 1-column featured
+        expect(nothrow([&] { quick_check(reader<>("a\n1\n\n\n\n\n\n"), args); }));
+
+    };
+
     "cr_trimming"_test = [] {
 
         std::vector<cell_string> v;
@@ -581,8 +616,6 @@ int main() {
                 expect(date_string.find("2039-04-14") != std::string::npos);                
             }});
         }
-        //return 0;
-
         {   // year is y instead of Y
             a.date_fmt = R"(%d/%m/%y)";
             a.datetime_fmt = R"(%d/%m/%Y %I:%M:%S %p)";

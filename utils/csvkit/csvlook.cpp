@@ -365,7 +365,7 @@ namespace csvlook {
             csv += temp;
             csv += '\n';
         }
-        return csv;
+        return {csv.begin(), csv.end() - 1};
     };
 
 } /// namespace
