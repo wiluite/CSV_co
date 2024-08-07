@@ -61,6 +61,7 @@ add_custom_command(
 
 endif()
 
+add_subdirectory(test)
 add_executable(csvclean csvclean.cpp)
 target_link_libraries(csvclean libcppp-reiconv.static simdutf)
 
