@@ -6,9 +6,11 @@
 #pragma once
 
 namespace csvkit::test_facilities {
+    struct single_file_arg {
+        std::filesystem::path file;
+    };
     struct common_args {
         bool no_header {false};
-        std::filesystem::path file;
         bool zero {false};
         mutable bool linenumbers {false};
         unsigned skip_lines {0};
@@ -37,7 +39,7 @@ namespace csvkit::test_facilities {
         mutable unsigned precision_locally{};
     };
     struct spread_args {
-        bool names {false};
+        bool names {false}; // Display column names and indices from the input CSV and exit.
         mutable std::string columns {"all columns"};
         mutable std::string not_columns {"no columns"};
     };

@@ -175,16 +175,14 @@ namespace csvjson {
                         std::ostringstream oss;
                         oss << std::quoted(elem_str);
                         return oss.str();
-                    } else {
+                    } else
                         return std::string(elem_str);
-                    }
                 };
 
                 bool const is_null = elem.is_null();
 
-                if (types[col] == column_type::text_t or (!args.blanks && is_null)) {
+                if (types[col] == column_type::text_t or (!args.blanks && is_null))
                     return !args.blanks && is_null ? (!args.no_inference ? print_func_impl(std::string("null")) : print_func_impl(std::string(""), true)) : print_func_impl(elem.str(), true);
-                }
 
                 assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
                 return print_func_impl(f(elem, std::any{}));
@@ -254,9 +252,8 @@ namespace csvjson {
                             , indenter.add_indent()
                             , print_key_func(type2output_key_func[static_cast<std::size_t>(types[key_idx]) - 1], key, key_idx)
                             , ": {");
-                } else {
+                } else
                     to_stream(oss, indenter.add_indent(), "{");
-                }
 
                 indenter.inc_indent();
                 auto i = 0u;

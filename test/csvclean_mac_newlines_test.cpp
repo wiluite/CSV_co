@@ -22,7 +22,7 @@ int main() {
         // native line-breaking.
 #if !defined (__APPLE__)
 
-        struct Args : csvkit::test_facilities::common_args {
+        struct Args : csvkit::test_facilities::single_file_arg, csvkit::test_facilities::common_args {
             Args() { file = "mac_newlines.csv"; }
             bool dry_run {false};
         } args;

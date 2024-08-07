@@ -112,6 +112,12 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/no_header_row.csv
         ${CMAKE_CURRENT_BINARY_DIR}/no_header_row.csv)
+add_custom_command(
+        TARGET csvcut_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
+
 target_link_libraries(csvcut_test libcppp-reiconv.static)
 add_test(csvcut_test csvcut_test)
 
@@ -161,6 +167,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
+add_custom_command(
+        TARGET csvlook_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
 target_link_libraries(csvlook_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvlook_test csvlook_test)
@@ -181,6 +192,12 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/FY09_EDU_Recipients_by_State.csv
         ${CMAKE_CURRENT_BINARY_DIR}/FY09_EDU_Recipients_by_State.csv)
+add_custom_command(
+        TARGET csvstat_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
+
 target_link_libraries(csvstat_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvstat_test csvstat_test)
 
@@ -225,6 +242,12 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/timedelta.csv
         ${CMAKE_CURRENT_BINARY_DIR}/timedelta.csv)
+add_custom_command(
+        TARGET csvsort_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
+
 target_link_libraries(csvsort_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvsort_test csvsort_test)
 
@@ -259,6 +282,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/sniff_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/sniff_limit.csv)
+add_custom_command(
+        TARGET csvjoin_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 target_link_libraries(csvjoin_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvjoin_test csvjoin_test)
 
@@ -303,6 +331,12 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/dummy3.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy3.csv)
+add_custom_command(
+        TARGET csvstack_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
+
 target_link_libraries(csvstack_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvstack_test csvstack_test)
 
@@ -342,6 +376,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/testjson_converted.csv
         ${CMAKE_CURRENT_BINARY_DIR}/testjson_converted.csv)
+add_custom_command(
+        TARGET csvjson_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
 target_link_libraries(csvjson_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvjson_test csvjson_test)
@@ -373,6 +412,12 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/FY09_EDU_Recipients_by_State.csv
         ${CMAKE_CURRENT_BINARY_DIR}/FY09_EDU_Recipients_by_State.csv)
+add_custom_command(
+        TARGET csvgrep_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
+
 
 target_link_libraries(csvgrep_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvgrep_test csvgrep_test)
@@ -383,6 +428,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/bad.csv
         ${CMAKE_CURRENT_BINARY_DIR}/bad.csv)
+add_custom_command(
+        TARGET csvclean_dry_run_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/test_field_size_limit.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
 add_custom_command(
         TARGET test POST_BUILD

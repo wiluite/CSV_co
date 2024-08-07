@@ -12,6 +12,8 @@
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+#include "test_reader_macros.h"
+#include "test_max_field_size_macros.h"
 
 #define CALL_TEST_AND_REDIRECT_TO_COUT   std::stringstream cout_buffer;                        \
                                          {                                                     \
@@ -19,23 +21,23 @@
                                              redirect_cout cr(cout_buffer.rdbuf());            \
                                              csvjson::json(ref, args);                         \
                                          }
-//#if defined(_MSC_VER)
+
 #if !defined(__unix__)
 #undef GetObject
 #endif
-//#endif
 
 int main() {
     using namespace boost::ut;
     using namespace rapidjson;
 
+    namespace tf = csvkit::test_facilities;
+
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
-    namespace tf = csvkit::test_facilities;
 
     "simple"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() { file = "dummy.csv"; }
         } args;
 
@@ -62,7 +64,7 @@ int main() {
     };
 
     "no blanks"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() { file = "blanks.csv"; }
         } args;
 
@@ -92,7 +94,7 @@ int main() {
     };
 
     "blanks"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() {
                 file = "blanks.csv";
                 blanks = true;
@@ -131,7 +133,7 @@ int main() {
     };
 
     "no header row"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() {
                 file = "no_header_row.csv";
                 no_header = true;
@@ -161,7 +163,7 @@ int main() {
     };
 
     "no inference"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() {
                 file = "dummy.csv";
                 no_inference = true;
@@ -192,7 +194,7 @@ int main() {
     };
 
     "indentation"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() {
                 file = "dummy.csv";
                 indent = 4;
@@ -206,7 +208,7 @@ int main() {
     };
 
     "keying"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() {
                 file = "dummy.csv";
                 key = "a";
@@ -243,7 +245,7 @@ int main() {
     };
 
     "duplicate keys"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() {
                 file = "dummy3.csv";
                 key = "a";
@@ -261,7 +263,7 @@ int main() {
     };
 
     "geojson with id"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() {
                 file = "test_geo.csv";
                 lat = "latitude";
@@ -304,7 +306,7 @@ int main() {
     };
 
     "geojson point"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() {
                 file = "test_geo.csv";
                 lat = "latitude";
@@ -327,7 +329,7 @@ int main() {
     //TODO: document no geometry option support
 
     "geojson with crs"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() { file = "test_geo.csv"; lat = "latitude"; lon = "longitude"; crs = "EPSG:4269";
             }
         } args;
@@ -345,7 +347,7 @@ int main() {
     };
 
     "geojson with no bbox"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() { file = "test_geo.csv"; lat = "latitude"; lon = "longitude"; no_bbox = true;
             }
         } args;
@@ -359,7 +361,7 @@ int main() {
     };
 
     "ndjson"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() { file = "testjson_converted.csv"; stream = true; }
         } args;
 
@@ -377,7 +379,7 @@ R"({"text": "Chicago Reader", "float": 1.0, "datetime": "1971-01-01T04:14:00", "
     };
 
     "ndjson streaming, no inference"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() { file = "testjson_converted.csv"; stream = true; no_inference = true; }
         } args;
 
@@ -394,23 +396,13 @@ R"({"text": "Chicago Reader", "float": "1.0", "datetime": "1971-01-01T04:14:00",
     };
 
     "ndgeojson"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() { file = "test_geo.csv"; lat = "latitude"; lon = "longitude"; stream = true; date_fmt = "%m/%d/%y";
             }
         } args;
 
-        struct yet_one_test_trim_policy {
-        public:
-            inline static void trim(std::string &s) {
-            }
-            inline static auto ret_trim(std::string s) {
-                return s;
-            }
-        };
-        using yet_one_test_reader_type = csv_co::reader<yet_one_test_trim_policy>;
-
-        yet_one_test_reader_type r(args.file);
-        std::reference_wrapper<yet_one_test_reader_type> ref = std::ref(r);
+        test_reader_r1 r(args.file);
+        std::reference_wrapper<test_reader_r1> ref = std::ref(r);
         CALL_TEST_AND_REDIRECT_TO_COUT
 
         expect(cout_buffer.str() ==
@@ -435,23 +427,13 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
     };
 
     "ndgeojson streaming, no inference"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
             Args() { file = "test_geo.csv"; lat = "latitude"; lon = "longitude"; stream = true; date_fmt = "%m/%d/%y"; no_inference = true;
             }
         } args;
 
-        struct another_test_trim_policy {
-        public:
-            inline static void trim(std::string &s) {
-            }
-            inline static auto ret_trim(std::string s) {
-                return s;
-            }
-        };
-        using another_test_reader_type = csv_co::reader<another_test_trim_policy>;
-
-        another_test_reader_type r(args.file);
-        std::reference_wrapper<another_test_reader_type> ref = std::ref(r);
+        test_reader_r2 r(args.file);
+        std::reference_wrapper<test_reader_r2> ref = std::ref(r);
         CALL_TEST_AND_REDIRECT_TO_COUT
         expect(cout_buffer.str() ==
 R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee Lounge", "description": "In addition to being the only coffee shop in downtown Tyler, DCL also features regular exhibitions of work by local artists.", "address": "200 West Erwin Street", "type": "Gallery", "last_seen_date": "3/30/12"}, "geometry": {"type": "Point", "coordinates": [-95.30181, 32.35066]}}
@@ -472,7 +454,52 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
 {"type": "Feature", "properties": {"slug": "obeidder", "title": "Obeidder Monster", "description": "Sharpie and Spray Paint", "address": "3319 Seaton St.", "type": "Street Art", "photo_url": "http://i.imgur.com/3aX7E.jpg", "photo_credit": "Photo by Justin Edwards. Used with permission.", "last_seen_date": "4/15/12"}, "geometry": {"type": "Point", "coordinates": [-95.334619, 32.314431]}}
 {"type": "Feature", "properties": {"slug": "sensor-device", "title": "Sensor Device", "artist": "Kurt Dyrhaug", "address": "University of Texas, Campus Drive", "type": "Sculpture", "photo_url": "http://media.hacktyler.com/artmap/photos/sensor-device.jpg", "photo_credit": "Photo by Christopher Groskopf. Used with permission.", "last_seen_date": "4/16/12"}, "geometry": {"type": "Point", "coordinates": [-95.250699, 32.317216]}}
 )");
+        "max field size in geojson mode"_test = [&] {
+            args.file = "test_field_size_limit.csv";
+            args.lat = "Along";
+            args.lon = "Boasting";
+
+            notrimming_reader_type r(args.file);
+            std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
+            expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT}));
+
+            using namespace z_test;
+
+            Z_CHECK(csvjson::json, test_reader_r3, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+            Z_CHECK(csvjson::json, test_reader_r5, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+            args.lat = "1";
+            args.lon = "2";
+            Z_CHECK(csvjson::json, test_reader_r4, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+            Z_CHECK(csvjson::json, test_reader_r6, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+            Z_CHECK(csvjson::json, test_reader_r7, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+            Z_CHECK(csvjson::json, test_reader_r8, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        };
+
     };
+
+    "max field size"_test = [] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+            Args() { file = "test_field_size_limit.csv"; }
+        } args;
+
+        notrimming_reader_type r(args.file);
+        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT}));
+
+        using namespace z_test;
+        Z_CHECK(csvjson::json, test_reader_r9, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK(csvjson::json, test_reader_r10, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+        Z_CHECK(csvjson::json, test_reader_r11, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK(csvjson::json, test_reader_r12, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+        Z_CHECK(csvjson::json, test_reader_r13, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK(csvjson::json, test_reader_r14, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+    };
+
 
 }
 

@@ -10,9 +10,12 @@
 #include "strm_redir.h"
 #include "common_args.h"
 #include "test_runner_macros.h"
+#include "test_reader_macros.h"
+#include "test_max_field_size_macros.h"
 
 int main() {
     using namespace boost::ut;
+    namespace tf = csvkit::test_facilities;
 
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
@@ -26,8 +29,7 @@ int main() {
                                                  }
 
     "runs"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "test_utf8.csv"; }
         } args;
 
@@ -41,8 +43,7 @@ int main() {
     };
 
     "encoding"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "test_latin1.csv"; }
         } args;
 
@@ -64,7 +65,7 @@ int main() {
 
     "sort string reverse"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "testxls_converted.csv"; columns = "1"; r = true; }
         } args;
 
@@ -82,7 +83,7 @@ int main() {
 
     "sort date"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "testxls_converted.csv"; columns = "2"; date_fmt = "%Y-%m-%d";}
         } args;
 
@@ -100,7 +101,7 @@ int main() {
 
     "no blanks"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "blanks.csv"; }
         } args;
 
@@ -111,7 +112,7 @@ int main() {
 
     "blanks"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "blanks.csv"; blanks = true; }
         } args;
 
@@ -122,7 +123,7 @@ int main() {
 
     "no header row"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "no_header_row.csv"; no_inference = true; no_header = true; }
         } args;
 
@@ -133,7 +134,7 @@ int main() {
 
     "no inference"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "test_literal_order.csv"; no_inference = true; columns = "1"; }
         } args;
 
@@ -151,7 +152,7 @@ int main() {
 
     "sort_t_and_nulls"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "sort_ints_nulls.csv"; columns = "2"; }
         } args;
 
@@ -175,8 +176,7 @@ int main() {
     };
 
     "sort timedelta"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
             Args() { file = "timedelta.csv"; columns = "2"; }
         } args;
 
@@ -190,5 +190,25 @@ int main() {
         expect(cout_buffer.str() == "a,b\none,0:00:01.123450\ntwo,0:00:01.123457\nthree,0:00:01.123457\n");
 
     };
+
+    "max field size"_test = [] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+            Args() { file = "test_field_size_limit.csv"; maxfieldsize = 100; }
+        } args;
+
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT(csvsort::sort)}));
+
+        using namespace z_test;
+
+        Z_CHECK(csvsort::sort, test_reader_r1, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK(csvsort::sort, test_reader_r3, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+        Z_CHECK(csvsort::sort, test_reader_r2, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK(csvsort::sort, test_reader_r4, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+        Z_CHECK(csvsort::sort, test_reader_r5, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK(csvsort::sort, test_reader_r6, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+    };
+
 
 }

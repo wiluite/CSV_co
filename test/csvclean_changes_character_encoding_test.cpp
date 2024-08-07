@@ -17,7 +17,7 @@ int main() {
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
     "changes character encoding"_test = [] () mutable {
-        struct Args : csvkit::test_facilities::common_args {
+        struct Args : csvkit::test_facilities::single_file_arg, csvkit::test_facilities::common_args {
             Args() { file = "test_latin1.csv"; maxfieldsize = max_unsigned_limit;} // TODO: Why does it requires max_unsigned_limit for test to pass?
             bool dry_run {false};
         } args;

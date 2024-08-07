@@ -10,10 +10,13 @@
 #include "strm_redir.h"
 #include "common_args.h"
 #include "test_runner_macros.h"
+#include "test_reader_macros.h"
+#include "test_max_field_size_macros.h"
 
 //TODO: add all "stdin" tests
 int main() {
     using namespace boost::ut;
+    namespace tf = csvkit::test_facilities;
 
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
@@ -26,9 +29,7 @@ int main() {
                                              }
 
     "skip lines"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "test_skip_lines.csv"; skip_lines = 3; columns = "1"; match = "1"; }
         } args;
 
@@ -41,9 +42,7 @@ int main() {
     };
 
     "match"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "dummy.csv"; columns = "1"; match = "1"; }
         } args;
 
@@ -56,9 +55,7 @@ int main() {
     };
 
     "any match"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "dummy.csv"; columns = "1,2,3"; match = "1"; any = true; }
         } args;
 
@@ -71,9 +68,7 @@ int main() {
     };
 
     "match utf8"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "test_utf8.csv"; columns = "3"; match = "ʤ"; any = true; }
         } args;
 
@@ -86,9 +81,7 @@ int main() {
     };
 
     "match utf8_bom"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "test_utf8_bom.csv"; columns = "3"; match = "ʤ"; any = true; }
         } args;
 
@@ -101,9 +94,7 @@ int main() {
     };
 
     "no match"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "dummy.csv"; columns = "1"; match = "NO MATCH"; }
         } args;
 
@@ -115,9 +106,7 @@ int main() {
     };
 
     "invert match"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "dummy.csv"; columns = "1"; match = "NO MATCH"; invert = true; }
         } args;
 
@@ -130,9 +119,7 @@ int main() {
     };
 
     "re match"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "dummy.csv"; columns = "3"; regex = "^(3|9)$"; }
         } args;
 
@@ -145,9 +132,7 @@ int main() {
     };
 
     "re match utf8"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "test_utf8.csv"; columns = "3"; regex = "ʤ"; }
         } args;
 
@@ -160,9 +145,7 @@ int main() {
     };
 
     "string match"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "FY09_EDU_Recipients_by_State.csv"; columns = "1"; match = "ILLINOIS"; }
         } args;
 
@@ -177,9 +160,7 @@ int main() {
     };
 
     "string match with line numbers"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "FY09_EDU_Recipients_by_State.csv"; columns = "1"; match = "ILLINOIS"; linenumbers = true;}
         } args;
 
@@ -194,18 +175,34 @@ int main() {
     };
 
     "match with linenumbers"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
             Args() { file = "dummy.csv"; columns = "1"; match = "1"; linenumbers = true; }
         } args;
-
-        CALL_TEST_AND_REDIRECT_TO_COUT(csvgrep::grep)
 
 //      line_number,a,b,c
 //      1,1,2,3
 
-        expect("line_number,a,b,c\n1,1,2,3\n" == cout_buffer.str());
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT(csvgrep::grep)
+            expect("line_number,a,b,c\n1,1,2,3\n" == cout_buffer.str());
+        }));
+    };
+
+    "max field size"_test = [] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::csvgrep_specific_args {
+            Args() { file = "test_field_size_limit.csv"; columns = "1"; match = "1"; maxfieldsize = 100;}
+        } args;
+
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT(csvgrep::grep)}));
+
+        using namespace z_test;
+        Z_CHECK(csvgrep::grep, test_reader_r1, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK(csvgrep::grep, test_reader_r3, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+        Z_CHECK(csvgrep::grep, test_reader_r2, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK(csvgrep::grep, test_reader_r4, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+        Z_CHECK(csvgrep::grep, test_reader_r5, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK(csvgrep::grep, test_reader_r6, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
     };
 
 }

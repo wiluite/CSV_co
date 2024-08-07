@@ -9,10 +9,13 @@
 #include "../utils/csvkit/csvstack.cpp"
 #include "strm_redir.h"
 #include "common_args.h"
+#include "test_reader_macros.h"
+#include "test_max_field_size_macros.h"
 
 //TODO: add all "stdin" tests
 int main() {
     using namespace boost::ut;
+    namespace tf = csvkit::test_facilities;
 
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
@@ -27,11 +30,7 @@ int main() {
 
 
     "skip lines"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
-            Args() {
-            }
         } args;
 
         args.files = std::vector<std::string>{"test_skip_lines.csv", "test_skip_lines.csv"};
@@ -46,11 +45,7 @@ int main() {
     };
 
     "single file stack"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
-            Args() {
-            }
         } args;
 
         args.files = std::vector<std::string>{"dummy.csv"};
@@ -63,11 +58,7 @@ int main() {
     };
 
     "multiple file stack col"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
-            Args() {
-            }
         } args;
 
         args.files = std::vector<std::string>{"dummy.csv", "dummy_col_shuffled.csv"};
@@ -80,7 +71,6 @@ int main() {
 
         expect("a,b,c\n1,2,3\n1,2,3\n" == cout_buffer.str());
         }
-
 
         args.files = std::vector<std::string>{"dummy_col_shuffled.csv", "dummy.csv"};
         {
@@ -95,8 +85,6 @@ int main() {
     };
 
     "multiple file stack col ragged"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
             Args() {
             }
@@ -113,8 +101,6 @@ int main() {
     };
 
     "explicit grouping"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
             Args() {
                 group_name= "foo";
@@ -133,8 +119,6 @@ int main() {
     };
 
     "filenames grouping"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
             Args() {
                 group_name= "path";
@@ -153,8 +137,6 @@ int main() {
     };
 
     "no header row basic"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
             Args() {
                 no_header = true;
@@ -172,8 +154,6 @@ int main() {
     };
 
     "no header row basic"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
             Args() {
                 no_header = true;
@@ -191,8 +171,6 @@ int main() {
     };
 
     "grouped manual and named column"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
             Args() {
                 no_header = true;
@@ -215,8 +193,6 @@ int main() {
     };
 
     "grouped filenames"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
             Args() {
                 no_header = true;
@@ -235,8 +211,6 @@ int main() {
     };
 
     "grouped filenames and named column"_test = [] {
-
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::common_args, tf::csvstack_specific_args {
             Args() {
                 no_header = true;
@@ -254,4 +228,24 @@ int main() {
         
         expect("hello,a,b,c\nno_header_row.csv,1,2,3\nno_header_row2.csv,4,5,6\n" == cout_buffer.str());
     };
+
+    "max field size"_test = [] {
+        struct Args : tf::common_args, tf::csvstack_specific_args {
+            Args() { files = std::vector<std::string>{"test_field_size_limit.csv"}; /*maxfieldsize = 100;*/ }
+        } args;
+
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT(csvstack::stack<notrimming_reader_type>(args))}));
+
+        using namespace z_test;
+
+        Z_CHECK1(csvstack::stack<test_reader_r1>(args), skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK1(csvstack::stack<test_reader_r3>(args), skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+        Z_CHECK1(csvstack::stack<test_reader_r2>(args), skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK1(csvstack::stack<test_reader_r4>(args), skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+        Z_CHECK1(csvstack::stack<test_reader_r5>(args), skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK1(csvstack::stack<test_reader_r6>(args), skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+    };
+
 }

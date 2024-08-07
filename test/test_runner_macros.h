@@ -3,8 +3,7 @@
 /// \author wiluite
 /// \brief  Tests for the csvstat utility.
 
-#ifndef CSV_CO_TEST_RUNNER_MACROS_H
-#define CSV_CO_TEST_RUNNER_MACROS_H
+#pragma once
 
 #define test_runner_impl(reader_type_, args_, reader_arg_, function_)                                                   \
     reader_type_ r(reader_arg_);                                                                                        \
@@ -17,9 +16,7 @@
         std::variant<std::monostate                                                                                     \
                    , std::reference_wrapper<notrimming_reader_type>                                                     \
                    , std::reference_wrapper<skipinitspace_reader_type>> variants;                                       \
-        /*if (!arguments.skip_init_space) {*/                                                                               \
             test_runner_impl(notrimming_reader_type, arguments, std::filesystem::path{arguments.file}, function)        \
-        /*}*/                                                                                                               \
                                                                                                                         \
     } catch (notrimming_reader_type::exception const & e) {                                                             \
         std::cout << e.what() << std::endl;                                                                             \
@@ -34,5 +31,3 @@
         std::cout << "Unknown exception.\n";                                                                            \
     }
 
-
-#endif //CSV_CO_TEST_RUNNER_MACROS_H

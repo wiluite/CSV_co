@@ -16,9 +16,8 @@ int main() {
 #if defined (WIN32)
     cfg<override> ={.colors={.none="", .pass="", .fail=""}};
 #endif
-
     "bad skip lines"_test = [&] () mutable {
-        struct Args : csvkit::test_facilities::common_args {
+        struct Args : csvkit::test_facilities::single_file_arg, csvkit::test_facilities::common_args {
             Args() { file = "bad_skip_lines.csv"; skip_lines = 3;}
             bool dry_run {false};
         } args;
@@ -35,5 +34,6 @@ int main() {
             );
         }));
     };
+
 
 }

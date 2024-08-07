@@ -11,6 +11,8 @@
 #include "common_args.h"
 #include <regex>
 #include "rapidjson/document.h"
+#include "test_reader_macros.h"
+#include "test_max_field_size_macros.h"
 
 #define TEST_NO_THROW  std::stringstream cout_buffer;                                                                   \
                        std::variant<std::monostate, csvstat::nt_unquoting_tuple> variants                               \
@@ -43,14 +45,14 @@
 
 int main() {
     using namespace boost::ut;
+    namespace tf = csvkit::test_facilities;
 
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
 
     "runs"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() { file = "test_utf8.csv"; }
         } args;
         {
@@ -69,8 +71,7 @@ int main() {
     };
 
     "encoding"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() { file = "test_latin1.csv"; }
         } args;
 
@@ -93,8 +94,7 @@ int main() {
     };
 
     "columns"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "testxls_converted.csv";
                 columns = "2";
@@ -110,8 +110,7 @@ int main() {
     };
 
     "linenumber"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "dummy.csv";
                 columns = "2";
@@ -127,8 +126,7 @@ int main() {
     };
 
     "no header row"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "no_header_row.csv";
                 columns = "2";
@@ -145,8 +143,7 @@ int main() {
     };
 
     "count only"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 count = true;
@@ -161,8 +158,7 @@ int main() {
     };
 
     "unique"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 columns = "county";
@@ -178,8 +174,7 @@ int main() {
     };
 
     "max length"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 columns = "county";
@@ -195,8 +190,7 @@ int main() {
     };
 
     "freq list"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() { file = "ks_1033_data.csv"; }
         } args;
 
@@ -211,8 +205,7 @@ int main() {
     };
 
     "freq"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 freq = true;
@@ -227,8 +220,7 @@ int main() {
     };
 
     "freq count"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 freq_count = 1;
@@ -245,8 +237,7 @@ int main() {
     };
 
     "csv"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 csv = true;
@@ -277,8 +268,7 @@ int main() {
     };
 
     "csv_columns"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 csv = true;
@@ -311,7 +301,7 @@ int main() {
         using namespace rapidjson;
 
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 json = true;
@@ -346,8 +336,7 @@ int main() {
     "json_columns"_test = [] {
         using namespace rapidjson;
 
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 json = true;
@@ -386,8 +375,7 @@ int main() {
     };
 
     "decimal_format"_test = [&] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             // TODO:provide in csvstat the num_locale cell state many times in the session
             Args() {
                 file = "FY09_EDU_Recipients_by_State.csv";
@@ -428,8 +416,7 @@ int main() {
     };
 
     "max_precision_on_off"_test = [&] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
                 columns = "1";
                 max_precision = true;
@@ -454,5 +441,24 @@ int main() {
 
             expect("0" == get_result(cout_buffer.str()));
         }
+    };
+    "max field size"_test = [] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+            Args() {
+                file = "test_field_size_limit.csv";
+            }
+        } args;
+
+        using namespace z_test;
+        Z_CHECK2(test_reader_r1, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK2(test_reader_r2, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+        Z_CHECK2(test_reader_r3, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK2(test_reader_r4, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+        Z_CHECK2(test_reader_r5, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK2(test_reader_r6, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+
+
     };
 }

@@ -18,7 +18,7 @@ int main() {
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
     "removes bom"_test = [] () mutable {
-        struct Args : csvkit::test_facilities::common_args {
+        struct Args : csvkit::test_facilities::single_file_arg, csvkit::test_facilities::common_args {
             Args() { file = "test_utf8_bom.csv"; maxfieldsize = max_unsigned_limit; }
             bool dry_run {false};
         } args;

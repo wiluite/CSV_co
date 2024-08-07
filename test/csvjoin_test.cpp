@@ -9,6 +9,7 @@
 #include "../utils/csvkit/csvjoin.cpp"
 #include "strm_redir.h"
 #include "common_args.h"
+#include "test_max_field_size_macros.h"
 
 int main() {
     using namespace boost::ut;
@@ -39,6 +40,19 @@ int main() {
 
             notrimming_reader_type new_reader (cout_buffer.str());
             expect(4 == new_reader.rows());
+
+            "max field size in this mode"_test = [&] {
+                args_copy.files = std::vector<std::string>{"test_field_size_limit.csv", "test_field_size_limit.csv"};
+                using namespace z_test;
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 12, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::has_header, 13, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+            };
         };
 
         "inner"_test = [&] {
@@ -49,17 +63,45 @@ int main() {
 
             notrimming_reader_type new_reader (cout_buffer.str());
             expect(3 == new_reader.rows());
+
+            "max field size in this mode"_test = [&] {
+                args_copy.files = std::vector<std::string>{"test_field_size_limit.csv", "test_field_size_limit.csv"};
+                args_copy.columns = "1";
+                using namespace z_test;
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 12, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::has_header, 13, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+            };
         };
 
         "left"_test = [&] {
             auto args_copy = args;
             args_copy.columns = "a";
-            args_copy.left_join = true;  
+            args_copy.left_join = true;
             args_copy.files = std::vector<std::string>{"join_a.csv", "join_b.csv"};
             CALL_TEST_AND_REDIRECT_TO_COUT(csvjoin::join_wrapper(args_copy))
 
             notrimming_reader_type new_reader (cout_buffer.str());
             expect(5 == new_reader.rows());
+
+            "max field size in this mode"_test = [&] {
+                args_copy.files = std::vector<std::string>{"test_field_size_limit.csv", "test_field_size_limit.csv"};
+                args_copy.columns = "1";
+                using namespace z_test;
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 12, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::has_header, 13, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+            };
         };
 
         "right"_test = [&] {
@@ -71,6 +113,21 @@ int main() {
 
             notrimming_reader_type new_reader (cout_buffer.str());
             expect(4 == new_reader.rows());
+
+            "max field size in this mode"_test = [&] {
+                args_copy.files = std::vector<std::string>{"test_field_size_limit.csv", "test_field_size_limit.csv"};
+                args_copy.columns = "1";
+                using namespace z_test;
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 12, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::has_header, 13, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+
+            };
         };
 
         "right indices"_test = [&] {
@@ -82,6 +139,21 @@ int main() {
 
             notrimming_reader_type new_reader (cout_buffer.str());
             expect(2 == new_reader.rows());
+
+            "max field size in this mode"_test = [&] {
+                args_copy.files = std::vector<std::string>{"test_field_size_limit.csv", "test_field_size_limit.csv"};
+                args_copy.columns = "1,3";
+                using namespace z_test;
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 12, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::has_header, 13, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+            };
+
         };
 
 #if !defined(_MSC_VER)
@@ -94,6 +166,20 @@ int main() {
 
             notrimming_reader_type new_reader (cout_buffer.str());
             expect(6 == new_reader.rows());
+
+            "max field size in this mode"_test = [&] {
+                args_copy.files = std::vector<std::string>{"test_field_size_limit.csv", "test_field_size_limit.csv"};
+                args_copy.columns = "1";
+                using namespace z_test;
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 12, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::has_header, 13, "FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.\n")
+                Z_CHECK0(csvjoin::join_wrapper(args_copy), skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+            };
         };
 #endif
 
@@ -135,7 +221,7 @@ int main() {
         "no header row"_test = [&] {
             auto args_copy = args;
             args_copy.columns = "1";
-            args_copy.no_header = true;            
+            args_copy.no_header = true;
             args_copy.files = std::vector<std::string>{"join_a.csv", "join_no_header_row.csv"};
             CALL_TEST_AND_REDIRECT_TO_COUT(csvjoin::join_wrapper(args_copy))
 
@@ -185,4 +271,5 @@ int main() {
             expect(cout_buffer.str() == "h1,h2,3\r\nabc,abc,\r\n,def,ghi\r\n" || cout_buffer.str() == "h1,h2,h3\nabc,abc,\n,def,ghi\n");
         };
     };
+
 }

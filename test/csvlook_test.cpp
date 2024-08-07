@@ -10,38 +10,32 @@
 #include "strm_redir.h"
 #include "common_args.h"
 #include "test_runner_macros.h"
+#include "test_reader_macros.h"
+#include "test_max_field_size_macros.h"
 
-#define CALL_TEST_AND_REDIRECT_TO_COUT_1 std::stringstream cout_buffer;                        \
-                                         {                                                     \
-                                             redirect(cout)                                    \
-                                             redirect_cout cr(cout_buffer.rdbuf());            \
-                                             csvlook::look(ref, args);                         \
-                                         }
-
-#define CALL_TEST_AND_REDIRECT_TO_COUT_2 std::stringstream cout_buffer;                               \
-                                         {                                                            \
-                                             redirect(cout)                                           \
-                                             redirect_cout cr(cout_buffer.rdbuf());                   \
-                                             test_reader_configurator_and_runner(args, csvlook::look) \
-                                         }
-
+#define CALL_TEST_AND_REDIRECT_TO_COUT std::stringstream cout_buffer; \
+{                                                                     \
+redirect(cout)                                                        \
+redirect_cout cr(cout_buffer.rdbuf());                                \
+csvlook::look(ref, args);                                             \
+}
 
 int main() {
     using namespace boost::ut;
+    namespace tf = csvkit::test_facilities;
 
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
     "runs"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "test_utf8.csv"; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | foo | bar | baz |
 //      | --- | --- | --- |
@@ -52,15 +46,14 @@ int main() {
     };
 
     "simple"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "dummy3.csv"; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      |    a | b | c |
 //      | ---- | - | - |
@@ -71,12 +64,15 @@ int main() {
     };
 
     "encoding"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "test_latin1.csv"; encoding = "latin1"; }
         } args;
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_2
+        std::stringstream cout_buffer;
+        redirect(cout)
+        redirect_cout cr(cout_buffer.rdbuf());
+        test_reader_configurator_and_runner(args, csvlook::look)
+//        CALL_TEST_AND_REDIRECT_TO_COUT_2
 
 //      | a | b | c |
 //      | - | - | - |
@@ -86,15 +82,14 @@ int main() {
     };
 
     "no blanks"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "blanks.csv"; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | a | b | c | d | e | f |
 //      | - | - | - | - | - | - |
@@ -105,15 +100,14 @@ int main() {
     };
 
     "blanks"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "blanks.csv"; blanks = true;}
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | a | b  | c   | d    | e    | f |
 //      | - | -- | --- | ---- | ---- | - |
@@ -123,15 +117,14 @@ int main() {
     };
 
     "no header row"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "no_header_row3.csv"; no_header = true; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | a | b | c |
 //      | - | - | - |
@@ -143,15 +136,14 @@ int main() {
 
     // TODO: add just unicode test
     "unicode bom"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "test_utf8_bom.csv"; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | foo | bar | baz |
 //      | --- | --- | --- |
@@ -162,15 +154,14 @@ int main() {
     };
 
     "linenumbers"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "dummy3.csv"; linenumbers = true;}
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | line_numbers |    a | b | c |
 //      | ------------ | ---- | - | - |
@@ -181,15 +172,14 @@ int main() {
     };
 
     "no_inference"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "dummy3.csv"; no_inference = true; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | a | b | c |
 //      | - | - | - |
@@ -200,15 +190,14 @@ int main() {
     };
 
     "max rows"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "dummy.csv"; max_rows = 0; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | a | b | c |
 //      | - | - | - |
@@ -218,15 +207,14 @@ int main() {
     };
 
     "max columns"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "dummy.csv"; max_columns = 1; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      |    a | ... |
 //      | ---- | --- |
@@ -236,15 +224,14 @@ int main() {
     };
 
     "max columns width"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "dummy4.csv"; max_column_width = 4; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      |    a | b | c |
 //      | ---- | - | - |
@@ -254,15 +241,14 @@ int main() {
     };
 
     "max precision"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "test_precision.csv"; max_precision = 0; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      |  a |
 //      | -- |
@@ -272,15 +258,14 @@ int main() {
     };
 
     "no number ellipsis"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "test_precision.csv"; no_number_ellipsis = true;}
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      |     a |
 //      | ----- |
@@ -290,15 +275,14 @@ int main() {
     };
 
     "max precision no number ellipsis"_test = [] {
-        namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
             Args() { file = "test_precision.csv"; max_precision = 0; no_number_ellipsis = true; }
         } args;
 
         notrimming_reader_type r (args.file);
         std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        CALL_TEST_AND_REDIRECT_TO_COUT_1
+        CALL_TEST_AND_REDIRECT_TO_COUT
 
 //      | a |
 //      | - |
@@ -306,4 +290,26 @@ int main() {
 
         expect(cout_buffer.str() == "| a | \n| - | \n| 1 | \n");
     };
+
+    "max field size"_test = [] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvlook_specific_args {
+            Args() { file = "test_field_size_limit.csv"; maxfieldsize = 100; }
+        } args;
+
+        csv_co::reader<> r (args.file);
+        std::reference_wrapper<csv_co::reader<>> ref = std::ref(r);
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT}));
+
+        using namespace z_test;
+
+        Z_CHECK(csvlook::look, test_reader_r1, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK(csvlook::look, test_reader_r3, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+
+        Z_CHECK(csvlook::look, test_reader_r2, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK(csvlook::look, test_reader_r4, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+
+        Z_CHECK(csvlook::look, test_reader_r5, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK(csvlook::look, test_reader_r6, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+    };
+
 }
