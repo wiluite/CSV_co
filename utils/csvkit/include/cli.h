@@ -259,7 +259,7 @@ namespace csvkit::cli {
 
     /// Transforms the header cell range to the vector of strings
     template <bool Quoted_or_Unquoted>
-    auto header_to_strings(auto const & cell_header) {
+    inline auto header_to_strings(auto const & cell_header) {
         std::vector<std::string> v;
         v.reserve(cell_header.size());
         for (auto const & e : cell_header) {
@@ -280,7 +280,7 @@ namespace csvkit::cli {
             csv += temp;
             csv += '\n';
         }
-        return csv;
+        return {csv.begin(), csv.end() - 1};
     }
 
     /// The output precision representation class used for the csvstat's standard and csv print visitors (except for 'most common values')    
@@ -666,7 +666,7 @@ namespace csvkit::cli {
     constexpr bool establish_new_checker = true;
     /// Function that checks maximum field size
     template <bool Reestablish = establish_checker, typename Reader, typename Args, typename Collection>
-    void check_max_size(Reader & reader, Args const & args, Collection const & collection, init_row ir) {
+    inline void check_max_size(Reader & reader, Args const & args, Collection const & collection, init_row ir) {
         static max_field_size_checker checker(reader, args, collection.size(), ir);
         for (auto & e: collection)
             checker.check(e);

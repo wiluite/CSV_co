@@ -214,6 +214,13 @@ namespace csvsort {
         decltype (auto) operator[](size_t r) {
             return (*impl)[r];
         }
+        [[nodiscard]] auto rows() const {
+            return (*impl).size();
+        }
+        [[nodiscard]] auto cols() const {
+            return (*impl)[0].size();
+        }
+
         [[nodiscard]] auto cbegin() const { return impl->cbegin(); }
         [[nodiscard]] auto cend() const { return impl->cend(); }
         auto begin() { return impl->begin(); }

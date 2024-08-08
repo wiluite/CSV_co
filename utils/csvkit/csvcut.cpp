@@ -70,6 +70,7 @@ namespace csvcut {
             };           
             
             if (args.no_header) {
+                //TODO: increase speed
                 check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
                 std::deque<std::string> deq;
 

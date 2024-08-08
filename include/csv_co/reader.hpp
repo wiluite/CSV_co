@@ -151,6 +151,7 @@ namespace csv_co {
     namespace trim_policy {
         struct no_trimming {
         public:
+            // Probably get rid of the first method all other the there at all
             inline static void trim(cell_string const &) {}
             inline static cell_string ret_trim(cell_string cs) {return cs;}
         };
@@ -494,7 +495,6 @@ namespace csv_co {
                 unquote(s, Quote::value);
                 // Fields partly quoted and not-quoted at all: must be spared from double quoting
                 unique_quote(s, Quote::value);
-                TrimPolicy::trim(s);
                 return s;
             }
 
@@ -524,7 +524,8 @@ namespace csv_co {
             /* implicit conversion operator */
             /// Conversion to unquoted string
             operator unquoted_cell_string() const {
-                return string();
+                auto const pre_str = TrimPolicy::ret_trim(string());
+                return {pre_str.begin(), pre_str.end()};
             };
 
             /// Conversion to unchanged cell string except for applying trimming strategy
@@ -545,19 +546,19 @@ namespace csv_co {
             /// Conversion operator to any arithmetic type
             template<typename T>
             T as() const requires std::is_arithmetic_v<T> {
-                auto const value = string();
+                auto const value = operator unquoted_cell_string();
                 auto const first_not_backspace = value.find_first_not_of(' ');
                 if (value.empty() or first_not_backspace == std::string::npos)
                     throw reader::exception("Argument is empty");
                 else {
                     auto process_result = [&](auto && r, auto const & v) {
-                        if (r.ec == std::errc()) {
+                        if (r.ec == std::errc())
                             return v;
-                        } else if (r.ec == std::errc::invalid_argument) {
+                        else if (r.ec == std::errc::invalid_argument)
                             throw reader::exception("Argument isn't a number: ", value);
-                        } else if (r.ec == std::errc::result_out_of_range) {
+                        else if (r.ec == std::errc::result_out_of_range)
                             throw reader::exception("This number ", value, " is larger than ", type_name<std::decay_t<decltype(v)>>());
-                        } else
+                        else
                             throw reader::exception("Unknown error with ", value);
                     };
 
@@ -605,8 +606,8 @@ namespace csv_co {
             }
 
             /// Compares the contents of this cell/field to something string-like
-            bool operator==(cell_string const &cs) const noexcept {
-                auto const &this_value = string();
+            bool operator==(std::string const &cs) const noexcept {
+                auto const this_value = operator unquoted_cell_string();
                 return std::equal(cs.begin(), cs.end(), this_value.begin(), this_value.end());
             }
 
@@ -624,12 +625,12 @@ namespace csv_co {
 
             /// Helper function. Note, it can highly depend on current trimming policy
             [[nodiscard]] bool empty() const {
-                return string().empty();
+                return TrimPolicy::ret_trim(string()).empty();
             }
 
             /// Helper cell size function
             [[nodiscard]] size_t size() const {
-                return string().size();
+                return TrimPolicy::ret_trim(string()).size();
             }
 
         };
@@ -1276,13 +1277,14 @@ namespace csv_co {
         // TODO: stop calling for rvalue string...
         /// Constructs reader from disk file source
         explicit reader(std::filesystem::path const & csv_src) : src {mio::ro_mmap {}} {
-            if (csv_src.string().find(".gz") == std::string::npos) {
+            auto const str = csv_src.string();
+            if (str.find(".gz") == std::string::npos) {
                 std::error_code mmap_error;
-                std::get<0>(src).map(csv_src.string().c_str(), mmap_error);
+                std::get<0>(src).map(str.c_str(), mmap_error);
                 if (mmap_error)
-                    throw exception (mmap_error.message(), " : ", csv_src.string());
+                    throw exception (mmap_error.message(), " : ", str );
             } else
-                src = EzGz::IGzFile<>(csv_src.string()).readAll();
+                src = EzGz::IGzFile<>(str ).readAll();
         }      
 
         /// Constructs reader from string source
