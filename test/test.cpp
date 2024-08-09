@@ -350,7 +350,6 @@ int main() {
 
     };
 
-
     // -- Topic change: Check Validity --
 
     "Check validity of a csv source"_test = [] {
@@ -1391,7 +1390,6 @@ int main() {
             auto header = r.header();
             expect(header[0]=="1" and header[1]=="2" and header[2]=="3");
         }
-
     };
 
 }

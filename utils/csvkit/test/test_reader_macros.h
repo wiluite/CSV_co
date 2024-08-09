@@ -5,12 +5,13 @@
 
 #pragma once
 
-#define TEST_TRIM_POLICY_READER(NAME)                            \
-    struct NAME {                                                \
-    public:                                                      \
-        inline static void trim(std::string &) {}                \
-        inline static auto ret_trim(std::string s) { return s; } \
-    };                                                           \
+#define TEST_TRIM_POLICY_READER(NAME)                                             \
+    struct NAME {                                                                 \
+    public:                                                                       \
+        inline static void trim(std::string &) {}                                 \
+        inline static auto ret_trim(std::string s) { return s; }                  \
+        inline static auto ret_trim(csv_co::unquoted_cell_string s) { return s; } \
+    };                                                                            \
     using test_reader_##NAME = csv_co::reader<NAME>;
 
     TEST_TRIM_POLICY_READER(r1)   // test_reader_r1

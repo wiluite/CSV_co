@@ -8,6 +8,7 @@
 #define BOOST_UT_DISABLE_MODULE
 #include "ut.hpp"
 #include <cli.h>
+#include "test_reader_macros.h"
 
 int main() {
     using namespace boost::ut;
@@ -445,14 +446,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
         };
     }
 
-    struct detect_date_and_datetime_types_trim_policy {
-    public:
-        inline static void trim(std::string &s) {}
-        inline static auto ret_trim(std::string s) {
-            return s;
-        }
-    };
-    using detect_date_and_datetime_types_reader_type = csv_co::reader<detect_date_and_datetime_types_trim_policy>;
+    using detect_date_and_datetime_types_reader_type = test_reader_r1;
 
     "detect date and datetime types"_test = [&] {
         // TODO: change it to from common_args.h 
@@ -551,23 +545,8 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
         }
     };
 
-    struct another_trim_policy {
-    public:
-        inline static void trim(std::string &s) {}
-        inline static auto ret_trim(std::string s) {
-            return s;
-        }
-    };
-    using another_reader_type = csv_co::reader<another_trim_policy>;
-
-    struct yet_one_trim_policy {
-    public:
-        inline static void trim(std::string &s) {}
-        inline static auto ret_trim(std::string s) {
-            return s;
-        }
-    };
-    using yet_one_reader_type = csv_co::reader<yet_one_trim_policy>;
+    using another_reader_type = test_reader_r2;
+    using yet_one_reader_type = test_reader_r3;
 
     "detect date and datetime types with Howard Hinnant's date library parser"_test = [&] {
         struct args {
@@ -652,14 +631,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
 
     };
 
-    struct typify_trim_policy {
-    public:
-        inline static void trim(std::string &s) {}
-        inline static auto ret_trim(std::string s) {
-            return s;
-        }
-    };
-    using typify_reader_type = csv_co::reader<typify_trim_policy>;
+    using typify_reader_type = test_reader_r4;
 
     "typify"_test = [&] {
 

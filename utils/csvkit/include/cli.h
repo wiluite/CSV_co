@@ -475,6 +475,10 @@ namespace csvkit::cli {
                 s.erase(s.find_last_not_of(list) + 1);
                 return s;
             }
+            inline static csv_co::unquoted_cell_string ret_trim(csv_co::unquoted_cell_string s) {
+                s.erase(s.find_last_not_of(list) + 1);
+                return s;
+            }
         };
         static char constexpr crchar[] {'\r', '\0'};
         using crtrim = trimming_trailing_cr<crchar>;
@@ -491,6 +495,11 @@ namespace csvkit::cli {
                 s.erase(s.find_last_not_of(list2) + 1);
             }
             inline static auto ret_trim(std::string s) {
+                s.erase(0, s.find_first_not_of(list));
+                s.erase(s.find_last_not_of(list2) + 1);
+                return s;
+            }
+            inline static csv_co::unquoted_cell_string ret_trim(csv_co::unquoted_cell_string s) {
                 s.erase(0, s.find_first_not_of(list));
                 s.erase(s.find_last_not_of(list2) + 1);
                 return s;

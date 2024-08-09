@@ -210,10 +210,8 @@ namespace csv_co {
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     [[nodiscard]] auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::compare(typed_span const &other) const -> int {
-        if constexpr (!Unquoted)
-            return cell_string(*this).compare(cell_string(other));
-        else
-            return unquoted_cell_string(*this).compare(unquoted_cell_string(other));
+        static_assert(Unquoted == csv_co::unquoted);
+        return unquoted_cell_string(*this).compare(unquoted_cell_string(other));
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>

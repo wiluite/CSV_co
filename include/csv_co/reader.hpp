@@ -71,9 +71,10 @@ namespace csv_co {
     };
 
     template<class T>
-    concept TrimPolicyConcept = requires(T, cell_string s) {
+    concept TrimPolicyConcept = requires(T, cell_string s, unquoted_cell_string u) {
         { T::trim(s) } -> std::convertible_to<void>;
         { T::ret_trim(s) } -> std::convertible_to<cell_string>;
+        { T::ret_trim(u) } -> std::convertible_to<unquoted_cell_string>;
     };
 
     template<char ch>
@@ -153,7 +154,12 @@ namespace csv_co {
         public:
             // Probably get rid of the first method all other the there at all
             inline static void trim(cell_string const &) {}
-            inline static cell_string ret_trim(cell_string cs) {return cs;}
+            inline static cell_string ret_trim(cell_string const & cs) {
+                return cs;
+            }
+            inline static unquoted_cell_string ret_trim(unquoted_cell_string const &cs) {
+                return cs;
+            }
         };
 
         template<char const *list>
@@ -162,7 +168,11 @@ namespace csv_co {
             inline static void trim(cell_string &s) {
                 string_functions::trim_string<list>(s);
             }
-            inline static auto ret_trim(cell_string s) {
+            inline static cell_string ret_trim(cell_string s) {
+                string_functions::trim_string<list>(s);
+                return s;
+            }
+            inline static unquoted_cell_string ret_trim(unquoted_cell_string s) {
                 string_functions::trim_string<list>(s);
                 return s;
             }
@@ -516,16 +526,16 @@ namespace csv_co {
                 b(s.empty() ? nullptr : &*s.begin()), e(s.empty() ? nullptr : b + s.size()) {
             }
 
+#if 0
             /// C-string strcmp()-like operation (1,0,-1). This is a quoted std::string comparison.
             [[nodiscard]] auto compare(cell_span const &other) const -> int {
                 return cell_string(*this).compare(cell_string(other));
             }
-
+#endif
             /* implicit conversion operator */
             /// Conversion to unquoted string
             operator unquoted_cell_string() const {
-                auto const pre_str = TrimPolicy::ret_trim(string());
-                return {pre_str.begin(), pre_str.end()};
+                return TrimPolicy::ret_trim(string());
             };
 
             /// Conversion to unchanged cell string except for applying trimming strategy
@@ -1585,7 +1595,6 @@ namespace csv_co {
             };
 
             /// Convert typed_span<false> to typed_span<true>, reset data type only once!
-            /*no explicit*/ 
             operator typed_span<!Unquoted> const & () const {
                 if (!rebind_conversion) {
                     type_ = vince_csv::DataType::UNKNOWN;
@@ -1593,7 +1602,7 @@ namespace csv_co {
                 }
                 return reinterpret_cast<typed_span<!Unquoted> const &>(*this);
             }
-            
+
             friend std::ostream& operator<< (std::ostream& os, typed_span const& cs) {
                 if constexpr (!Unquoted)
                     os << cs.operator cell_string();
