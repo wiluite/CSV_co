@@ -379,8 +379,8 @@ namespace csvlook::detail {
             oss.precision(4);
             oss << 1000000.1000;
             try {
-                csv_co::csvkit::str_symbols(oss.str());
-            } catch (std::exception &e) {
+                csv_co::csvkit::str_symbols_deep_check(oss.str());
+            } catch (std::exception &) {
                 throw std::runtime_error("The current global locale contender is incompatible with the string length detection feature. Use -G=C for safe case.");
             }
         } catch (...) {

@@ -12,7 +12,7 @@ int main() {
 
     try {
 
-        auto sum = 0u;
+        auto sum = 0ul;
 
         reader_type r(std::filesystem::path("uspop.csv"));
 

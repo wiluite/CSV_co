@@ -20,7 +20,15 @@ namespace csv_co::csvkit {
     constexpr auto from_basic_string_32(auto && str) {
         return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>().to_bytes(str);
     }
+    /// Counts the number of characters in a guaranteed utf-8 string.
     constexpr auto str_symbols(auto && str) {
+        std::size_t len = 0;
+        for (auto && e : str)
+            len += (e & 0xc0) != 0x80;
+        return len;
+    }
+    /// Counts the number of characters in a utf-8 string with checking for utf-8
+    constexpr auto str_symbols_deep_check(auto && str) {
         return to_basic_string_32(str).size();
     }
 }

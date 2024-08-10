@@ -20,6 +20,9 @@
 /*
  * ASCII
  */
+#ifdef _MSC_VER
+#pragma warning(disable : 4244)
+#endif
 
 static int
 ascii_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, size_t n)

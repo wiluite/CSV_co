@@ -260,7 +260,7 @@ namespace argparse {
             try {
                 this->value_ = value;
                 datap->convert(value);
-            } catch (const std::invalid_argument &e) {
+            } catch (const std::invalid_argument &) {
                 error = "Invalid argument, could not convert \"" + value + "\" for " + _get_keys() + " (" + help + ")";
             } catch (const std::runtime_error &e) {
                 error = "Invalid argument \"" + value + "\" for " + _get_keys() + " (" + help + "). Error: " + e.what();

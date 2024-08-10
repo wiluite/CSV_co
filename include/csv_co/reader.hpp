@@ -1518,8 +1518,8 @@ namespace csv_co {
                     throw implementation_exception();
                 });
             }
-            catch (implementation_exception const & e) {}
-            catch (exception const & e) {
+            catch (implementation_exception const &) {}
+            catch (exception const &) {
                 throw;
             }
             return c;
@@ -1537,7 +1537,7 @@ namespace csv_co {
                         throw implementation_exception();
                 });
             }
-            catch (implementation_exception const & e) {}
+            catch (implementation_exception const &) {}
             if (rows_to_skip)
                 skip_rows<ParseChunkSize>(rows_to_skip);
         }

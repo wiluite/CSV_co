@@ -19,6 +19,9 @@
 
 /* This file defines the conversion loop via Unicode as a pivot encoding. */
 
+#ifdef _MSC_VER
+#pragma warning(disable : 4245)
+#endif
 
 struct uc_to_mb_fallback_locals {
   unsigned char* l_outbuf;

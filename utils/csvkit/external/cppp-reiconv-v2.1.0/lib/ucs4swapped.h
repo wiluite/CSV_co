@@ -25,7 +25,7 @@ static int
 ucs4swapped_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, size_t n)
 {
   /* This function assumes that 'unsigned int' has exactly 32 bits. */
-  if (sizeof(unsigned int) != 4) abort();
+  if constexpr (sizeof(unsigned int) != 4) abort();
 
   if (n >= 4) {
     unsigned int x = *(const unsigned int *)s;
@@ -40,7 +40,7 @@ static int
 ucs4swapped_wctomb (conv_t conv, unsigned char *r, ucs4_t wc, size_t n)
 {
   /* This function assumes that 'unsigned int' has exactly 32 bits. */
-  if (sizeof(unsigned int) != 4) abort();
+  if constexpr(sizeof(unsigned int) != 4) abort();
 
   if (n >= 4) {
     unsigned int x = wc;

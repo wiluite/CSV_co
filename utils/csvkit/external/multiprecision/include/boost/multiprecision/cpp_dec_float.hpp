@@ -60,6 +60,7 @@
 #ifdef BOOST_MSVC
 #pragma warning(push)
 #pragma warning(disable : 6326) // comparison of two constants
+#pragma warning(disable : 4459)
 #endif
 
 namespace boost {

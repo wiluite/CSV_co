@@ -104,7 +104,7 @@ endif()
 if(MSVC)
     add_definitions(-DIS_MSVC=true)
     add_definitions(/WX)
-    #    add_definitions(/W4)
+    add_definitions(/W4)
     add_definitions(/wd4189)
     add_definitions(/wd4100)
     add_definitions(/wd4996) # 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS.

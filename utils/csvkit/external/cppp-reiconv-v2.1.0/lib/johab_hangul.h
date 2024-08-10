@@ -99,6 +99,9 @@ static const signed char jamo_final_index[32] = {
   0x0f, 0x10, none, 0x11, 0x12, 0x13, 0x14, 0x15,
   0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, none, none,
 };
+#ifdef _MSC_VER
+#pragma warning(disable : 4244)
+#endif
 
 static int
 johab_hangul_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, size_t n)

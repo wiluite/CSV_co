@@ -5,6 +5,12 @@
 #include <initializer_list>
 #include <climits>
 
+#ifdef _MSC_VER
+#pragma warning(disable : 4310)
+#pragma warning(disable : 4127)
+#pragma warning(disable : 4702)
+#endif
+
 // Useful for debugging purposes
 namespace simdutf {
 namespace {

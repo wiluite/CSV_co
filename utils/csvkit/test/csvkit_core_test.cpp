@@ -324,32 +324,32 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             unsigned maxfieldsize = 10;
         } a;
 
-        csv_co::reader reader("h1\n\"a12345678Ю\"\n");
+        csv_co::reader<csv_co::trim_policy::alltrim> reader("h1\n\" aФ2345678Ю\"\n");
         max_field_size_checker mfsc1(reader, a, 1, init_row{1});
 
-        expect(nothrow([&]() {
+        reader.run_rows([&](auto &span) {
+            // Note, typed_span, constructed from this cell_span should already have numeric_locale imbued.
+            for (auto &e: span)
+                expect(nothrow([&]() {mfsc1.check(e);}));
+        });
+
+        a.maxfieldsize = 9;
+
+        expect(throws([&]() {
             reader.run_rows([&](auto &span) {
                 for (auto &e: span)
                     mfsc1.check(e);
             });
         }));
 
-        a.maxfieldsize = 9;
-        expect(throws([&]() {
-            reader.run_rows([&](auto &span) {
-                for (auto &e: span) 
-                    mfsc1.check(e);
-            });
-        }));
-
         a.maxfieldsize = 10;
         max_field_size_checker mfsc2(reader, a, 1, init_row{1});
-        expect(nothrow([&]() { mfsc2.check(std::string{"a12345678Ю"}); }));
+        expect(nothrow([&]() { mfsc2.check(std::string{"aФ2345678Ю"}); }));
         a.maxfieldsize = 9;
         max_field_size_checker mfsc3(reader, a, 1, init_row{1});
-        expect(throws([&]() { mfsc3.check(std::string{"a12345678Ю"}); }));
+        expect(throws([&]() { mfsc3.check(std::string{"aФ2345678Ю"}); }));
         try {
-            mfsc3.check(std::string{"\"a12345678Ю\""});
+            mfsc3.check(std::string{"\"aФ2345678Ю\""});
         } catch (std::exception const &e) {
             expect(std::string(e.what()) == "FieldSizeLimitError: CSV contains a field longer than the maximum length of 9 characters on line 1.");
         }

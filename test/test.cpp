@@ -1239,7 +1239,7 @@ int main() {
                 }
             });
             r.run_rows<1>([](auto) {});
-        } catch(reader_type::exception const & e) {
+        } catch(reader_type::exception const &) {
             notification_handler_fired++;
         }
         expect(notification_handler_fired == 2);

@@ -19,6 +19,10 @@
 #include <bit>
 #include <iostream>
 
+#ifdef _MSC_VER
+#pragma warning(disable : 4244)
+#endif
+
 namespace EzGz {
 
 template <typename T>
@@ -92,7 +96,7 @@ public:
 	uint32_t operator() () { return ~state; }
 	uint32_t operator() (std::span<const uint8_t> input) {
 		for (auto it : input) {
-			const uint8_t tableIndex = (state ^ it);
+			const uint8_t tableIndex = static_cast<const uint8_t>(state ^ it);
 			state = (state >> 8) ^ Detail::basicCrc32LookupTable[tableIndex];
 		}
 		return ~state; // Invert all bits at the end
@@ -147,7 +151,7 @@ public:
 		}
 
 		for ( ; position < std::ssize(input); position++) {
-			const uint8_t tableIndex = (state ^ input[position]);
+			const uint8_t tableIndex = static_cast<const uint8_t>(state ^ input[position]);
 			state = (state >> 8) ^ Detail::basicCrc32LookupTable[tableIndex];
 		}
 		return ~state; // Invert all bits at the end
@@ -222,7 +226,7 @@ public:
 			refillSome();
 		}
 		ptrdiff_t start = position;
-		int available = std::min<int>(size, filled - start);
+		int available = std::min<int>(size, static_cast<int>(filled - start));
 		position += available;
 		return {buffer.begin() + start, buffer.begin() + start + available};
 	}
@@ -314,7 +318,7 @@ public:
 		if (bitsLeft < amount) [[unlikely]] {
 			throw std::runtime_error("Run out of data");
 		}
-		uint16_t result = data;
+		uint16_t result = static_cast<uint16_t>(data);
 		data >>= amount;
 		bitsLeft -= amount;
 		result &= upperRemovals[amount];
@@ -785,16 +789,16 @@ public:
 					return true;
 				}
 				bitInput = BitReader<ByteInput<Settings>>(&input);
-			} else if (FixedCodeState* state = std::get_if<FixedCodeState>(&decodingState)) {
-				if (state->parseSome(this)) {
+			} else if (FixedCodeState* state1 = std::get_if<FixedCodeState>(&decodingState)) {
+				if (state1->parseSome(this)) {
 					return true;
 				}
-				bitInput = std::move(state->input);
-			} else if (DynamicCodeState* state = std::get_if<DynamicCodeState>(&decodingState)) {
-				if (state->parseSome(this)) {
+				bitInput = std::move(state1->input);
+			} else if (DynamicCodeState* state2 = std::get_if<DynamicCodeState>(&decodingState)) {
+				if (state2->parseSome(this)) {
 					return true;
 				}
-				bitInput = std::move(state->input);
+				bitInput = std::move(state2->input);
 			} else {
 				bitInput = BitReader<ByteInput<Settings>>(&input);
 			}
@@ -830,7 +834,7 @@ public:
 				// Read Huffman code lengths
 				std::array<uint8_t, codeCodingReorder.size()> codeCodingLengths = {};
 				for (int i = 0; i < codeLengthCount; i++) {
-					codeCodingLengths[codeCodingReorder[i]] = bitInput.getBits(3);
+					codeCodingLengths[codeCodingReorder[i]] = static_cast<uint8_t>(bitInput.getBits(3));
 				}
 
 				// Generate Huffman codes for lengths
@@ -908,7 +912,7 @@ public:
 			throw std::runtime_error("Can't read file");
 		}
 		file->read(reinterpret_cast<char*>(batch.data()), batch.size());
-		int bytesRead = file->gcount();
+		int bytesRead = static_cast<int>(file->gcount());
 		if (bytesRead == 0) {
 			throw std::runtime_error("Truncated file");
 		}
@@ -1013,11 +1017,11 @@ struct IGzFileInfo {
 		check(0x1f);
 		check(0x8b);
 		check(0x08);
-		uint8_t flags = input.template getInteger<uint8_t>();
+		uint8_t flags = static_cast<uint8_t>(input.template getInteger<uint8_t>());
 		check(flags);
-		modificationTime = input.template getInteger<uint32_t>();
+		modificationTime = static_cast<int32_t>(input.template getInteger<uint32_t>());
 		check(modificationTime);
-		uint8_t extraFlags = input.template getInteger<uint8_t>();
+		uint8_t extraFlags = static_cast<uint8_t>(input.template getInteger<uint8_t>());
 		check(extraFlags);
 
 		if (extraFlags == 4) {
@@ -1025,7 +1029,7 @@ struct IGzFileInfo {
 		} else if (extraFlags == 8) {
 			fastestCompression = true;
 		}
-		uint8_t creatingOperatingSystem = input.template getInteger<uint8_t>(); // Was at input[9]
+		uint8_t creatingOperatingSystem = static_cast<uint8_t>(input.template getInteger<uint8_t>()); // Was at input[9]
 		check(creatingOperatingSystem);
 		if (creatingOperatingSystem == 0) {
 			operatingSystem = CreatingOperatingSystem::WINDOWS;
@@ -1034,7 +1038,7 @@ struct IGzFileInfo {
 		}
 
 		if (flags & 0x04) {
-			uint16_t extraHeaderSize = input.template getInteger<uint16_t>();
+			uint16_t extraHeaderSize = static_cast<uint16_t>(input.template getInteger<uint16_t>());
 			check(extraHeaderSize);
 			int readSoFar = 0;
 			extraData.emplace();
@@ -1046,7 +1050,7 @@ struct IGzFileInfo {
 			}
 		}
 		if (flags & 0x08) {
-			char letter = input.template getInteger<uint8_t>();
+			char letter = static_cast<char>(input.template getInteger<uint8_t>());
 			check(letter);
 			while (letter != '\0') {
 				name += letter;
@@ -1083,7 +1087,7 @@ class IGzFile : public IDeflateArchive<Settings> {
 	using Deflate = IDeflateArchive<Settings>;
 
 	void onFinish() override {
-		uint32_t expectedCrc = Deflate::input.template getInteger<uint32_t>();
+		uint32_t expectedCrc = static_cast<uint32_t>(Deflate::input.template getInteger<uint32_t>());
 		if constexpr(Settings::verifyChecksum) {
 			auto realCrc = Deflate::output.getChecksum()();
 			if (expectedCrc != realCrc)

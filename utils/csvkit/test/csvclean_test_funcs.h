@@ -34,7 +34,7 @@ static auto assertCleaned = [](std::string const & basename, std::vector<std::st
                     std::getline(f, temp);
                     expect(temp==e);
                 }
-            } catch (std::exception & e) {
+            } catch (std::exception &) {
                 throw;
             }
         }

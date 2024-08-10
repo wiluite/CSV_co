@@ -207,7 +207,7 @@ namespace csvkit::cli {
         auto cell_str = span.operator csv_co::cell_string();
         // 1st, we need to transform possible foreign line-breaking to the native one.
         bool stay_quoted = false;
-        if ('\n' != line_break) {
+        if constexpr('\n' != line_break) {
             std::remove_const_t<decltype(std::string::npos)> it;
             while ((it = cell_str.find(line_break)) != std::string::npos) {
                 cell_str.replace(it, 1, "\n");
@@ -603,16 +603,10 @@ namespace csvkit::cli {
     class max_field_size_checker {
         template <typename T>
         void check_tmpl(T const & o) {
-            try {
-                if constexpr(std::is_same_v<T, std::string>)
-                    throw_if_exceeds(csv_co::csvkit::str_symbols(o));
-                else
-                    throw_if_exceeds(o.str_size_in_symbols());
-            } catch(typename Reader::exception const & e) {
-                throw;
-            } catch(std::exception const & e) {
-                throw typename Reader::exception("Symbols from different encodings inside cell: ", static_cast<std::string>(o));
-            }
+            if constexpr(std::is_same_v<T, std::string>)
+                throw_if_exceeds(csv_co::csvkit::str_symbols(o));
+            else
+                throw_if_exceeds(o.str_size_in_symbols());
         }
 
     public:
@@ -633,12 +627,12 @@ namespace csvkit::cli {
             }
         }
 
+        // works for numeric-locale-embedded cells only.
         inline void check(typename Reader::cell_span const & cell_span) {
-            // works for numeric-locale-embedded cells only.
             cell_span_check_impl(typename Reader::template typed_span<csv_co::unquoted>{cell_span});
         }
+        // works for any strings from cells that may be numeric-locale-free.
         void check(std::string const & s) {
-            // works for any strings from cells that may be numeric-locale-free.
             string_check_impl(s);
         }
 
@@ -1021,7 +1015,7 @@ namespace csvkit::cli {
             for (auto c = strtok(ids().data(),","); c != nullptr; c = strtok(nullptr, ",")) {
                 try {
                     columns.emplace_back(match_column_identifier(column_names, c, column_offset));
-                } catch (ColumnIdentifierError const & e) {
+                } catch (ColumnIdentifierError const &) {
                     column_identifier_error_handler(c, column_names, columns, column_offset);
                 }
             }
@@ -1031,7 +1025,7 @@ namespace csvkit::cli {
             for (auto c = strtok(excl().data(),","); c != nullptr; c = strtok(nullptr, ",")) {
                 try {
                     not_columns.insert(match_column_identifier(column_names, c, column_offset));
-                } catch (ColumnIdentifierError const & e) {
+                } catch (ColumnIdentifierError const &) {
                     column_identifier_error_handler(c, column_names, not_columns, column_offset);
                 }
             }
