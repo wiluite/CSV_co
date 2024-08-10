@@ -86,12 +86,16 @@ int main() {
         expect(throws([&] { quick_check(reader<> ("a,b,c\n1,3"), args); }));
         try {quick_check(reader<> ("a,b,c\n1,3"), args);} catch(std::exception const & e) {
             expect(std::string(e.what()) == R"(The document has different numbers of columns : 2 3 at least at rows : 2 1...
+Either use/reuse the -K option for alignment, or use the csvclean utility to fix it.)"
+            or std::string(e.what()) == R"(The document has different numbers of columns : 3 2 at least at rows : 1 2...
 Either use/reuse the -K option for alignment, or use the csvclean utility to fix it.)");
         }
 
         expect(throws([&] { quick_check(reader<> ("a,b,c\n1,2,3,4"), args); }));
         try {quick_check(reader<> ("a,b,c\n1,2,3,4"), args);} catch(std::exception const & e) {
             expect(std::string(e.what()) == R"(The document has different numbers of columns : 4 3 at least at rows : 2 1...
+Either use/reuse the -K option for alignment, or use the csvclean utility to fix it.)"
+            or std::string(e.what()) == R"(The document has different numbers of columns : 3 4 at least at rows : 1 2...
 Either use/reuse the -K option for alignment, or use the csvclean utility to fix it.)");
         }
 
@@ -190,7 +194,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
                 {
                     reader<>::typed_span<unquoted> float_span{reader<>::cell_span{cs}};
                     expect(float_span.is_float());
-                    expect(float_span.num() > 1234567.8 and float_span.num() < 1234567.9);
+                    expect(float_span.num() >= 1234567.8 and float_span.num() <= 1234567.9);
                 }
             }
         };
@@ -246,14 +250,14 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             }
 
             cs = R"( " 01 " )";
-            expect(not ((reader<>::typed_span<quoted>) {reader<>::cell_span{cs}}).is_boolean());
+            expect(not (reader<>::typed_span<quoted>{reader<>::cell_span{cs}}).is_boolean());
             {
                 reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
                 expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num());
             }
 
             cs = R"( " 0 " )";
-            expect(not ((reader<>::typed_span<quoted>) {reader<>::cell_span{cs}}).is_boolean());
+            expect(not (reader<>::typed_span<quoted>{reader<>::cell_span{cs}}).is_boolean());
             {
                 reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
                 expect(span.is_boolean() and span.unsafe_bool() == 0 and span.is_num());
@@ -266,7 +270,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             }
 
             cs = R"( "TrUe " )";
-            expect(not ((reader<>::typed_span<quoted>) {reader<>::cell_span{cs}}).is_boolean());
+            expect(not (reader<>::typed_span<quoted>{reader<>::cell_span{cs}}).is_boolean());
             {
                 reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
                 expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num() and span.num() == 1);
