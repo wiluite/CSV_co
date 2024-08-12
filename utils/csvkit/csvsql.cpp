@@ -29,22 +29,22 @@ using namespace ::csvkit::cli;
 
 namespace csvsql {
     struct Args : ARGS_positional_files {
-        std::string & num_locale = kwarg("L LOCALE,locale LOCALE","Specify the locale (\"C\") of any formatted numbers.").set_default(std::string("C"));
+        std::string & num_locale = kwarg("L,locale","Specify the locale (\"C\") of any formatted numbers.").set_default(std::string("C"));
         bool &blanks = flag("blanks", R"(Do not convert "", "na", "n/a", "none", "null", "." to NULL.)");
-        std::vector<std::string> &null_value = kwarg("null-value NULL_VALUES...","Convert these values to NULL.").multi_argument().set_default(std::vector<std::string>{});
-        std::string & date_fmt = kwarg("date-format DATE_FORMAT","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
-        std::string & datetime_fmt = kwarg("datetime-format DATETIME_FORMAT","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
+        std::vector<std::string> &null_value = kwarg("null-value","Convert these values to NULL.").multi_argument().set_default(std::vector<std::string>{});
+        std::string & date_fmt = kwarg("date-format","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
+        std::string & datetime_fmt = kwarg("datetime-format","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
 
-        std::string & dialect = kwarg("i DIALECT,dialect DIALECT","Dialect of SQL {mysql,postgresql,sqlite,firebird} to generate. Cannot be used with --db.").set_default(std::string("sqlite"));
-        std::string & db = kwarg("db CONNECTION_STRING","If present, a 'soci' connection string to use to directly execute generated SQL on a database.").set_default(std::string(""));
-        std::string & query = kwarg("query QUERIES","Execute one or more SQL queries delimited by \";\" and output the result of the last query as CSV. QUERY may be a filename. --query may be specified multiple times.").set_default(std::string(""));
+        std::string & dialect = kwarg("i,dialect","Dialect of SQL {mysql,postgresql,sqlite,firebird} to generate. Cannot be used with --db.").set_default(std::string("sqlite"));
+        std::string & db = kwarg("db","If present, a 'soci' connection string to use to directly execute generated SQL on a database.").set_default(std::string(""));
+        std::string & query = kwarg("query","Execute one or more SQL queries delimited by \";\" and output the result of the last query as CSV. QUERY may be a filename. --query may be specified multiple times.").set_default(std::string(""));
         bool &insert = flag("insert", "Insert the data into the table. Requires --db.");
-        std::string & prefix = kwarg("prefix PREFIX","Add an expression following the INSERT keyword, like OR IGNORE or OR REPLACE.").set_default(std::string(""));
-        std::string & before_insert = kwarg("before-insert BEFORE_INSERT","Execute SQL before the INSERT command. Requires --insert.").set_default(std::string(""));
-        std::string & after_insert = kwarg("after-insert AFTER_INSERT","Execute SQL after the INSERT command. Requires --insert.").set_default(std::string(""));
-        std::string & tables = kwarg("tables TABLE_NAMES","A comma-separated list of names of tables to be created. By default, the tables will be named after the filenames without extensions or \"stdin\".").set_default(std::string(""));
+        std::string & prefix = kwarg("prefix","Add an expression following the INSERT keyword, like OR IGNORE or OR REPLACE.").set_default(std::string(""));
+        std::string & before_insert = kwarg("before-insert","Execute SQL before the INSERT command. Requires --insert.").set_default(std::string(""));
+        std::string & after_insert = kwarg("after-insert","Execute SQL after the INSERT command. Requires --insert.").set_default(std::string(""));
+        std::string & tables = kwarg("tables","A comma-separated list of names of tables to be created. By default, the tables will be named after the filenames without extensions or \"stdin\".").set_default(std::string(""));
         bool &no_constraints = flag("no-constraints", "Generate a schema without length limits or null checks. Useful when sampling big tables.");
-        std::string & unique_constraint = kwarg("unique-constraint UNIQUE_CONSTRAINT","A comma-separated list of names of columns to include in a UNIQUE constraint").set_default(std::string(""));
+        std::string & unique_constraint = kwarg("unique-constraint","A comma-separated list of names of columns to include in a UNIQUE constraint").set_default(std::string(""));
 
         bool &no_create = flag("no-create", "Skip creating the table. Requires --insert.");
         bool &create_if_not_exists = flag("create-if-not-exists", "Create the table if it does not exist, otherwise keep going. Requires --insert.");

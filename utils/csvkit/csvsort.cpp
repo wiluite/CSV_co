@@ -6,6 +6,7 @@
 #include <cli.h>
 #include <cli-compare.h>
 #include <printer_concepts.h>
+#include "external/poolstl/poolstl.hpp"
 
 using namespace ::csvkit::cli;
 
@@ -14,14 +15,15 @@ namespace csvsort {
     struct Args : ARGS_positional_1 {
         std::string & num_locale = kwarg("L,locale","Specify the locale (\"C\") of any formatted numbers.").set_default(std::string("C"));
         bool & blanks = flag("blanks",R"(Do not convert "", "na", "n/a", "none", "null", "." to NULL.)");
-        std::vector<std::string> & null_value = kwarg("null-value", "Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
+        std::vector<std::string> & null_value = kwarg("null-value NULL_VALUES [NULL_VALUES ...]", "Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
         std::string & date_fmt = kwarg("date-format","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
         std::string & datetime_fmt = kwarg("datetime-format","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
         bool & names = flag ("n,names","Display column names and indices from the input CSV and exit.");
         std::string & columns = kwarg("c,columns","A comma-separated list of column indices, names or ranges to sort by, e.g. \"1,id,3-5\".").set_default("all columns");
         bool & r = flag("r,reverse", "Sort in descending order.");
         bool & no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
-        bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported");
+        bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported.");
+        bool & parallel_sort = flag("p,parallel-sort", "Use parallel sort.");
 
         void welcome() final {
             std::cout << "\nSort CSV files. Like the Unix \"sort\" command, but for tabular data.\n\n";
@@ -257,10 +259,18 @@ namespace csvsort {
 
             auto const types_blanks = std::get<1>(typify(reader, args, typify_option::typify_without_precisions));
             auto cfa = ::csvkit::cli::compare::detail::obtain_compare_functionality<std::decay_t<decltype(table[0][0])>>(ids, types_blanks, args);
-            if (args.r)
-                std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::greater<>()));
-            else
-                std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::less<>()));
+            if (args.r) {
+                if (args.parallel_sort)
+                    std::sort(poolstl::par, table.begin(), table.end(), sort_comparator(std::move(cfa), std::greater<>()));
+                else
+                    std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::greater<>()));
+            }
+            else {
+                if (args.parallel_sort)
+                    std::sort(poolstl::par, table.begin(), table.end(), sort_comparator(std::move(cfa), std::less<>()));
+                else
+                    std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::less<>()));
+            }
 
             std::ostringstream oss;
             printer p(oss);

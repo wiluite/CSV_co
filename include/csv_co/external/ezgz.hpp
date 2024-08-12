@@ -96,7 +96,7 @@ public:
 	uint32_t operator() () { return ~state; }
 	uint32_t operator() (std::span<const uint8_t> input) {
 		for (auto it : input) {
-			const uint8_t tableIndex = static_cast<const uint8_t>(state ^ it);
+			const uint8_t tableIndex = static_cast<uint8_t>(state ^ it);
 			state = (state >> 8) ^ Detail::basicCrc32LookupTable[tableIndex];
 		}
 		return ~state; // Invert all bits at the end
@@ -151,7 +151,7 @@ public:
 		}
 
 		for ( ; position < std::ssize(input); position++) {
-			const uint8_t tableIndex = static_cast<const uint8_t>(state ^ input[position]);
+			const uint8_t tableIndex = static_cast<uint8_t>(state ^ input[position]);
 			state = (state >> 8) ^ Detail::basicCrc32LookupTable[tableIndex];
 		}
 		return ~state; // Invert all bits at the end

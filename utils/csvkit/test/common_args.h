@@ -66,6 +66,7 @@ namespace csvkit::test_facilities {
     };
     struct csvsort_specific_args {
         bool r {false};
+        bool parallel_sort {true};
     };
     struct csvjoin_specific_args {
         std::vector<std::string> files;
