@@ -40,7 +40,8 @@ Wanted to create a simplified RFC-4180-compliant parser that would be quite fast
 
 > How fast is it?
 
-Just look at [Benchmarks](#benchmarks) and (if you would like to use small csvkit) look at [Statistics performance](#statistics-performance).
+Just look at [Benchmarks](#benchmarks) and (if you would like to use small csvkit) look at
+[Statistics performance](#statistics-performance) and [Sorting performance](#sorting-performance).
 
 
 ### Features
@@ -469,6 +470,12 @@ Our tool gives the result in about 42 seconds. Here we could not wait for the re
 Thus, both csvkit and xsv are unable to produce their results where for csv_co' csvstat the reasons why this is not possible 
 are not the case. This is a subject for further research.
 
+### Sorting performance
+If we talk about sorting by columns of string types, then the xsv is unrivaled, far ahead of other means in time, because
+it obviously uses efficient algorithms for sorting strings, and without the use of parallelism. However, let's see how
+effective it is to sort a group of columns where there is one numeric type (the -N option is required, otherwise the
+results will be incorrect). We only need 13 seconds versus 21 at the xsv. The csvkit is a minute behind us.
+![image info](./img/sort_worldcitiespop.png)
 
 ### Build All
 
