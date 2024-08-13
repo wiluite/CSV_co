@@ -90,25 +90,23 @@ namespace csvsort {
             auto print_func = [&](auto && elem, std::size_t col) {
                 using e_type = std::decay_t<decltype(elem)>;
                 static_assert(e_type::is_quoted());
-                typename e_type::template rebind<csv_co::unquoted>::other const & unquoted_elem = elem;
-                using unquoted_elem_type = std::decay_t<decltype(unquoted_elem)>;
-                static_assert(unquoted_elem_type::is_unquoted());
+                using UElemType = typename e_type::template rebind<csv_co::unquoted>::other;
+                auto & unquoted_elem = elem.operator UElemType const&();
 
                 bool const is_null = unquoted_elem.is_null();
                 if (types[col] == column_type::text_t or (!args.blanks && is_null)) {
                     auto compose_text = [&]() -> std::string {
-                        std::string unquoted = unquoted_elem.str();
-                        return unquoted.find(',') == std::string::npos ? unquoted : unquoted_elem; // unquoted_elem casts to original string by default
+                        return unquoted_elem.raw_string_view().find(',') == std::string::npos ? unquoted_elem.str() : unquoted_elem; // unquoted_elem casts to original string by default
                     };
                     os << (!args.blanks && is_null ? "" : compose_text());
                     return;
                 }
 
-                using func_type = std::function<std::string(unquoted_elem_type const &, std::any const&)>;
+                using func_type = std::function<std::string(UElemType const &, std::any const&)>;
 
                 static std::array<func_type, static_cast<std::size_t>(column_type::sz) - 1> type2func {
-                        compose_bool<unquoted_elem_type>
-                        , [&args](unquoted_elem_type const & e, std::any const & info) {
+                        compose_bool<UElemType>
+                        , [&args](UElemType const & e, std::any const & info) {
 
                             static std::ostringstream ss;
                             ss.str({});
@@ -134,9 +132,9 @@ namespace csvsort {
                             }
                             return ss.str();
                         }
-                        , compose_datetime<unquoted_elem_type>
-                        , compose_date<unquoted_elem_type>
-                        , [](unquoted_elem_type const & e, std::any const &) {
+                        , compose_datetime<UElemType>
+                        , compose_date<UElemType>
+                        , [](UElemType const & e, std::any const &) {
                             auto const str = std::get<1>(e.timedelta_tuple());
                             return str.find(',') != std::string::npos ? "\"" + str +'"' : str;
                         }
@@ -256,7 +254,6 @@ namespace csvsort {
             // Filling in data to sort.
             // It is sufficient to have csv_co::quoted cell_spans in it, because comparison is quite sophisticated and takes it into account
             compromise_table_MxN table(reader, args);
-
             auto const types_blanks = std::get<1>(typify(reader, args, typify_option::typify_without_precisions));
             auto cfa = ::csvkit::cli::compare::detail::obtain_compare_functionality<std::decay_t<decltype(table[0][0])>>(ids, types_blanks, args);
             if (args.r) {
@@ -271,6 +268,13 @@ namespace csvsort {
                 else
                     std::sort(table.begin(), table.end(), sort_comparator(std::move(cfa), std::less<>()));
             }
+            // Force detecting types for all rest (not-comparable) cells concurrently to reduce result output time
+            for_each(poolstl::par, table.begin(), table.end(), [&](auto &item) {
+                for (auto & elem : item) {
+                    using UElemType = typename std::decay_t<decltype(elem)>::template rebind<csv_co::unquoted>::other;
+                    elem.operator UElemType const&().type();
+                }
+            });
 
             std::ostringstream oss;
             printer p(oss);
