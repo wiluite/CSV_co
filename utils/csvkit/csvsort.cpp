@@ -45,7 +45,7 @@ namespace csvsort {
                 auto & col = std::get<0>(elem);
                 auto & fun = std::get<1>(elem);
 #endif
-                static int result;
+                int result;
                 std::visit([&](auto & c_cmp) { result = c_cmp(a[col], b[col]); }, fun);
                 if (result)
                     return cpp_cmp(result, 0);

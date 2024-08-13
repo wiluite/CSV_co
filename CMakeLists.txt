@@ -32,11 +32,6 @@ execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" . WORKING_DIR
 execute_process(COMMAND "${CMAKE_COMMAND}" --build . WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/external_deps" )
 endif()
 
-#if (NOT MSVC)
-#    set(CMAKE_CXX_FLAGS_DEBUG "-g")
-#    set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -march=native ")
-#endif()
-
 if ((_SANITY_CHECK) AND (UNIX) AND (NOT (CMAKE_SYSTEM_NAME STREQUAL "CYGWIN")))
     set (COMPILER_DEFINES "#define SANITY_CHECK")
     set (SANITY_COMPILE_FLAGS "-fsanitize=address,leak,undefined" "-fno-omit-frame-pointer")
