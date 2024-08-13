@@ -10,7 +10,6 @@
 #include <numeric>
 #include <cmath>
 #include <cli.h>
-#include <ctime>
 
 using namespace ::csvkit::cli;
 
@@ -391,7 +390,6 @@ namespace csvstat {
 
             auto prepare_task_vector = [&](auto &reader, auto const &args, auto &transposed_2d, auto const &header, auto const &ids) {
 
-                //update_null_values(args.null_value);
                 auto [types, blanks, _] = detect_types_and_blanks(reader, args, transposed_2d);
 
                 using tabular_t = std::decay_t<decltype(transposed_2d)>;
@@ -407,33 +405,30 @@ namespace csvstat {
                 using task_vector_type = std::vector<std::variant<no_calculation_class, timedelta_class_type, number_class_type, bool_class_type, text_class_type, datetime_class_type, date_class_type>>;
                 task_vector_type task_vec(cols, no_calculation_class{});
 
-                std::vector<unsigned> all_col_num_vec(header.size());
-                std::iota(all_col_num_vec.begin(), all_col_num_vec.end(), 0);
-
-                for (auto c : all_col_num_vec) {
+                for (auto c = 0ul; c < header.size(); ++c) {
                     if (auto const it = std::find(ids.cbegin(), ids.cend(), c); it != ids.cend()) {
                         auto const index = c;
                         auto const col_name = header[c];
-                        c = it - ids.begin();
-                        assert(c < task_vec.size());
-                        switch (types[c]) {
+                        std::size_t const col = it - ids.begin();
+                        assert(col < task_vec.size());
+                        switch (types[col]) {
                             case column_type::bool_t:
-                                task_vec[c] = bool_class_type{std::ref(transposed_2d), std::ref(args), c, col_name, index, blanks[c]};
+                                task_vec[col] = bool_class_type{std::ref(transposed_2d), std::ref(args), col, col_name, index, blanks[col]};
                                 break;
                             case column_type::timedelta_t:
-                                task_vec[c] = timedelta_class_type{std::ref(transposed_2d), std::ref(args), c, col_name, index, blanks[c]};
+                                task_vec[col] = timedelta_class_type{std::ref(transposed_2d), std::ref(args), col, col_name, index, blanks[col]};
                                 break;
                             case column_type::number_t:
-                                task_vec[c] = number_class_type{std::ref(transposed_2d), std::ref(args), c, col_name, index, blanks[c]};
+                                task_vec[col] = number_class_type{std::ref(transposed_2d), std::ref(args), col, col_name, index, blanks[col]};
                                 break;
                             case column_type::datetime_t:
-                                task_vec[c] = datetime_class_type{std::ref(transposed_2d), std::ref(args), c, col_name, index, blanks[c]};
+                                task_vec[col] = datetime_class_type{std::ref(transposed_2d), std::ref(args), col, col_name, index, blanks[col]};
                                 break;
                             case column_type::date_t:
-                                task_vec[c] = date_class_type{std::ref(transposed_2d), std::ref(args), c, col_name, index, blanks[c]};
+                                task_vec[col] = date_class_type{std::ref(transposed_2d), std::ref(args), col, col_name, index, blanks[col]};
                                 break;
                             case column_type::text_t:
-                                task_vec[c] = text_class_type{std::ref(transposed_2d), std::ref(args), c, col_name, index, blanks[c]};
+                                task_vec[col] = text_class_type{std::ref(transposed_2d), std::ref(args), col, col_name, index, blanks[col]};
                                 break;
                             case column_type::unknown_t:
                             case column_type::sz:
@@ -445,14 +440,13 @@ namespace csvstat {
             };
 
             auto tv = prepare_task_vector(reader, args, transposed_2d, header, ids);
-
             transwarp::parallel exec(std::thread::hardware_concurrency());
-            auto t2 = transwarp::for_each(exec, tv.begin(), tv.end(), [&](auto &item) {
+            auto task = transwarp::for_each(exec, tv.begin(), tv.end(), [&](auto &item) {
                 std::visit([&](auto &&arg) {
                     operation_option ? arg.single_operation(cols) : arg.prepare();
                 }, item);
             });
-            t2->wait();
+            task->wait();
 
             if (operation_option) {
                 for (auto &item: tv)

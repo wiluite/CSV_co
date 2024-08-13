@@ -753,16 +753,6 @@ namespace csvkit::cli {
         quoted_elem_type::imbue_num_locale(cell_numeric_locale(args.num_locale.c_str()));
     }
 
-    void maxprecision_policy(auto & reader, auto const & args) {
-        using reader_type = std::decay_t<decltype(reader)>;
-
-        using unquoted_elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
-        unquoted_elem_type::maxprecision_flag(args.no_mdp);
-
-        using quoted_elem_type = typename reader_type::template typed_span<csv_co::quoted>;
-        quoted_elem_type::maxprecision_flag(args.no_mdp);
-    }
-
     void setup_date_parser_backend(auto & reader, auto const & args) {
         using reader_type = std::decay_t<decltype(reader)>;
 
@@ -797,7 +787,17 @@ namespace csvkit::cli {
         std::vector<bool> blanks (task_vec.size(), false);
 
         imbue_numeric_locale(reader, args);
-        maxprecision_policy(reader, args);
+
+        [&args] {
+            using reader_type = std::decay_t<decltype(reader)>;
+
+            using unquoted_elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
+            unquoted_elem_type::maxprecision_flag(args.no_mdp);
+
+            using quoted_elem_type = typename reader_type::template typed_span<csv_co::quoted>;
+            quoted_elem_type::maxprecision_flag(args.no_mdp);
+        }();
+
         setup_date_parser_backend(reader, args);
 
         //TODO: for now e.is_null() calling first is obligate. Can we do better?
@@ -850,9 +850,11 @@ namespace csvkit::cli {
             }
         });
 
+        task->wait();
+
         #undef SETUP_BLANKS
 
-        task->wait();
+
         for (auto elem : task_vec)
             assert(elem != column_type::unknown_t);
 
