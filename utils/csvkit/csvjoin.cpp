@@ -808,6 +808,8 @@ int main(int argc, char * argv[])
     if (args.verbose)
         args.print();
 
+    OutputCodePage65001 ocp65001;
+
     try {
         if (args.files.empty())
             args.std_input = read_standard_input(args);

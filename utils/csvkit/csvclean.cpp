@@ -208,6 +208,7 @@ int main(int argc, char * argv[]) {
     if (args.verbose)
         args.print();
 
+    OutputCodePage65001 ocp65001;
     basic_reader_configurator_and_runner(read_standard_input, clean)
 
     return 0;

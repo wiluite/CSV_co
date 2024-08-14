@@ -426,7 +426,6 @@ int main() {
         {
             assert(!args.no_mdp);
             notrimming_reader_type r("a\n1.1\n3.333\n2.22\n");
-            maxprecision_policy(r, args);
 
             TEST_NO_THROW
 
@@ -435,7 +434,6 @@ int main() {
         {
             args.no_mdp = true;
             skipinitspace_reader_type r("a\n1.1\n3.333\n2.22\n");
-            maxprecision_policy(r, args);
 
             TEST_NO_THROW2
 

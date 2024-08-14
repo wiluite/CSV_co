@@ -230,6 +230,9 @@ int main(int argc, char * argv[]) {
     auto args = argparse::parse<Args>(argc, argv);
     if (args.verbose)
         args.print();
+
+    OutputCodePage65001 ocp65001;
+
     try {
         if (!args.skip_init_space) 
             stack<notrimming_reader_type>(args);

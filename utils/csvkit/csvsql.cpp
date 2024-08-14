@@ -24,6 +24,8 @@
 
 #include <iostream>
 #include <cli.h>
+#include <iosfwd>
+#include <vector>
 
 using namespace ::csvkit::cli;
 
@@ -35,7 +37,7 @@ namespace csvsql {
         std::string & date_fmt = kwarg("date-format","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
         std::string & datetime_fmt = kwarg("datetime-format","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
 
-        std::string & dialect = kwarg("i,dialect","Dialect of SQL {mysql,postgresql,sqlite,firebird} to generate. Cannot be used with --db.").set_default(std::string("sqlite"));
+        std::string & dialect = kwarg("i,dialect","Dialect of SQL {mysql,postgresql,sqlite,firebird} to generate. Cannot be used with --db. ").set_default(std::string(""));
         std::string & db = kwarg("db","If present, a 'soci' connection string to use to directly execute generated SQL on a database.").set_default(std::string(""));
         std::string & query = kwarg("query","Execute one or more SQL queries delimited by \";\" and output the result of the last query as CSV. QUERY may be a filename. --query may be specified multiple times.").set_default(std::string(""));
         bool &insert = flag("insert", "Insert the data into the table. Requires --db.");
@@ -70,6 +72,32 @@ int main(int argc, char * argv[]) {
         args.print();
 
     try {
+        std::vector<std::string> table_names;
+        if (!args.tables.empty())
+            table_names = [&] {
+                std::istringstream stream(args.tables);
+                std::vector<std::string> result;
+                for (std::string word; std::getline(stream, word, ',');)
+                    result.push_back(word);
+                return result;
+            }();
+
+#if 0
+        for (auto & e : args.null_value) {
+            std::cout << "value " << e << std::endl;
+        }
+        for (auto & e : table_names) {
+            std::cout << e << std::endl;
+        }
+#endif
+        if (!args.dialect.empty()) {
+            std::vector<std::string_view> svv{"mysql", "postgresql", "sqlite", "firebird"};
+            if (!std::any_of(svv.cbegin(), svv.cend(), [&](auto elem){ return elem == args.dialect;}))
+                throw std::runtime_error("csvsql: error: argument -i/--dialect: invalid choice: '" + args.dialect + "' (choose from 'mysql', 'postgresql', 'sqlite', 'firebird').");
+            if (!args.db.empty() or !args.query.empty())
+                throw std::runtime_error("csvsql: error: The --dialect option is only valid when neither --db nor --query are specified.");
+        }
+
         using namespace soci;
         //session sql(sqlite3, "db.sqlite3");               // need linkage to soci_sqlite3 for its link target
         session sql("sqlite3://db=db.sqlite3"); // no need linkage to soci_sqlite3 for its link target
@@ -77,5 +105,8 @@ int main(int argc, char * argv[]) {
 
     } catch (soci::soci_error const &err) {
         std::cout << "ERROR!\n";
+    } catch (std::exception const & e) {
+        std::cout << e.what() << std::endl;
     }
+
 }
