@@ -15,11 +15,6 @@ using namespace ::csvkit::cli;
 
 namespace csvstat {
 
-    using nt_unquoting_cell_type = notrimming_reader_type::typed_span<csv_co::unquoted>;
-    using nt_unquoting_tuple = std::tuple<nt_unquoting_cell_type, std::reference_wrapper<notrimming_reader_type>>;
-    using sis_unquoting_cell_type = skipinitspace_reader_type::typed_span<csv_co::unquoted>;
-    using sis_unquoting_tuple = std::tuple<sis_unquoting_cell_type, std::reference_wrapper<skipinitspace_reader_type>>;
-
     struct Args : ARGS_positional_1 {
         std::string &num_locale = kwarg("L,locale", "Specify the locale (\"C\") of any formatted numbers.").set_default("C");
         bool &blanks = flag("blanks", R"(Do not convert "", "na", "n/a", "none", "null", "." to NULL.)");
@@ -322,8 +317,7 @@ namespace csvstat {
         using namespace csv_co;
         throw_if_names_and_no_header(args);
         bool operation_option = is_operation(args);
-
-        auto &reader = std::get<std::tuple_element_t<1, std::remove_reference_t<decltype(reader_reference)>>>(reader_reference).get();
+        auto & reader = reader_reference.get();
 
         recode_source(reader, args);
         skip_lines(reader, args);
@@ -354,7 +348,7 @@ namespace csvstat {
             auto ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes{std::string{}});
             auto const cols = ids.size();
 
-            using cell_span_t = std::tuple_element_t<0, std::remove_reference_t<decltype(reader_reference)>>;
+            using cell_span_t = typename std::decay_t<decltype(reader)>::template typed_span<csv_co::unquoted>;
             using tabular_type = fixed_array_2d_replacement<cell_span_t>;
 
             // Filling in 2d in the transposed form, process each column a bit cache-friendly
@@ -367,9 +361,8 @@ namespace csvstat {
             if (all_columns_selected(ids, header.size())) {
                 reader.run_rows([&](auto &row_span) { // more cache-friendly
                     check_max_size<establish_new_checker>(reader, args, header_to_strings<unquoted>(row_span), ir);
-                    for (auto &elem: row_span) {
+                    for (auto &elem: row_span)
                         transposed_2d[c_col++][c_row] = elem;
-                    }
                     c_row++;
                     c_col = 0;
                 });
@@ -389,8 +382,93 @@ namespace csvstat {
             }
 
             auto prepare_task_vector = [&](auto &reader, auto const &args, auto &transposed_2d, auto const &header, auto const &ids) {
+                using Reader = std::decay_t<decltype(reader)>;
+                auto detect_types_and_blanks = [&] (fixed_array_2d_replacement<typename Reader::template typed_span<csv_co::unquoted>> & table) {
 
-                auto [types, blanks, _] = detect_types_and_blanks(reader, args, transposed_2d);
+                    update_null_values(args.null_value);
+
+                    std::vector<column_type> task_vec (table.rows(), column_type::unknown_t);
+
+                    std::vector<std::size_t> column_numbers (task_vec.size());
+                    std::iota(column_numbers.begin(), column_numbers.end(), 0);
+
+                    transwarp::parallel exec(std::thread::hardware_concurrency());
+                    std::vector<bool> blanks (task_vec.size(), false);
+
+                    imbue_numeric_locale(reader, args);
+
+                    [&args] {
+                        using reader_type = std::decay_t<decltype(reader)>;
+
+                        using unquoted_elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
+                        unquoted_elem_type::maxprecision_flag(args.no_mdp);
+
+                        using quoted_elem_type = typename reader_type::template typed_span<csv_co::quoted>;
+                        quoted_elem_type::maxprecision_flag(args.no_mdp);
+                    }();
+
+                    setup_date_parser_backend(reader, args);
+
+                    //TODO: for now e.is_null() calling first is obligate. Can we do better?
+#define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = true;
+
+                    auto task = transwarp::for_each(exec, column_numbers.cbegin(), column_numbers.cend(), [&](auto c) {
+                        if (std::all_of(table[c].cbegin(), table[c].cend(), [&blanks, &c, &args](auto & e) {
+                            SETUP_BLANKS
+                            return n || (!args.no_inference && e.is_boolean());
+                        })) {
+                            task_vec[c] = column_type::bool_t;
+                            return;
+                        }
+                        if (std::all_of(table[c].cbegin(), table[c].cend(), [&args, &blanks, &c](auto &e) {
+                            SETUP_BLANKS
+                            return n || (!args.no_inference && std::get<0>(e.timedelta_tuple()));
+                        })) {
+                            task_vec[c] = column_type::timedelta_t;
+                            return;
+                        }
+                        if (std::all_of(table[c].cbegin(), table[c].cend(), [&blanks, &c, &args](auto & e) {
+                            SETUP_BLANKS
+                            return n || (!args.no_inference && e.is_num());
+                        })) {
+                            task_vec[c] = column_type::number_t;
+                            return;
+                        }
+                        if (std::all_of(table[c].cbegin(), table[c].cend(), [&args, &blanks, &c](auto & e) {
+                            SETUP_BLANKS
+                            return n || (!args.no_inference && std::get<0>(e.datetime(args.datetime_fmt)));
+                        })) {
+                            task_vec[c] = column_type::datetime_t;
+                            return;
+                        }
+                        if (std::all_of(table[c].cbegin(), table[c].cend(), [&args, &blanks, &c](auto &e) {
+                            SETUP_BLANKS
+                            return n || (!args.no_inference && std::get<0>(e.date(args.date_fmt)));
+                        })) {
+                            task_vec[c] = column_type::date_t;
+                            return;
+                        }
+                        // Text type: check ALL rows for an absent.
+                        if (std::all_of(table[c].cbegin(), table[c].cend(), [&](auto &e) {
+                            if (!blanks[c] && e.is_null() && !args.blanks)
+                                blanks[c] = true;
+                            return true;
+                        })) {
+                            task_vec[c] = column_type::text_t;
+                            return;
+                        }
+                    });
+                    task->wait();
+#undef SETUP_BLANKS
+
+                    for (auto elem : task_vec)
+                        assert(elem != column_type::unknown_t);
+
+                    return std::tuple{task_vec, blanks, std::vector<std::size_t>{}};
+                };
+
+                //auto [types, blanks, _] = detect_types_and_blanks(reader, args, transposed_2d);
+                auto [types, blanks, _] = detect_types_and_blanks(transposed_2d);
 
                 using tabular_t = std::decay_t<decltype(transposed_2d)>;
                 using args_type = std::decay_t<decltype(args)>;
@@ -527,14 +605,16 @@ int main(int argc, char * argv[]) {
     OutputCodePage65001 ocp65001;
 
     try {
-        std::variant<std::monostate, csvstat::nt_unquoting_tuple, csvstat::sis_unquoting_tuple> variants;
+        std::variant<std::monostate
+            , std::reference_wrapper<notrimming_reader_type>
+            , std::reference_wrapper<skipinitspace_reader_type>> variants;
         if (!args.skip_init_space) {
             notrimming_reader_type r (std::filesystem::path{args.file});
-            variants = std::make_tuple(csvstat::nt_unquoting_cell_type{}, std::ref(r));
+            variants = std::ref(r);
             std::visit([&](auto & arg)  { csvstat::stat(arg, args);}, variants);
         } else {
             skipinitspace_reader_type r (std::filesystem::path{args.file});
-            variants = std::make_tuple(csvstat::sis_unquoting_cell_type{}, std::ref(r));
+            variants = std::ref(r);
             std::visit([&](auto & arg)  { csvstat::stat(arg, args);}, variants);
         }
     } catch (notrimming_reader_type::exception const & e) {
@@ -2077,9 +2157,9 @@ namespace csvstat {
     json_print_visitor::~json_print_visitor() {
         std::cout << prep->add_indent();
         std::cout << "}";
-        if (prep->cur_col != prep->col_num-1) {
+        if (prep->cur_col != prep->col_num-1)
             std::cout << ", ";
-        } else {
+        else {
 #if 0
             prep->dec_indent();
             std::cout << prep->add_indent() << "]";
@@ -2120,9 +2200,8 @@ namespace csvstat {
                   , prep->add_indent(), R"("sum": )", o.r->sum, ", "
                   , prep->add_indent(), R"("mean": )", o.r->mean, ", "
                   , prep->add_indent(), R"("median": )", o.r->median, ", ");
-        if (!std::isnan(o.r->stdev)) {
+        if (!std::isnan(o.r->stdev))
             to_stream(std::cout, prep->add_indent(), R"("stdev": )", o.r->stdev, ", ");
-        }
         if (!o.args().get().no_mdp)
             to_stream(std::cout, prep->add_indent(), R"("maxprecision": )", o.r->mdp, ", ");
 

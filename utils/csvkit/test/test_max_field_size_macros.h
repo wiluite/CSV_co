@@ -38,18 +38,16 @@
         expect(std::string(e.what()) == CALLRESULT);                                 \
     }
 
-#define Z_CHECK2(READER, SKIP_LINES, NO_HEADER, MAX_FIELD_SIZE, CALLRESULT)                  \
-    args.skip_lines = static_cast<int>(SKIP_LINES);                                          \
-    args.no_header = static_cast<bool>(NO_HEADER);                                           \
-    args.maxfieldsize = MAX_FIELD_SIZE;                                                      \
-    try {                                                                                    \
-        READER rdr(args.file);                                                               \
-        using a_cell = READER::typed_span<csv_co::unquoted>;                                 \
-        using a_tuple = std::tuple<a_cell, std::reference_wrapper<READER>>;                  \
-        std::variant<std::monostate, a_tuple> v2 = std::make_tuple(a_cell{}, std::ref(rdr)); \
-        std::visit([&](auto & arg) { csvstat::stat(arg, args);}, v2);                        \
-    } catch(std::runtime_error const & e) {                                                  \
-        expect(std::string(e.what()) == CALLRESULT);                                         \
+#define Z_CHECK2(READER, SKIP_LINES, NO_HEADER, MAX_FIELD_SIZE, CALLRESULT)  \
+    args.skip_lines = static_cast<int>(SKIP_LINES);                          \
+    args.no_header = static_cast<bool>(NO_HEADER);                           \
+    args.maxfieldsize = MAX_FIELD_SIZE;                                      \
+    try {                                                                    \
+        READER rdr(args.file);                                               \
+        std::reference_wrapper<READER> ref = std::ref(rdr);                  \
+        csvstat::stat(ref, args);                                            \
+    } catch(std::runtime_error const & e) {                                  \
+        expect(std::string(e.what()) == CALLRESULT);                         \
     }
 
 namespace z_test {

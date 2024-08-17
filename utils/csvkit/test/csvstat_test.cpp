@@ -14,34 +14,23 @@
 #include "test_reader_macros.h"
 #include "test_max_field_size_macros.h"
 
-#define TEST_NO_THROW  std::stringstream cout_buffer;                                                                   \
-                       std::variant<std::monostate, csvstat::nt_unquoting_tuple> variants                               \
-                           = std::make_tuple(csvstat::nt_unquoting_cell_type{}, std::ref(r));                           \
-                       {                                                                                                \
-                           redirect(cout)                                                                               \
-                           redirect_cout cr(cout_buffer.rdbuf());                                                       \
-                           expect(nothrow ([&]{std::visit([&](auto & arg) { csvstat::stat(arg, args);}, variants);}));  \
-                       }
+#define TEST_NO_THROW  \
+std::reference_wrapper<decltype(r)> ref = std::ref(r);  \
+std::stringstream cout_buffer;                          \
+{                                                       \
+redirect(cout)                                          \
+redirect_cout cr(cout_buffer.rdbuf());                  \
+expect(nothrow ([&] { csvstat::stat(ref, args); }));    \
+}
 
-#define TEST_NO_THROW2 std::stringstream cout_buffer;                                                                   \
-                       std::variant<std::monostate, csvstat::sis_unquoting_tuple> variants                              \
-                           = std::make_tuple(csvstat::sis_unquoting_cell_type{}, std::ref(r));                          \
-                       {                                                                                                \
-                           redirect(cout)                                                                               \
-                           redirect_cout cr(cout_buffer.rdbuf());                                                       \
-                           expect(nothrow ([&]{std::visit([&](auto & arg) { csvstat::stat(arg, args);}, variants);}));  \
-                       }
-
-#define TEST_NO_THROW_EN_US_LOCALE  std::stringstream cout_buffer;                                                      \
-                       std::variant<std::monostate, csvstat::nt_unquoting_tuple> variants                               \
-                           = std::make_tuple(csvstat::nt_unquoting_cell_type{}, std::ref(r));                           \
-                       {                                                                                                \
-                           redirect(cout)                                                                               \
-                           redirect_cout cr(cout_buffer.rdbuf());                                                       \
-                           expect(nothrow ([&]{std::visit([&](auto & arg) {                                             \
-                               csvstat::stat(arg, args, "en_US");}, variants);                                          \
-                           }));                                                                                         \
-                       }
+#define TEST_NO_THROW_EN_US_LOCALE                                 \
+std::stringstream cout_buffer;                                     \
+std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);  \
+{                                                                  \
+redirect(cout)                                                     \
+redirect_cout cr(cout_buffer.rdbuf());                             \
+expect(nothrow ([&] { csvstat::stat(ref, args, "en_US"); }));      \
+}
 
 int main() {
     using namespace boost::ut;
@@ -61,8 +50,8 @@ int main() {
         }
         {
             notrimming_reader_type r("aa\n");
-            std::variant<std::monostate, csvstat::nt_unquoting_tuple> variants = std::make_tuple(csvstat::nt_unquoting_cell_type{}, std::ref(r));
-            expect(throws([&] { std::visit([&](auto &arg) { csvstat::stat(arg, args); }, variants); }));
+            std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+            expect(throws([&] { csvstat::stat(ref, args); }));
         }
         {
             notrimming_reader_type r("aa\n1\n");
@@ -77,14 +66,14 @@ int main() {
 
         {
             notrimming_reader_type r(args.file);
-            std::variant<std::monostate, csvstat::nt_unquoting_tuple> variants = std::make_tuple(csvstat::nt_unquoting_cell_type{}, std::ref(r));
-            expect(throws([&] { std::visit([&](auto &arg) { csvstat::stat(arg, args); }, variants); }));
+            std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+            expect(throws([&] { csvstat::stat(ref, args); }));
         }
         {
             args.encoding = "bad_encoding";
             notrimming_reader_type r(args.file);
-            std::variant<std::monostate, csvstat::nt_unquoting_tuple> variants = std::make_tuple(csvstat::nt_unquoting_cell_type{}, std::ref(r));
-            expect(throws([&] { std::visit([&](auto &arg) { csvstat::stat(arg, args); }, variants); }));
+            std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+            expect(throws([&] { csvstat::stat(ref, args); }));
         }
         {
             args.encoding = "latin1";
@@ -435,11 +424,12 @@ int main() {
             args.no_mdp = true;
             skipinitspace_reader_type r("a\n1.1\n3.333\n2.22\n");
 
-            TEST_NO_THROW2
+            TEST_NO_THROW
 
             expect("0" == get_result(cout_buffer.str()));
         }
     };
+
     "max field size"_test = [] {
         struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
             Args() {
@@ -456,7 +446,5 @@ int main() {
 
         Z_CHECK2(test_reader_r5, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
         Z_CHECK2(test_reader_r6, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
-
-
     };
 }
