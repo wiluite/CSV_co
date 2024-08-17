@@ -319,7 +319,6 @@ namespace csvstat {
         bool operation_option = is_operation(args);
         auto & reader = reader_reference.get();
 
-        recode_source(reader, args);
         skip_lines(reader, args);
         quick_check(reader, args);
 
@@ -603,32 +602,7 @@ int main(int argc, char * argv[]) {
     args.freq_count = !args.freq_count ? 5 : args.freq_count;
 
     OutputCodePage65001 ocp65001;
-
-    try {
-        std::variant<std::monostate
-            , std::reference_wrapper<notrimming_reader_type>
-            , std::reference_wrapper<skipinitspace_reader_type>> variants;
-        if (!args.skip_init_space) {
-            notrimming_reader_type r (std::filesystem::path{args.file});
-            variants = std::ref(r);
-            std::visit([&](auto & arg)  { csvstat::stat(arg, args);}, variants);
-        } else {
-            skipinitspace_reader_type r (std::filesystem::path{args.file});
-            variants = std::ref(r);
-            std::visit([&](auto & arg)  { csvstat::stat(arg, args);}, variants);
-        }
-    } catch (notrimming_reader_type::exception const & e) {
-        std::cout << e.what() << std::endl;
-    }
-    catch (skipinitspace_reader_type::exception const & e) {
-        std::cout << e.what() << std::endl;
-    }
-    catch (std::exception const & e) {
-        std::cout << e.what() << std::endl;
-    }
-    catch (...) {
-        std::cout << "Unknown exception.\n";
-    }
+    basic_reader_configurator_and_runner(read_standard_input, stat)
 }
 #endif
 

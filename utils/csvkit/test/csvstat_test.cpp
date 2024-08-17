@@ -13,6 +13,7 @@
 #include "rapidjson/document.h"
 #include "test_reader_macros.h"
 #include "test_max_field_size_macros.h"
+#include "test_runner_macros.h"
 
 #define TEST_NO_THROW  \
 std::reference_wrapper<decltype(r)> ref = std::ref(r);  \
@@ -65,20 +66,33 @@ int main() {
         } args;
 
         {
-            notrimming_reader_type r(args.file);
-            std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
-            expect(throws([&] { csvstat::stat(ref, args); }));
+            assert (args.encoding == "UTF-8");
+            expect(throws([&] { test_reader_configurator_and_runner2(args, csvstat::stat) }));
+            try {
+                test_reader_configurator_and_runner2(args, csvstat::stat)
+            } catch (std::exception const & e) {
+                expect(std::string(e.what()) == R"(Your file is not "UTF-8" encoded. Please specify the correct encoding with the -e flag.
+Decode error: simdutf can't decode byte 0xa9 in position 16.
+)");
+            }
         }
         {
             args.encoding = "bad_encoding";
-            notrimming_reader_type r(args.file);
-            std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
-            expect(throws([&] { csvstat::stat(ref, args); }));
+            expect(throws([&] { test_reader_configurator_and_runner2(args, csvstat::stat) }));
+            try {
+                test_reader_configurator_and_runner2(args, csvstat::stat)
+            } catch (std::exception const & e) {
+                expect(std::string(e.what()) == R"(LookupError: unknown encoding: BAD_ENCODING)");
+            }
         }
         {
             args.encoding = "latin1";
-            notrimming_reader_type r(args.file);
-            TEST_NO_THROW
+            std::stringstream cout_buffer;
+            {
+                redirect(cout)
+                redirect_cout cr(cout_buffer.rdbuf());
+                expect(nothrow([&] { test_reader_configurator_and_runner2(args, csvstat::stat) }));
+            }
         }
     };
 
