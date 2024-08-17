@@ -72,7 +72,6 @@ int main() {
         redirect(cout)
         redirect_cout cr(cout_buffer.rdbuf());
         test_reader_configurator_and_runner(args, csvlook::look)
-//        CALL_TEST_AND_REDIRECT_TO_COUT_2
 
 //      | a | b | c |
 //      | - | - | - |

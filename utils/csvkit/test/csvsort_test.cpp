@@ -48,18 +48,23 @@ int main() {
         } args;
 
         {
-            CALL_TEST_AND_REDIRECT_TO_COUT(csvsort::sort)
-            expect (cout_buffer.str().find("Your file is not \"UTF-8\" encoded") != std::string::npos);
+            expect(throws([&] { test_reader_configurator_and_runner(args, csvsort::sort) }));
+            try {
+                test_reader_configurator_and_runner(args, csvsort::sort)
+            } catch (std::exception const & e) {
+                expect(std::string(e.what()).find("Your file is not \"UTF-8\" encoded") != std::string::npos);
+            }
         }
         {
             args.encoding = "latin1";
-            CALL_TEST_AND_REDIRECT_TO_COUT(csvsort::sort)
+            expect(nothrow([&] {
+                CALL_TEST_AND_REDIRECT_TO_COUT(csvsort::sort)
 
-//          a,b,c
-//          1,2,3
-//          4,5,©
-
-            expect(cout_buffer.str() == "a,b,c\n1,2,3\n4,5,©\n");
+//              a,b,c
+//              1,2,3
+//              4,5,©
+                expect(cout_buffer.str() == "a,b,c\n1,2,3\n4,5,©\n");
+            }));
         }
     };
 

@@ -67,9 +67,9 @@ int main() {
 
         {
             assert (args.encoding == "UTF-8");
-            expect(throws([&] { test_reader_configurator_and_runner2(args, csvstat::stat) }));
+            expect(throws([&] { test_reader_configurator_and_runner(args, csvstat::stat) }));
             try {
-                test_reader_configurator_and_runner2(args, csvstat::stat)
+                test_reader_configurator_and_runner(args, csvstat::stat)
             } catch (std::exception const & e) {
                 expect(std::string(e.what()) == R"(Your file is not "UTF-8" encoded. Please specify the correct encoding with the -e flag.
 Decode error: simdutf can't decode byte 0xa9 in position 16.
@@ -78,9 +78,9 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
         }
         {
             args.encoding = "bad_encoding";
-            expect(throws([&] { test_reader_configurator_and_runner2(args, csvstat::stat) }));
+            expect(throws([&] { test_reader_configurator_and_runner(args, csvstat::stat) }));
             try {
-                test_reader_configurator_and_runner2(args, csvstat::stat)
+                test_reader_configurator_and_runner(args, csvstat::stat)
             } catch (std::exception const & e) {
                 expect(std::string(e.what()) == R"(LookupError: unknown encoding: BAD_ENCODING)");
             }
@@ -91,7 +91,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
             {
                 redirect(cout)
                 redirect_cout cr(cout_buffer.rdbuf());
-                expect(nothrow([&] { test_reader_configurator_and_runner2(args, csvstat::stat) }));
+                expect(nothrow([&] { test_reader_configurator_and_runner(args, csvstat::stat) }));
             }
         }
     };
