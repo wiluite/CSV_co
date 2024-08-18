@@ -20,44 +20,62 @@ endif()
 find_package(Threads REQUIRED)
 
 if (IO_CSVKIT_UTILS)
+
+    if (SOCI_HAVE_SQLITE3)
+        message("You will have sqlite3 backend for your i/o utils.")
+    else()
+        set(SQLITE3_INCLUDE_DIR "")
+    endif()
+    if (SOCI_HAVE_POSTGRESQL)
+        message("You will have postgresql backend for your i/o utils.")
+    else()
+        set(POSTGRESQL_INCLUDE_DIR "")
+    endif()
+    if (SOCI_HAVE_MYSQL)
+        message("You will have mysql backend for your i/o utils.")
+    else()
+        set(MYSQL_INCLUDE_DIR "")
+    endif()
+    if (SOCI_HAVE_FIREBIRD)
+        message("You will have firebird backend for your i/o utils.")
+    else()
+        set(FIREBIRD_INCLUDE_DIR "")
+    endif()
+
     add_executable(csvsql csvsql.cpp)
-    message(${CMAKE_BINARY_DIR})
     target_include_directories(csvsql
         PRIVATE
         ${CMAKE_BINARY_DIR}/external/soci/include
-        ${POSTGRESQL_INCLUDE_DIR}
         ${SQLITE3_INCLUDE_DIR}
+        ${POSTGRESQL_INCLUDE_DIR}
         ${MYSQL_INCLUDE_DIR}
         ${FIREBIRD_INCLUDE_DIR}
     )
-
-target_link_libraries(csvsql PRIVATE
+    target_link_libraries(csvsql PRIVATE
         libcppp-reiconv.static
         simdutf
         soci_core
-#        soci_sqlite3
-)
-add_custom_command(
+    )
+    add_custom_command(
         TARGET csvsql POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/run_csvsql
         ${CMAKE_CURRENT_BINARY_DIR}/run_csvsql)
 
-add_executable(sql2csv sql2csv.cpp)
 
-target_include_directories(sql2csv
+    add_executable(sql2csv sql2csv.cpp)
+    target_include_directories(sql2csv
         PRIVATE
         ${CMAKE_BINARY_DIR}/external/soci/include ${POSTGRESQL_INCLUDE_DIR} ${SQLITE3_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR})
 
-target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf
+    target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf
         soci_core
-)
-add_custom_command(
+    )
+    add_custom_command(
         TARGET sql2csv POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/run_sql2csv
         ${CMAKE_CURRENT_BINARY_DIR}/run_sql2csv)
-
 
 endif()
 
