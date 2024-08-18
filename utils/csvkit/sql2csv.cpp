@@ -27,7 +27,7 @@
 int main() {
     try {
         //using namespace soci;
-    } catch (std::exception /*soci::soci_error*/ const &err) {
-        std::cout << "ERROR!\n";
+    } catch (std::exception /*soci::soci_error*/ const & err) {
+        std::cout << err.what() << '\n';
     }
 }

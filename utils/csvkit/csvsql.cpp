@@ -104,7 +104,7 @@ int main(int argc, char * argv[]) {
         sql << "create table test1 (id integer)";
 
     } catch (soci::soci_error const &err) {
-        std::cout << "ERROR!\n";
+        std::cout << err.what() << '\n';
     } catch (std::exception const & e) {
         std::cout << e.what() << std::endl;
     }

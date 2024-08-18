@@ -48,6 +48,13 @@
 
 #define ARGPARSE_VERSION 4
 
+#ifdef _MSC_VER
+#ifdef max
+#undef max
+#undef min
+#endif
+#endif
+
 namespace argparse {
     class Args;
     using std::cout, std::cerr, std::endl, std::setw, std::size_t;

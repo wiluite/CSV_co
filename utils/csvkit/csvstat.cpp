@@ -382,7 +382,8 @@ namespace csvstat {
 
             auto prepare_task_vector = [&](auto &reader, auto const &args, auto &transposed_2d, auto const &header, auto const &ids) {
                 using Reader = std::decay_t<decltype(reader)>;
-                auto detect_types_and_blanks = [&] (fixed_array_2d_replacement<typename Reader::template typed_span<csv_co::unquoted>> & table) {
+                using table_type = fixed_array_2d_replacement<typename Reader::template typed_span<csv_co::unquoted>>;
+                auto detect_types_and_blanks = [&] (table_type & table) {
 
                     update_null_values(args.null_value);
 
@@ -466,7 +467,6 @@ namespace csvstat {
                     return std::tuple{task_vec, blanks, std::vector<std::size_t>{}};
                 };
 
-                //auto [types, blanks, _] = detect_types_and_blanks(reader, args, transposed_2d);
                 auto [types, blanks, _] = detect_types_and_blanks(transposed_2d);
 
                 using tabular_t = std::decay_t<decltype(transposed_2d)>;
@@ -593,6 +593,7 @@ int main(int argc, char * argv[]) {
     std::cout << mem_avail_mb() << std::endl;
     using namespace csvstat;
 #endif
+    using namespace csvstat;
 
     auto args = argparse::parse<csvstat::Args>(argc, argv);
     if (args.verbose)
