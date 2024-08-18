@@ -65,6 +65,11 @@ namespace csvsql {
 
 int main(int argc, char * argv[]) {
     using namespace csvsql;
+#if !defined(__unix__)
+    std::string path = getenv("PATH");
+    path = "PATH=" + path + ";..\\..\\external_deps";
+    putenv(path.c_str()); 
+#endif
 
     auto args = argparse::parse<Args>(argc, argv);
 

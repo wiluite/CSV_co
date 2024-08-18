@@ -122,7 +122,13 @@ std::vector<std::string> get_default_paths()
     std::vector<std::string> paths;
 
     char const* const penv = std::getenv("SOCI_BACKENDS_PATH");
-    std::string const env(penv ? penv : "");
+    std::string const env(penv ? penv : 
+#if defined(__unix__)
+"../../lib"
+#else
+"..\\..\\bin"
+#endif
+);
     if (env.empty())
     {
         paths.push_back(".");

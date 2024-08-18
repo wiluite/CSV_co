@@ -56,12 +56,14 @@ if (IO_CSVKIT_UTILS)
         simdutf
         soci_core
     )
+    if (UNIX)
+    else()
     add_custom_command(
         TARGET csvsql POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/utils/csvkit/run_csvsql
-        ${CMAKE_CURRENT_BINARY_DIR}/run_csvsql)
-
+        ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
+        ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
+    endif()
 
     add_executable(sql2csv sql2csv.cpp)
     target_include_directories(sql2csv
@@ -71,11 +73,6 @@ if (IO_CSVKIT_UTILS)
     target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf
         soci_core
     )
-    add_custom_command(
-        TARGET sql2csv POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/utils/csvkit/run_sql2csv
-        ${CMAKE_CURRENT_BINARY_DIR}/run_sql2csv)
 
 endif()
 
