@@ -58,11 +58,19 @@ if (IO_CSVKIT_UTILS)
     )
     if (UNIX)
     else()
-    add_custom_command(
-        TARGET csvsql POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
-        ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
+      if (MSVC)
+        add_custom_command(
+            TARGET csvsql POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_BINARY_DIR}/bin/soci_core_4_1.dll
+            ${CMAKE_CURRENT_BINARY_DIR}/soci_core_4_1.dll)
+      else()
+        add_custom_command(
+            TARGET csvsql POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
+            ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
+      endif()
     endif()
 
     add_executable(sql2csv sql2csv.cpp)
