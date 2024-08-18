@@ -593,8 +593,6 @@ int main(int argc, char * argv[]) {
     std::cout << mem_avail_mb() << std::endl;
     using namespace csvstat;
 #endif
-    using namespace csvstat;
-
     auto args = argparse::parse<csvstat::Args>(argc, argv);
     if (args.verbose)
         args.print();
@@ -603,7 +601,7 @@ int main(int argc, char * argv[]) {
     args.freq_count = !args.freq_count ? 5 : args.freq_count;
 
     OutputCodePage65001 ocp65001;
-    basic_reader_configurator_and_runner(read_standard_input, stat)
+    basic_reader_configurator_and_runner(read_standard_input, csvstat::stat)
 }
 #endif
 
