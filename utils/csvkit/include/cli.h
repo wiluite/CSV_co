@@ -820,9 +820,9 @@ namespace csvkit::cli {
                 }
             } checker (header, rowspan);
 
-            for (auto & elem : rowspan) {
+            for (auto & elem : rowspan)
                 table[c_col++][c_row] = elem;
-            }
+
             c_row++;
             c_col = 0;
         });
@@ -838,6 +838,14 @@ namespace csvkit::cli {
         std::vector<unsigned char> precisions (task_vec.size(), 0); 
 
         imbue_numeric_locale(reader, args);
+        [&option] {
+            using unquoted_elem_type = typename Reader::template typed_span<csv_co::unquoted>;
+            unquoted_elem_type::maxprecision_flag(option == typify_option::typify_without_precisions);
+
+            using quoted_elem_type = typename Reader::template typed_span<csv_co::quoted>;
+            unquoted_elem_type::maxprecision_flag(option == typify_option::typify_without_precisions);
+        }();
+
         setup_date_parser_backend(reader, args);
 
         //TODO: for now e.is_null() calling first is obligate. Can we do better?

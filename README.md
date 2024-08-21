@@ -402,7 +402,7 @@ is tightly bound to the --date-format and --datetime-format arguments and works 
 supported by the environment/compiler/standard library. And the --date-lib-parser argument engages the special date library to
 improve the situation and ensure consistency everywhere. For more info see tests located in csvkit_core_test.cpp.
 
-4) Some utilities may not support composition/pipeing. For example, csvstack currently only supports disk files as data sources.
+4) Some utilities may not support composition/piping.
 5) csvjson does not support geometry option for right now. 
 
 ### Statistics performance
@@ -474,7 +474,7 @@ are not the case. This is a subject for further research.
 If we talk about sorting by columns of string types, then the xsv is unrivaled, far ahead of other means in time, because
 it obviously uses efficient algorithms for sorting strings, and without the use of parallelism. However, let's see how
 effective it is to sort a group of columns where there is one numeric type (the -N option is required, otherwise the
-results will be incorrect). We only need 13 seconds versus 21 at the xsv. The csvkit is a minute behind us.
+results will be incorrect). We only need 13 seconds versus 21 at the xsv. The csvkit is more than a minute behind us.
 ![image info](./img/sort_worldcitiespop.png)
 
 ### Build All
