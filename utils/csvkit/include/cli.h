@@ -15,6 +15,8 @@
 #include <numeric>
 #include "encoding.h"
 
+// TODO: Urgent
+// 1. implement -z option in typify() for utils that use typify()
 namespace csvkit::cli {
     /// Returns zero-based index of a column by name or by order depending on the offset value 
     unsigned match_column_identifier (auto const & column_names, char const * c, auto column_offset);
@@ -774,7 +776,8 @@ namespace csvkit::cli {
 
     enum class typify_option {
         typify_with_precisions,
-        typify_without_precisions
+        typify_without_precisions,
+        typify_without_precisions_and_blanks
     };
 
     enum class csvjoin_source_option {
@@ -782,7 +785,7 @@ namespace csvkit::cli {
         csvjoin_string_source
     };
 
-    using typify_with_precisions_result = std::tuple<std::vector<column_type>, std::vector<bool>, std::vector<unsigned char>>;
+    using typify_with_precisions_result = std::tuple<std::vector<column_type>, std::vector<bool>, std::vector<unsigned>>;
     using typify_without_precisions_result = std::tuple<std::vector<column_type>, std::vector<bool>>;
     using typify_result = std::variant<typify_with_precisions_result, typify_without_precisions_result>;
 
@@ -831,11 +834,11 @@ namespace csvkit::cli {
 
         std::vector<std::size_t> column_numbers (task_vec.size());
         std::iota(column_numbers.begin(), column_numbers.end(), 0);
-
+    
         transwarp::parallel exec(std::thread::hardware_concurrency());
 
         std::vector<bool> blanks (task_vec.size(), false);
-        std::vector<unsigned char> precisions (task_vec.size(), 0); 
+        std::vector<unsigned> precisions (task_vec.size(), 0);
 
         imbue_numeric_locale(reader, args);
         [&option] {
