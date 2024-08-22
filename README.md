@@ -475,6 +475,7 @@ If we talk about sorting by columns of string types, then the xsv is unrivaled, 
 it obviously uses efficient algorithms for sorting strings, and without the use of parallelism. However, let's see how
 effective it is to sort a group of columns where there is one numeric type (the -N option is required, otherwise the
 results will be incorrect). We only need about 7 seconds versus 21 at the xsv. The csvkit is more than a minute behind us.
+
 ![image info](./img/sort_worldcitiespop.png)
 
 ### Build All
