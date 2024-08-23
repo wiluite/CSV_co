@@ -25,8 +25,6 @@ namespace csvkit::test_facilities {
         std::string date_fmt {R"(%m/%d/%Y)"};
         std::string datetime_fmt {R"(%m/%d/%Y %I:%M %p)"};
         bool no_inference {false};
-        std::string decimal_format {"%.3f"};
-        bool no_grouping_sep {false};
         bool date_lib_parser {true};
     };
     struct csvlook_specific_args {
@@ -63,6 +61,8 @@ namespace csvkit::test_facilities {
         unsigned long freq_count {5ul};
         bool count {false};
         bool no_mdp {false};
+        bool no_grouping_sep {false};
+        std::string decimal_format {"%.3f"};
     };
     struct csvsort_specific_args {
         bool r {false};
@@ -99,5 +99,24 @@ namespace csvkit::test_facilities {
         bool invert {false};
         bool any {};
     };
+    struct csvsql_specific_args {
+        std::vector<std::string> files;
+        std::string dialect {""};
+        std::string db;
+        std::string query;
+        bool insert {false};
+        std::string prefix;
+        std::string before_insert;
+        std::string after_insert;
+        std::string tables;
+        bool no_constraints {false};
+        std::string unique_constraint;
+        bool no_create {false};
+        bool create_if_not_exists {false};
+        bool overwrite {false};
+        std::string schema {false};
+        unsigned chunk_size {0};
+    };
+
 
 }

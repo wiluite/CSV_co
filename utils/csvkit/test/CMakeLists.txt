@@ -430,4 +430,40 @@ add_custom_command(
 target_link_libraries(csvgrep_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvgrep_test csvgrep_test)
 
+if (IO_CSVKIT_UTILS)
+
+    add_executable(csvsql_test csvsql_test.cpp)
+    target_include_directories(csvsql_test PRIVATE
+        ${CMAKE_BINARY_DIR}/../external/soci/include
+        ${SQLITE3_INCLUDE_DIR}
+        ${POSTGRESQL_INCLUDE_DIR}
+        ${MYSQL_INCLUDE_DIR}
+        ${FIREBIRD_INCLUDE_DIR}
+    )
+    add_custom_command(
+        TARGET csvsql_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testfixed_converted.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/testfixed_converted.csv)
+    target_link_libraries(csvsql_test libcppp-reiconv.static simdutf soci_core -lpthread)
+    add_test(csvsql_test csvsql_test)
+
+    if (UNIX)
+    else()
+      if (MSVC)
+        add_custom_command(
+            TARGET csvsql_test POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_BINARY_DIR}/bin/soci_core_4_1.dll
+            ${CMAKE_CURRENT_BINARY_DIR}/soci_core_4_1.dll)
+      else()
+        add_custom_command(
+            TARGET csvsql_test POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
+            ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
+      endif()
+    endif()
+endif()
+
 enable_testing ()
