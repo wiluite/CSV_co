@@ -445,6 +445,31 @@ if (IO_CSVKIT_UTILS)
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testfixed_converted.csv
         ${CMAKE_CURRENT_BINARY_DIR}/testfixed_converted.csv)
+    add_custom_command(
+        TARGET csvsql_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/blanks.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/blanks.csv)
+    add_custom_command(
+        TARGET csvsql_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/no_header_row.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/no_header_row.csv)
+    add_custom_command(
+        TARGET csvsql_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
+    add_custom_command(
+        TARGET csvsql_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/iris.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/iris.csv)
+    add_custom_command(
+        TARGET csvsql_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/irismeta.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/irismeta.csv)
     target_link_libraries(csvsql_test libcppp-reiconv.static simdutf soci_core -lpthread)
     add_test(csvsql_test csvsql_test)
 

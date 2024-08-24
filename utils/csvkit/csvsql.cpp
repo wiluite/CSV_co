@@ -68,9 +68,11 @@ namespace csvsql::detail {
             return readers;
         }
         template<typename ReaderType>
-        auto set_readers(auto const & args) {
-            for (auto const & elem : args.files) {
-                auto reader {elem != "_" ? ReaderType{std::filesystem::path{elem}} : ReaderType{read_standard_input(args)}};
+        auto set_readers(auto & args) {
+            if (args.files.empty())
+                args.files = std::vector<std::string>{"_"};
+            for (auto & elem : args.files) {
+                auto reader {elem != "_" ? ReaderType{std::filesystem::path{elem}} : (elem = "stdin", ReaderType{read_standard_input(args)})};
                 recode_source(reader, args);
                 skip_lines(reader, args);
                 quick_check(reader, args);
@@ -87,6 +89,7 @@ namespace csvsql::detail {
     };
 
     class create_table_composer {
+        friend void reset_environment();
         static inline std::size_t file_no;
         class print_director {
             static inline std::stringstream stream;
@@ -128,168 +131,46 @@ namespace csvsql::detail {
             }; // printer
 
             struct varchar_precision {};
-            struct mysql_printer : printer, varchar_precision {
+            struct generic_printer : printer {
+                void print_name(std::string const & name) override { print_name_or_quoted_name(name, '"'); }
+                void print(bool_column_tag) override { to_stream(stream, "BOOLEAN"); }
+                void print(bool_column_tag, bool blanks, unsigned) override { to_stream(stream, "BOOLEAN", (blanks ? "" : " NOT NULL")); }
+                void print(number_column_tag) override { to_stream(stream, "DECIMAL"); }
+                void print(number_column_tag, bool blanks, unsigned) override { to_stream(stream, "DECIMAL", (blanks ? "" : " NOT NULL")); }
+                void print(datetime_column_tag) override { to_stream(stream, "TIMESTAMP"); }
+                void print(datetime_column_tag, bool blanks, unsigned) override { to_stream(stream, "TIMESTAMP"); }
+                void print(date_column_tag) override { to_stream(stream, "DATE"); }
+                void print(date_column_tag, bool blanks, unsigned) override { to_stream(stream, "DATE", (blanks ? "" : " NOT NULL")); }
+                void print(timedelta_column_tag) override { to_stream(stream, "DATETIME"); }
+                void print(timedelta_column_tag, bool blanks, unsigned) override { to_stream(stream, "DATETIME", (blanks ? "" : " NOT NULL")); }
+                void print(text_column_tag) override { to_stream(stream, "VARCHAR"); }
+                void print(text_column_tag, bool blanks, unsigned) override { to_stream(stream, "VARCHAR", (blanks ? "" : " NOT NULL")); }
+            };
+
+            struct mysql_printer : generic_printer, varchar_precision {
                 void print_name(std::string const & name) override {
                     print_name_or_quoted_name(name, '`');
                 }
-                void print(bool_column_tag) override {
-                    to_stream(stream, "BOOL");
-                }
-                void print(bool_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "BOOL", (blanks ? "" : " NOT NULL"));
-                }
-                void print(number_column_tag) override {
-                    to_stream(stream, "DECIMAL");
-                }
-                void print(number_column_tag, bool blanks, unsigned prec) override {
-                    to_stream(stream, "DECIMAL(38, ", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL"));
-                }
-                void print(datetime_column_tag) override {
-                    to_stream(stream, "TIMESTAMP");
-                }
-                void print(datetime_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "TIMESTAMP");
-                }
-                void print(date_column_tag) override {
-                    to_stream(stream, "DATE");
-                }
-                void print(date_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "DATE", (blanks ? "" : " NOT NULL"));
-                }
-                void print(timedelta_column_tag) override {
-                    to_stream(stream, "DATETIME");
-                }
-                void print(timedelta_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "DATETIME", (blanks ? "" : " NOT NULL"));
-                }
-                void print(text_column_tag) override {
-                    throw std::runtime_error("VARCHAR requires a length on dialect mysql");
-                }
-                void print(text_column_tag, bool blanks, unsigned prec) override {
-                    to_stream(stream, "VARCHAR(", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL"));
-                }
-            };
-            struct postgresql_printer : printer {
-                void print_name(std::string const & name) override {
-                    print_name_or_quoted_name(name, '"');
-                }
-                void print(bool_column_tag) override {
-                    to_stream(stream, "BOOLEAN");
-                }
-                void print(bool_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "BOOLEAN", (blanks ? "" : " NOT NULL"));
-                }
-                void print(number_column_tag) override {
-                    to_stream(stream, "DECIMAL");
-                }
-                void print(number_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "DECIMAL", (blanks ? "" : " NOT NULL"));
-                }
-                void print(datetime_column_tag) override {
-                    to_stream(stream, "TIMESTAMP WITHOUT TIME ZONE");
-                }
-                void print(datetime_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "TIMESTAMP WITHOUT TIME ZONE");
-                }
-                void print(date_column_tag) override {
-                    to_stream(stream, "DATE");
-                }
-                void print(date_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "DATE", (blanks ? "" : " NOT NULL"));
-                }
-                void print(timedelta_column_tag) override {
-                    to_stream(stream, "INTERVAL");
-                }
-                void print(timedelta_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "INTERVAL", (blanks ? "" : " NOT NULL"));
-                }
-                void print(text_column_tag) override {
-                    to_stream(stream, "VARCHAR");
-                }
-                void print(text_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "VARCHAR", (blanks ? "" : " NOT NULL"));
-                }
-            };
-            struct sqlite_printer : printer {
-                void print_name(std::string const & name) override {
-                    print_name_or_quoted_name(name, '"');
-                }
-                void print(bool_column_tag) override {
-                    to_stream(stream, "BOOLEAN");
-                }
-                void print(bool_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "BOOLEAN", (blanks ? "" : " NOT NULL"));
-                }
-                void print(number_column_tag) override {
-                    to_stream(stream, "FLOAT");
-                }
-                void print(number_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "FLOAT", (blanks ? "" : " NOT NULL"));
-                }
-                void print(datetime_column_tag) override {
-                    to_stream(stream, "TIMESTAMP");
-                }
-                void print(datetime_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "TIMESTAMP");
-                }
-                void print(date_column_tag) override {
-                    to_stream(stream, "DATE");
-                }
-                void print(date_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "DATE", (blanks ? "" : " NOT NULL"));
-                }
-                void print(timedelta_column_tag) override {
-                    to_stream(stream, "DATETIME");
-                }
-                void print(timedelta_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "DATETIME", (blanks ? "" : " NOT NULL"));
-                }
-                void print(text_column_tag) override {
-                    to_stream(stream, "VARCHAR");
-                }
-                void print(text_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "VARCHAR", (blanks ? "" : " NOT NULL"));
-                }
+                void print(bool_column_tag) override { to_stream(stream, "BOOL"); }
+                void print(bool_column_tag, bool blanks, unsigned) override { to_stream(stream, "BOOL", (blanks ? "" : " NOT NULL")); }
+                void print(number_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "DECIMAL(38, ", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
+                void print(text_column_tag) override { throw std::runtime_error("VARCHAR requires a length on dialect mysql"); }
+                void print(text_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "VARCHAR(", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
             };
 
-            struct generic_printer : sqlite_printer {
-                void print_name(std::string const & name) override {
-                    print_name_or_quoted_name(name, '"');
-                }
-                void print(number_column_tag) override {
-                    to_stream(stream, "DECIMAL");
-                }
-                void print(number_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "DECIMAL", (blanks ? "" : " NOT NULL"));
-                }
+            struct postgresql_printer : generic_printer {
+                void print(datetime_column_tag) override { to_stream(stream, "TIMESTAMP WITHOUT TIME ZONE"); }
+                void print(datetime_column_tag, bool blanks, unsigned) override { to_stream(stream, "TIMESTAMP WITHOUT TIME ZONE"); }
+                void print(timedelta_column_tag) override { to_stream(stream, "INTERVAL"); }
+                void print(timedelta_column_tag, bool blanks, unsigned) override { to_stream(stream, "INTERVAL", (blanks ? "" : " NOT NULL")); }
             };
 
-            struct firebird_printer : printer {
-                void print_name(std::string const & name) override {
-                    print_name_or_quoted_name(name, '"');
-                }
-                void print(bool_column_tag) override {
-                    to_stream(stream, "BOOLEAN");
-                }
-                void print(bool_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "BOOLEAN", (blanks ? "" : " NOT NULL"));
-                }
-                void print(number_column_tag) override {
-                    to_stream(stream, "DECIMAL");
-                }
-                void print(number_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "DECIMAL", (blanks ? "" : " NOT NULL"));
-                }
-                void print(datetime_column_tag) override {
-                    to_stream(stream, "TIMESTAMP");
-                }
-                void print(datetime_column_tag, bool blanks, unsigned) override {
-                    to_stream(stream, "TIMESTAMP");
-                }
-                void print(date_column_tag) override {
-                    to_stream(stream, "DATE");
-                }
-                void print(date_column_tag, bool blanks, unsigned) override { to_stream(stream, "DATE", (blanks ? "" : " NOT NULL"));}
+            struct sqlite_printer : generic_printer {
+                void print(number_column_tag) override { to_stream(stream, "FLOAT"); }
+                void print(number_column_tag, bool blanks, unsigned) override { to_stream(stream, "FLOAT", (blanks ? "" : " NOT NULL")); }
+            };
+
+            struct firebird_printer : generic_printer {
                 void print(timedelta_column_tag) override { to_stream(stream, "TIMESTAMP");}
                 void print(timedelta_column_tag, bool blanks, unsigned) override { to_stream(stream, "TIMESTAMP", (blanks ? "" : " NOT NULL"));}
                 void print(text_column_tag) override { throw std::runtime_error("VARCHAR requires a length on dialect firebird");}
@@ -413,17 +294,38 @@ namespace csvsql::detail {
             ++file_no;
         }
 
-        [[nodiscard]] std::string table() const {
+        [[nodiscard]] static std::string table() {
             return print_director::table();
         }
 
     };
 
+    struct table_inserter {
+        table_inserter(soci::session & sql, create_table_composer & composer, auto & reader) {
+            sql.begin();
+            sql << create_table_composer::table();
+            sql << "insert into iris(sepal_length,sepal_width,petal_length,petal_width,species) values(5.1,3.5,1.4,0.2,\"Iris-setosa\")";
+            sql.commit();
+        }
+    };
+
+    struct query {
+        query(soci::session & sql, std::string q) {
+            soci::row r;
+            sql << q, into(r);
+            std::cout << r.size() << std::endl;
+        }
+    };
+
+    void reset_environment() {
+        create_table_composer::file_no = 0;
+    }
+
 } ///detail
 
 static
-struct windows_backend_dependancy {
-    windows_backend_dependancy() {
+struct soci_backend_dependancy {
+    soci_backend_dependancy() {
     #if !defined(__unix__)
       #if !defined(BOOST_UT_DISABLE_MODULE)
         std::string path = getenv("PATH");
@@ -436,11 +338,11 @@ struct windows_backend_dependancy {
       #endif
     #endif
     }
-} wbd;
+} sbd;
 
 namespace csvsql {
     template <typename ReaderType>
-    void sql(auto const & args) {
+    void sql(auto & args) {
 
         using namespace csv_co;
         using namespace detail;
@@ -483,15 +385,29 @@ namespace csvsql {
         if (args.chunk_size and !args.insert)
             throw std::runtime_error(need_insert("--chunk-size"));
 
-
+        reset_environment();
         readers_manager<ReaderType> r_man;
         r_man.template set_readers<ReaderType>(args);
 
-        for (auto & r : r_man.get_readers()) {
-            create_table_composer ctc (r, args, table_names);
-            if (args.db.empty() and args.query.empty())
-                std::cout << ctc.table();
+        if (args.db.empty() and args.query.empty()) {
+            for (auto & r : r_man.get_readers()) {
+                create_table_composer composer (r, args, table_names);
+                std::cout << composer.table();
+            }
+            return;
         }
+        if (args.db.empty()) {
+            args.db = "sqlite3://db=:memory:";
+        }
+
+        soci::session session(args.db);
+        for (auto & reader : r_man.get_readers()) {
+            create_table_composer composer (reader, args, table_names);
+            table_inserter ti (session, composer, reader);
+        }
+
+        query q(session, args.query);
+
     }
 
 }
@@ -519,4 +435,5 @@ int main(int argc, char * argv[]) {
         std::cout << "Unknown exception.\n";
     }
 }
+
 #endif

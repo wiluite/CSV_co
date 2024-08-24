@@ -12,7 +12,6 @@
 #include "test_reader_macros.h"
 #include "test_max_field_size_macros.h"
 
-//TODO: add all "stdin" tests
 int main() {
     using namespace boost::ut;
     namespace tf = csvkit::test_facilities;
