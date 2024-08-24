@@ -919,8 +919,13 @@ namespace csvkit::cli {
         #undef SETUP_BLANKS
 
         task->wait();
-        for (auto elem : task_vec)
+        for (auto & elem : task_vec) {
             assert(elem != column_type::unknown_t);
+            if (args.no_inference and elem != column_type::text_t) {
+                assert(elem == column_type::bool_t);  // all nulls in a column otherwise boolean
+                elem = column_type::text_t;           // force setting it to text
+            }
+        }
 
         if (option == typify_option::typify_with_precisions)
             return std::tuple{task_vec, blanks, precisions};
