@@ -205,6 +205,17 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
+add_custom_command(
+        TARGET csvstat_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_utf8.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_utf8.csv)
+add_custom_command(
+        TARGET csvstat_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_latin1.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_latin1.csv)
+
 
 target_link_libraries(csvstat_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvstat_test csvstat_test)

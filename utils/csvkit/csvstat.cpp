@@ -410,7 +410,7 @@ namespace csvstat {
                     setup_date_parser_backend(reader, args);
 
                     //TODO: for now e.is_null() calling first is obligate. Can we do better?
-#define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = true;
+                    #define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = true;
 
                     auto task = transwarp::for_each(exec, column_numbers.cbegin(), column_numbers.cend(), [&](auto c) {
                         if (std::all_of(table[c].cbegin(), table[c].cend(), [&blanks, &c, &args](auto & e) {
@@ -459,15 +459,20 @@ namespace csvstat {
                         }
                     });
                     task->wait();
-#undef SETUP_BLANKS
+                    #undef SETUP_BLANKS
 
-                    for (auto elem : task_vec)
+                    for (auto & elem : task_vec) {
                         assert(elem != column_type::unknown_t);
+                        if (args.no_inference and elem != column_type::text_t) {
+                            assert(elem == column_type::bool_t);  // all nulls in a column otherwise boolean
+                            elem = column_type::text_t;           // force setting it to text
+                        }
+                    }
 
-                    return std::tuple{task_vec, blanks, std::vector<std::size_t>{}};
+                    return std::tuple{task_vec, blanks};
                 };
 
-                auto [types, blanks, _] = detect_types_and_blanks(transposed_2d);
+                auto [types, blanks] = detect_types_and_blanks(transposed_2d);
 
                 using tabular_t = std::decay_t<decltype(transposed_2d)>;
                 using args_type = std::decay_t<decltype(args)>;
@@ -832,8 +837,16 @@ namespace csvstat {
         common_lambda = first_loop_lambda;
 
         std::size_t null_number = 0;
-        unsigned char mdp = 0; 
-        for (auto const & elem : slice) {
+        unsigned char mdp = 0;
+
+        using elem_t = decltype(slice[0]);
+        std::function<unsigned char(elem_t&)> mdp_calc;
+        if (this->args().get().no_mdp)
+            mdp_calc = [&](elem_t&) { return 0; };
+        else
+            mdp_calc = [&](elem_t& elem) { return std::max(elem.precision(), mdp); };
+
+        for (auto & elem : slice) {
             assert(elem.is_num() || elem.is_null());
             if (!elem.is_null()) {
                 current_n++;
@@ -845,7 +858,7 @@ namespace csvstat {
                 common_lambda(element_value);
                 mcv_map_[element_value]++;
                 ++B::non_nulls();
-                mdp = std::max(elem.precision(), mdp);
+                mdp = mdp_calc(elem);
             } else 
                 null_number++;
         }
