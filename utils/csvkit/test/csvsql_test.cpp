@@ -225,10 +225,10 @@ int main() {
         expect(cout_buffer.str().find(R"(CREATE TABLE "dummy")") != std::string::npos);
     };
 
-#if 0
     "query"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
             Args() {
+                db = "sqlite3://db=:memory:";
                 files = std::vector<std::string>{"iris.csv", "irismeta.csv"};
                 query = "SELECT m.usda_id, avg(i.sepal_length) AS mean_sepal_length FROM iris "
                         "AS i JOIN irismeta AS m ON (i.species = m.species) GROUP BY m.species";
@@ -238,8 +238,7 @@ int main() {
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvsql::sql<notrimming_reader_type>(args)
         )
-        std::cout << cout_buffer.str() << std::endl; 
+        std::cout << cout_buffer.str() << std::endl;
     };
-#endif
 
 }

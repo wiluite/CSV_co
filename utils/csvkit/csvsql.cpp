@@ -279,15 +279,21 @@ namespace csvsql::detail {
             }
             return "generic";
         }
+        std::vector<std::string> header_;
+        std::vector<column_type> types_;
+        std::vector<bool> blanks_;
     public:
         create_table_composer(auto & reader, auto const & args, std::vector<std::string> const & table_names) {
 
             auto const info = typify(reader, args, !args.no_constraints ? typify_option::typify_with_precisions : typify_option::typify_without_precisions);
             skip_lines(reader, args);
             auto const header = obtain_header_and_<skip_header>(reader, args);
+            header_ = header_to_strings<csv_co::unquoted>(header);
 
             print_director print_director_(args, table_names);
             std::visit([&](auto & arg) {
+                types_ = std::get<0>(arg);
+                blanks_ = std::get<1>(arg);
                 print_director_.direct(reader, arg, dialect(args), header);
             }, info);
 
@@ -298,22 +304,114 @@ namespace csvsql::detail {
             return print_director::table();
         }
 
+        [[nodiscard]] auto const & header() const { return header_; }
+        [[nodiscard]] auto const & types() const { return types_; }
+        [[nodiscard]] auto const & blanks() const { return blanks_; }
     };
 
-    struct table_inserter {
-        table_inserter(soci::session & sql, create_table_composer & composer, auto & reader) {
-            sql.begin();
+    class table_creator {
+    public:
+        explicit table_creator (soci::session & sql) {
             sql << create_table_composer::table();
-            sql << "insert into iris(sepal_length,sepal_width,petal_length,petal_width,species) values(5.1,3.5,1.4,0.2,\"Iris-setosa\")";
-            sql.commit();
+        }
+    };
+
+    class table_inserter {
+
+        std::string insert_expr() const {
+            auto const table = create_table_composer::table();
+            std::string expr = "insert into ";
+            auto pos = table.find('(', 13);
+            expr += std::string(table.begin() + 13, table.begin() + pos + 1);
+            std::string values;
+            unsigned counter = 0;
+            while (pos = table.find('\t', pos + 1), pos != std::string::npos) {
+                 expr += std::string(table.begin() + pos + 1, table.begin() + table.find(' ', pos + 1)) + ",";
+                 values += ":v" + std::to_string(counter++) + ',';
+            }
+            expr.back() = ')';
+            expr += " values (" + values;
+            expr.back() = ')';
+            return expr;
+        }
+
+        template<template<class...> class F, class L> struct mp_transform_impl;
+        template<template<class...> class F, class L>
+        using mp_transform = typename mp_transform_impl<F, L>::type;
+        template<template<class...> class F, template<class...> class L, class... T>
+        struct mp_transform_impl<F, L<T...>> {
+            using type = L<F<T>...>;
+        };
+
+        using generic_bool = int32_t;
+        using db_types=std::variant<double, std::string, std::tm, generic_bool>;
+        using db_types_ptr = mp_transform<std::add_pointer_t, db_types>;
+
+        std::vector<db_types> data_holder;
+        using ct = column_type;
+        std::map<ct, db_types> type2value = {{ct::bool_t, generic_bool{}}, {ct::text_t, std::string{}}, {ct::number_t, double{}}
+            , {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, double{}}
+        };
+
+        inline static unsigned value_index;
+        void static reset_value_index() {
+            value_index = 0;
+        }
+
+        db_types_ptr& prepare_next_arg(auto arg) {
+            static db_types_ptr each_next;
+            data_holder[value_index] = type2value[arg];
+            std::visit([&](auto & arg) {
+                each_next = &arg;
+            }, data_holder[value_index++]);
+            return each_next;
+        };
+
+        void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt) {
+            using reader_type = std::decay_t<decltype(reader)>;
+            using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
+            using func_type = std::function<void(elem_type const&)>;
+
+            auto col = 0u;
+            static std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
+                [&](elem_type const & value) { assert(false && "not implemented"); },
+                [&](elem_type const & e) { data_holder[col] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool()); },
+                [&](elem_type const & e) { data_holder[col] = static_cast<double>(e.num()); },
+                [&](elem_type const & value) { assert(false && "not implemented"); },
+                [&](elem_type const & value) { assert(false && "not implemented"); },
+                [&](elem_type const & value) { assert(false && "not implemented"); },
+                [&](elem_type const & e) { assert(false && "not implemented"); }
+            };
+
+            reader.run_rows([&] (auto & row_span) {
+                col = 0u;
+                for (auto & elem : row_span) {
+                    fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
+                    col++;
+                }
+                stmt.execute(true);
+            });
+        }
+
+    public:
+        table_inserter(soci::session & sql, create_table_composer & composer, auto & reader) {
+            data_holder.resize(composer.types().size());
+
+            auto prep = sql.prepare.operator<<(insert_expr().c_str());
+            reset_value_index();
+            for(auto e : composer.types()) {
+                std::visit([&](auto & arg) {
+                    prep = prep,(soci::use(*arg));
+                }, prepare_next_arg(e));
+            }
+            soci::statement stmt = prep;
+
+            insert_data(reader, composer, stmt);
         }
     };
 
     struct query {
         query(soci::session & sql, std::string q) {
-            soci::row r;
-            sql << q, into(r);
-            std::cout << r.size() << std::endl;
         }
     };
 
@@ -344,7 +442,6 @@ namespace csvsql {
     template <typename ReaderType>
     void sql(auto & args) {
 
-        using namespace csv_co;
         using namespace detail;
 
         std::vector<std::string> table_names;
@@ -392,22 +489,21 @@ namespace csvsql {
         if (args.db.empty() and args.query.empty()) {
             for (auto & r : r_man.get_readers()) {
                 create_table_composer composer (r, args, table_names);
-                std::cout << composer.table();
             }
             return;
         }
-        if (args.db.empty()) {
+        if (args.db.empty())
             args.db = "sqlite3://db=:memory:";
-        }
 
         soci::session session(args.db);
+
         for (auto & reader : r_man.get_readers()) {
-            create_table_composer composer (reader, args, table_names);
-            table_inserter ti (session, composer, reader);
+            create_table_composer composer(reader, args, table_names);
+            table_creator creator(session);
+            if (args.insert)
+                table_inserter ti(session, composer, reader);
         }
-
         query q(session, args.query);
-
     }
 
 }
