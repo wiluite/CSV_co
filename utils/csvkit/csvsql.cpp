@@ -380,7 +380,7 @@ namespace csvsql::detail {
                 [&](elem_type const & value) { assert(false && "not implemented"); },
                 [&](elem_type const & value) { assert(false && "not implemented"); },
                 [&](elem_type const & value) { assert(false && "not implemented"); },
-                [&](elem_type const & e) { assert(false && "not implemented"); }
+                [&](elem_type const & e) { data_holder[col] = e.str(); }
             };
 
             reader.run_rows([&] (auto & row_span) {
@@ -411,7 +411,51 @@ namespace csvsql::detail {
     };
 
     struct query {
-        query(soci::session & sql, std::string q) {
+        query(soci::session & sql, std::string const & q) {
+            using namespace soci;
+
+            rowset<row> rs = (sql.prepare << q.c_str());
+            bool print_header = false;
+            for (auto it = rs.begin(); it != rs.end(); ++it) {
+                row const &rr = (*it);
+                if (!print_header) {
+                    std::cout << rr.get_properties(0).get_name();
+                    for (std::size_t i = 1; i != rr.size(); ++i)
+                        std::cout << ',' << rr.get_properties(i).get_name();
+                    std::cout << '\n';
+                    print_header = true;
+                }
+                auto print_data = [&](std::size_t i) {
+                    column_properties const & props = rr.get_properties(i);
+                    switch(props.get_db_type())
+                    {
+                        case db_string:
+                            std::cout << rr.get<std::string>(i);
+                            break;
+                        case db_double:
+                            std::cout << rr.get<double>(i);
+                            break;
+                        case db_int32:
+                            std::cout << std::boolalpha << static_cast<bool>(rr.get<int32_t>(i));
+                            break;
+                        case db_date:
+                            //std::tm when = rr.get<std::tm>(i);
+                            //cout << asctime(&when);
+                            break;
+                        case db_blob:
+                            break;
+                        case db_xml:
+                            break;
+                        default:
+                            break;
+                    }
+                };
+                print_data(0);
+                for (std::size_t i = 1; i != rr.size(); ++i) {
+                    std::cout << ','; print_data(i);
+                }
+                std::cout << '\n';
+            }
         }
     };
 
@@ -489,6 +533,7 @@ namespace csvsql {
         if (args.db.empty() and args.query.empty()) {
             for (auto & r : r_man.get_readers()) {
                 create_table_composer composer (r, args, table_names);
+                std::cout << composer.table();
             }
             return;
         }
@@ -500,7 +545,7 @@ namespace csvsql {
         for (auto & reader : r_man.get_readers()) {
             create_table_composer composer(reader, args, table_names);
             table_creator creator(session);
-            if (args.insert)
+            if (args.insert or args.db.find(":memory:") != std::string::npos)
                 table_inserter ti(session, composer, reader);
         }
         query q(session, args.query);
