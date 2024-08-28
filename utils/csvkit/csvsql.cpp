@@ -348,9 +348,10 @@ namespace csvsql::detail {
         using db_types_ptr = mp_transform<std::add_pointer_t, db_types>;
 
         std::vector<db_types> data_holder;
+        std::vector<soci::indicator> indicators;
         using ct = column_type;
         std::map<ct, db_types> type2value = {{ct::bool_t, generic_bool{}}, {ct::text_t, std::string{}}, {ct::number_t, double{}}
-            , {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, double{}}
+            , {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, std::tm{}}
         };
 
         inline static unsigned value_index;
@@ -363,7 +364,7 @@ namespace csvsql::detail {
             data_holder[value_index] = type2value[arg];
             std::visit([&](auto & arg) {
                 each_next = &arg;
-            }, data_holder[value_index++]);
+            }, data_holder[value_index]);
             return each_next;
         };
 
@@ -374,13 +375,37 @@ namespace csvsql::detail {
 
             auto col = 0u;
             static std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
-                [&](elem_type const & value) { assert(false && "not implemented"); },
-                [&](elem_type const & e) { data_holder[col] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool()); },
-                [&](elem_type const & e) { data_holder[col] = static_cast<double>(e.num()); },
-                [&](elem_type const & value) { assert(false && "not implemented"); },
-                [&](elem_type const & value) { assert(false && "not implemented"); },
-                [&](elem_type const & value) { assert(false && "not implemented"); },
-                [&](elem_type const & e) { data_holder[col] = e.str(); }
+                [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
+                , [&](elem_type const & e) {
+                    if (!e.is_null()) {
+                        data_holder[col] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
+                        indicators[col] = soci::i_ok;
+                    } else {
+                        data_holder[col] = static_cast<generic_bool>(false);
+                        indicators[col] = soci::i_null;
+                    }
+                }
+                , [&](elem_type const & e) {
+                    if (!e.is_null()) {
+                        data_holder[col] = static_cast<double>(e.num());
+                        indicators[col] = soci::i_ok;
+                    } else {
+                        data_holder[col] = static_cast<double>(0);
+                        indicators[col] = soci::i_null;
+                    }
+                }
+                , [&](elem_type const & e) { data_holder[col] = std::tm{}; /*assert(false && "not implemented");*/ }
+                , [&](elem_type const & e) {
+                    if (!e.is_null()) {
+                        data_holder[col] = std::tm{};
+                        indicators[col] = soci::i_ok;
+                    } else {
+                        data_holder[col] = std::tm{};
+                        indicators[col] = soci::i_null;
+                    }
+                }
+                , [&](elem_type const & e) { data_holder[col] = std::tm{}; /*assert(false && "not implemented");*/ }
+                , [&](elem_type const & e) { data_holder[col] = e.str(); }
             };
 
             reader.run_rows([&] (auto & row_span) {
@@ -396,65 +421,87 @@ namespace csvsql::detail {
     public:
         table_inserter(soci::session & sql, create_table_composer & composer, auto & reader) {
             data_holder.resize(composer.types().size());
+            indicators.resize(composer.types().size(), soci::i_ok);
 
+            sql.begin();
             auto prep = sql.prepare.operator<<(insert_expr().c_str());
             reset_value_index();
             for(auto e : composer.types()) {
                 std::visit([&](auto & arg) {
-                    prep = prep,(soci::use(*arg));
+                    prep = prep,(soci::use(*arg, indicators[value_index]));
                 }, prepare_next_arg(e));
+                value_index++;
             }
             soci::statement stmt = prep;
-
             insert_data(reader, composer, stmt);
+            sql.commit();
         }
     };
 
-    struct query {
+    class query {
+        void update_query(std::string & q) {
+            if (std::filesystem::exists(std::filesystem::path{q})) {
+                std::ifstream f (q);
+                assert(f.is_open());
+                std::string line;
+                q = {};
+                while (getline(f, line))
+                    q += line;
+                f.close();
+            }
+        }
+    public:
         query(soci::session & sql, std::string const & q) {
-            using namespace soci;
+            if (!q.empty()) {
+                auto query {q};
+                update_query(query);
 
-            rowset<row> rs = (sql.prepare << q.c_str());
-            bool print_header = false;
-            for (auto it = rs.begin(); it != rs.end(); ++it) {
-                row const &rr = (*it);
-                if (!print_header) {
-                    std::cout << rr.get_properties(0).get_name();
-                    for (std::size_t i = 1; i != rr.size(); ++i)
-                        std::cout << ',' << rr.get_properties(i).get_name();
-                    std::cout << '\n';
-                    print_header = true;
-                }
-                auto print_data = [&](std::size_t i) {
-                    column_properties const & props = rr.get_properties(i);
-                    switch(props.get_db_type())
-                    {
-                        case db_string:
-                            std::cout << rr.get<std::string>(i);
-                            break;
-                        case db_double:
-                            std::cout << rr.get<double>(i);
-                            break;
-                        case db_int32:
-                            std::cout << std::boolalpha << static_cast<bool>(rr.get<int32_t>(i));
-                            break;
-                        case db_date:
-                            //std::tm when = rr.get<std::tm>(i);
-                            //cout << asctime(&when);
-                            break;
-                        case db_blob:
-                            break;
-                        case db_xml:
-                            break;
-                        default:
-                            break;
+                using namespace soci;
+
+                rowset<row> rs = (sql.prepare << query.c_str());
+                bool print_header = false;
+                for (auto it = rs.begin(); it != rs.end(); ++it) {
+                    row const &rr = (*it);
+                    if (!print_header) {
+                        std::cout << rr.get_properties(0).get_name();
+                        for (std::size_t i = 1; i != rr.size(); ++i)
+                            std::cout << ',' << rr.get_properties(i).get_name();
+                        std::cout << '\n';
+                        print_header = true;
                     }
-                };
-                print_data(0);
-                for (std::size_t i = 1; i != rr.size(); ++i) {
-                    std::cout << ','; print_data(i);
+                    auto print_data = [&](std::size_t i) {
+                        column_properties const & props = rr.get_properties(i);
+                        std::tm when;
+                        switch(props.get_db_type())
+                        {
+                            case db_string:
+                                std::cout << rr.get<std::string>(i);
+                                break;
+                            case db_double:
+                                std::cout << rr.get<double>(i);
+                                break;
+                            case db_int32:
+                                std::cout << std::boolalpha << static_cast<bool>(rr.get<int32_t>(i));
+                                break;
+                            case db_date:
+                                when = rr.get<std::tm>(i);
+                                std::cout << asctime(&when);
+                                break;
+                            case db_blob:
+                                break;
+                            case db_xml:
+                                break;
+                            default:
+                                break;
+                        }
+                    };
+                    print_data(0);
+                    for (std::size_t i = 1; i != rr.size(); ++i) {
+                        std::cout << ',';
+                        print_data(i);
+                    }
+                    std::cout << '\n';
                 }
-                std::cout << '\n';
             }
         }
     };
@@ -538,15 +585,21 @@ namespace csvsql {
             return;
         }
         if (args.db.empty())
-            args.db = "sqlite3://db=:memory:";
+            args.db = "sqlite3://db=:memory: timeout=2 share-cache=true";
 
         soci::session session(args.db);
 
         for (auto & reader : r_man.get_readers()) {
-            create_table_composer composer(reader, args, table_names);
-            table_creator creator(session);
-            if (args.insert or args.db.find(":memory:") != std::string::npos)
-                table_inserter ti(session, composer, reader);
+            try {
+                create_table_composer composer(reader, args, table_names);
+                table_creator creator(session);
+                if (args.insert or (args.db.find(":memory:") != std::string::npos and !args.query.empty()))
+                    table_inserter ti(session, composer, reader);
+            } catch(std::exception & e) {
+                if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
+                    continue;
+                throw;
+            }
         }
         query q(session, args.query);
     }
@@ -568,6 +621,9 @@ int main(int argc, char * argv[]) {
             csvsql::sql<notrimming_reader_type>(args);
         else
             csvsql::sql<skipinitspace_reader_type>(args);
+    }
+    catch (soci::soci_error const & e) {
+        std::cout << e.what() << std::endl;
     }
     catch (std::exception const & e) {
         std::cout << e.what() << std::endl;

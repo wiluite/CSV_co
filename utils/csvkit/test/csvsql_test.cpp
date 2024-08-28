@@ -228,7 +228,6 @@ int main() {
     "query"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
             Args() {
-                db = "sqlite3://db=:memory:";
                 files = std::vector<std::string>{"iris.csv", "irismeta.csv"};
                 query = "SELECT m.usda_id, avg(i.sepal_length) AS mean_sepal_length FROM iris "
                         "AS i JOIN irismeta AS m ON (i.species = m.species) GROUP BY m.species";
@@ -238,7 +237,74 @@ int main() {
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvsql::sql<notrimming_reader_type>(args)
         )
-        std::cout << cout_buffer.str() << std::endl;
+        expect(cout_buffer.str().find("usda_id,mean_sepal_length") != std::string::npos);
+        expect(cout_buffer.str().find("IRSE,5.00") != std::string::npos);
+        expect(cout_buffer.str().find("IRVE2,5.936") != std::string::npos);
+        expect(cout_buffer.str().find("IRVI,6.58") != std::string::npos);
+    };
+#if 0
+    "query empty"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            Args() {
+                files = std::vector<std::string>{};
+                query = "SELECT 1";
+            }
+        } args;
+
+        std::istringstream iss(" ");
+        auto cin_buf = std::cin.rdbuf();
+        std::cin.rdbuf(iss.rdbuf());
+        CALL_TEST_AND_REDIRECT_TO_COUT(
+            csvsql::sql<notrimming_reader_type>(args)
+        )
+        std::cin.rdbuf(cin_buf);
+        expect(cout_buffer.str() == "1\n1\n");
     };
 
+    "query text"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            Args() {
+                files = std::vector<std::string>{"testfixed_converted2.csv"};
+                query = "SELECT text FROM testfixed_converted2 WHERE text LIKE \"Chicago%\"";
+            }
+        } args;
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(
+            csvsql::sql<notrimming_reader_type>(args)
+        )
+
+        expect(cout_buffer.str() == "text\nChicago Reader\nChicago Sun-Times\nChicago Tribune\n");
+    };
+
+    "query file"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            Args() {
+                files = std::vector<std::string>{"testfixed_converted3.csv"};
+                query = "test_query.sql"; //TODO: see multiple queries in the file. Do the same.
+            }
+        } args;
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(
+            csvsql::sql<notrimming_reader_type>(args)
+        )
+
+        expect(cout_buffer.str() == "text\nChicago Reader\nChicago Sun-Times\nChicago Tribune\n");
+    };
+
+    "query update"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            Args() {
+                files = std::vector<std::string>{"dummy.csv"};
+                no_inference = true;
+                query = "UPDATE dummy SET a=10 WHERE a=1";
+            }
+        } args;
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(
+            csvsql::sql<notrimming_reader_type>(args)
+        )
+
+        expect(cout_buffer.str() == "");
+    };
+#endif
 }
