@@ -53,7 +53,7 @@ if (IO_CSVKIT_UTILS)
     )
     target_link_libraries(csvsql PRIVATE
         libcppp-reiconv.static
-        simdutf
+        simdutf -lpthread
         soci_core
     )
     if (UNIX)

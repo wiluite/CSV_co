@@ -242,7 +242,7 @@ int main() {
         expect(cout_buffer.str().find("IRVE2,5.936") != std::string::npos);
         expect(cout_buffer.str().find("IRVI,6.58") != std::string::npos);
     };
-#if 0
+
     "query empty"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
             Args() {
@@ -264,8 +264,8 @@ int main() {
     "query text"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted2.csv"};
-                query = "SELECT text FROM testfixed_converted2 WHERE text LIKE \"Chicago%\"";
+                files = std::vector<std::string>{"testfixed_converted.csv"};
+                query = "SELECT text FROM testfixed_converted WHERE text LIKE \"Chicago%\"";
             }
         } args;
 
@@ -275,7 +275,7 @@ int main() {
 
         expect(cout_buffer.str() == "text\nChicago Reader\nChicago Sun-Times\nChicago Tribune\n");
     };
-
+#if 0
     "query file"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
             Args() {

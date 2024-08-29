@@ -318,15 +318,16 @@ namespace csvsql::detail {
 
     class table_inserter {
 
-        std::string insert_expr() const {
+        [[nodiscard]] std::string static insert_expr() {
             auto const table = create_table_composer::table();
             std::string expr = "insert into ";
             auto pos = table.find('(', 13);
-            expr += std::string(table.begin() + 13, table.begin() + pos + 1);
+            expr += std::string(table.begin() + 13, table.begin() + static_cast<std::ptrdiff_t>(pos) + 1);
             std::string values;
             unsigned counter = 0;
             while (pos = table.find('\t', pos + 1), pos != std::string::npos) {
-                 expr += std::string(table.begin() + pos + 1, table.begin() + table.find(' ', pos + 1)) + ",";
+                 expr += std::string(table.begin() + static_cast<std::ptrdiff_t>(pos) + 1
+                         , table.begin() + static_cast<std::ptrdiff_t>(table.find(' ', pos + 1))) + ",";
                  values += ":v" + std::to_string(counter++) + ',';
             }
             expr.back() = ')';
@@ -394,8 +395,8 @@ namespace csvsql::detail {
                         indicators[col] = soci::i_null;
                     }
                 }
-                , [&](elem_type const & e) { data_holder[col] = std::tm{}; /*assert(false && "not implemented");*/ }
                 , [&](elem_type const & e) {
+                    // STUB
                     if (!e.is_null()) {
                         data_holder[col] = std::tm{};
                         indicators[col] = soci::i_ok;
@@ -404,7 +405,26 @@ namespace csvsql::detail {
                         indicators[col] = soci::i_null;
                     }
                 }
-                , [&](elem_type const & e) { data_holder[col] = std::tm{}; /*assert(false && "not implemented");*/ }
+                , [&](elem_type const & e) {
+                    // STUB
+                    if (!e.is_null()) {
+                        data_holder[col] = std::tm{};
+                        indicators[col] = soci::i_ok;
+                    } else {
+                        data_holder[col] = std::tm{};
+                        indicators[col] = soci::i_null;
+                    }
+                }
+                , [&](elem_type const & e) {
+                    // STUB
+                    if (!e.is_null()) {
+                        data_holder[col] = std::tm{};
+                        indicators[col] = soci::i_ok;
+                    } else {
+                        data_holder[col] = std::tm{};
+                        indicators[col] = soci::i_null;
+                    }
+                }
                 , [&](elem_type const & e) { data_holder[col] = e.str(); }
             };
 
@@ -428,7 +448,7 @@ namespace csvsql::detail {
             reset_value_index();
             for(auto e : composer.types()) {
                 std::visit([&](auto & arg) {
-                    prep = prep.operator,(soci::use(*arg, indicators[value_index]));
+                    prep = std::move(prep.operator,(soci::use(*arg, indicators[value_index])));
                 }, prepare_next_arg(e));
                 value_index++;
             }
@@ -439,7 +459,7 @@ namespace csvsql::detail {
     };
 
     class query {
-        void update_query(std::string & q) {
+        static void update_query(std::string & q) {
             if (std::filesystem::exists(std::filesystem::path{q})) {
                 std::ifstream f (q);
                 assert(f.is_open());
@@ -460,8 +480,8 @@ namespace csvsql::detail {
 
                 rowset<row> rs = (sql.prepare << query.c_str());
                 bool print_header = false;
-                for (auto it = rs.begin(); it != rs.end(); ++it) {
-                    row const &rr = (*it);
+                for (auto && elem : rs) {
+                    row const &rr = elem;
                     if (!print_header) {
                         std::cout << rr.get_properties(0).get_name();
                         for (std::size_t i = 1; i != rr.size(); ++i)
@@ -471,7 +491,7 @@ namespace csvsql::detail {
                     }
                     auto print_data = [&](std::size_t i) {
                         column_properties const & props = rr.get_properties(i);
-                        std::tm when;
+                        std::tm when{};
                         switch(props.get_db_type())
                         {
                             case db_string:
@@ -486,10 +506,6 @@ namespace csvsql::detail {
                             case db_date:
                                 when = rr.get<std::tm>(i);
                                 std::cout << asctime(&when);
-                                break;
-                            case db_blob:
-                                break;
-                            case db_xml:
                                 break;
                             default:
                                 break;
@@ -512,11 +528,11 @@ namespace csvsql::detail {
 
 } ///detail
 
+#if !defined(__unix__)
 static
 struct soci_backend_dependancy {
     soci_backend_dependancy() {
-    #if !defined(__unix__)
-      #if !defined(BOOST_UT_DISABLE_MODULE)
+    #if !defined(BOOST_UT_DISABLE_MODULE)
         std::string path = getenv("PATH");
         path = "PATH=" + path + ";..\\..\\external_deps";
         putenv(path.c_str());
@@ -524,10 +540,10 @@ struct soci_backend_dependancy {
         std::string path = getenv("PATH");
         path = "PATH=" + path + ";..\\..\\..\\external_deps";
         putenv(path.c_str());
-      #endif
     #endif
     }
 } sbd;
+#endif
 
 namespace csvsql {
     template <typename ReaderType>
@@ -580,10 +596,11 @@ namespace csvsql {
         if (args.db.empty() and args.query.empty()) {
             for (auto & r : r_man.get_readers()) {
                 create_table_composer composer (r, args, table_names);
-                std::cout << composer.table();
+                std::cout << create_table_composer::table();
             }
             return;
         }
+
         if (args.db.empty())
             args.db = "sqlite3://db=:memory: timeout=2 share-cache=true";
 

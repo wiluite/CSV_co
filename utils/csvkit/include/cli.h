@@ -852,6 +852,7 @@ namespace csvkit::cli {
         setup_date_parser_backend(reader, args);
 
         //TODO: for now e.is_null() calling first is obligate. Can we do better?
+
         #define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = 1;
 
         auto task = transwarp::for_each(exec, column_numbers.cbegin(), column_numbers.cend(), [&](auto c) {
@@ -907,7 +908,7 @@ namespace csvkit::cli {
             }
             // Text type: check ALL rows for an absent.
             if (std::all_of(table[c].begin(), table[c].end(), [&](auto &e) {
-                if (!blanks[c] && e.is_null() && !args.blanks)
+                if (e.is_null() && !blanks[c] && !args.blanks)
                     blanks[c] = true;
                 return true;
             })) {
@@ -919,6 +920,7 @@ namespace csvkit::cli {
         #undef SETUP_BLANKS
 
         task->wait();
+
         for (auto & elem : task_vec) {
             assert(elem != column_type::unknown_t);
             if (args.no_inference and elem != column_type::text_t) {
@@ -926,7 +928,6 @@ namespace csvkit::cli {
                 elem = column_type::text_t;           // force setting it to text
             }
         }
-
         if (option == typify_option::typify_with_precisions)
             return std::tuple{task_vec, blanks, precisions};
         else
