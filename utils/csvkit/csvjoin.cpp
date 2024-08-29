@@ -149,7 +149,7 @@ namespace csvjoin::detail {
         }
 
         // Pure single file in input
-        using ts_n_blanks_type = std::tuple<std::vector<::csvkit::cli::column_type>, std::vector<bool>>;
+        using ts_n_blanks_type = std::tuple<std::vector<::csvkit::cli::column_type>, std::vector<unsigned char>>;
         template<CsvReaderConcept R>
         void write(R && r, auto && types_n_blanks, auto && args)  {
             r.run_rows([&](auto & span) {
@@ -241,7 +241,7 @@ namespace csvjoin::detail {
         using reader_type = std::variant_alternative_t<0, typename std::decay_t<decltype(deq)>::value_type>;
         std::deque<unsigned> c_ids;
         std::deque<std::vector<std::string>> headers;
-        std::deque<std::tuple<std::vector<column_type>, std::vector<bool>>> ts_n_blanks;
+        std::deque<std::tuple<std::vector<column_type>, std::vector<unsigned char>>> ts_n_blanks;
 
         if (args.right_join)
             std::reverse(join_column_names.begin(), join_column_names.end());

@@ -281,7 +281,7 @@ namespace csvsql::detail {
         }
         std::vector<std::string> header_;
         std::vector<column_type> types_;
-        std::vector<bool> blanks_;
+        std::vector<unsigned char> blanks_;
     public:
         create_table_composer(auto & reader, auto const & args, std::vector<std::string> const & table_names) {
 
@@ -428,7 +428,7 @@ namespace csvsql::detail {
             reset_value_index();
             for(auto e : composer.types()) {
                 std::visit([&](auto & arg) {
-                    prep = prep,(soci::use(*arg, indicators[value_index]));
+                    prep = prep.operator,(soci::use(*arg, indicators[value_index]));
                 }, prepare_next_arg(e));
                 value_index++;
             }

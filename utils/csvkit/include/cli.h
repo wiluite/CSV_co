@@ -785,8 +785,8 @@ namespace csvkit::cli {
         csvjoin_string_source
     };
 
-    using typify_with_precisions_result = std::tuple<std::vector<column_type>, std::vector<bool>, std::vector<unsigned>>;
-    using typify_without_precisions_result = std::tuple<std::vector<column_type>, std::vector<bool>>;
+    using typify_with_precisions_result = std::tuple<std::vector<column_type>, std::vector<unsigned char>, std::vector<unsigned>>;
+    using typify_without_precisions_result = std::tuple<std::vector<column_type>, std::vector<unsigned char>>;
     using typify_result = std::variant<typify_with_precisions_result, typify_without_precisions_result>;
 
     template <typename Reader, typename Args>
@@ -837,7 +837,7 @@ namespace csvkit::cli {
     
         transwarp::parallel exec(std::thread::hardware_concurrency());
 
-        std::vector<bool> blanks (task_vec.size(), false);
+        std::vector<unsigned char> blanks (task_vec.size(), 0);
         std::vector<unsigned> precisions (task_vec.size(), 0);
 
         imbue_numeric_locale(reader, args);
@@ -852,7 +852,7 @@ namespace csvkit::cli {
         setup_date_parser_backend(reader, args);
 
         //TODO: for now e.is_null() calling first is obligate. Can we do better?
-        #define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = true;
+        #define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = 1;
 
         auto task = transwarp::for_each(exec, column_numbers.cbegin(), column_numbers.cend(), [&](auto c) {
             if (std::all_of(table[c].begin(), table[c].end(), [&blanks, &c, &args](auto & e)  {
