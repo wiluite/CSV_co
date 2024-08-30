@@ -227,7 +227,7 @@ namespace csvsql::detail {
                         printer_map[dialect]->print(arg, blanks[index], precisions[index]);
                     }, tag_map[e]);
                     ++index;
-                    stream << (index != types.size() ? ",\n\t" : "\n");
+                    stream << (index != types.size() ? ",\n\t" :(unique_constraint.empty() ? "\n" : (",\n\tUNIQUE (" + unique_constraint + ")\n")));
                 }
             }
 
@@ -240,7 +240,7 @@ namespace csvsql::detail {
                         printer_map[dialect]->print(arg);
                     }, tag_map[e]);
                     ++index;
-                    stream << (index != types.size() ? ",\n\t" : "\n");
+                    stream << (index != types.size() ? ",\n\t" : (unique_constraint.empty() ? "\n" : (",\n\tUNIQUE (" + unique_constraint + ")\n")));
                 }
             }
             static std::string table() {
@@ -261,9 +261,12 @@ namespace csvsql::detail {
                 ~encloser() {
                     stream << ");\n";
                 }
+            private:
+                //std::string const & unique_constraint;
             } encloser_;
+            std::string const & unique_constraint;
             print_director(auto const & args, std::vector<std::string> const & table_names)
-                : encloser_(args, table_names) {}
+                : encloser_(args, table_names),  unique_constraint(args.unique_constraint) {}
         };
 
     private:
@@ -311,24 +314,38 @@ namespace csvsql::detail {
 
     class table_creator {
     public:
-        explicit table_creator (soci::session & sql) {
-            sql << create_table_composer::table();
+        explicit table_creator (auto const & args, soci::session & sql) {
+            if (!args.no_create)
+                sql << create_table_composer::table();
         }
     };
 
     class table_inserter {
 
         [[nodiscard]] std::string static insert_expr() {
-            auto const table = create_table_composer::table();
+            constexpr const std::array<std::string_view, 1> sql_keywords {{"UNIQUE"}};
+            auto const t = create_table_composer::table();
             std::string expr = "insert into ";
-            auto pos = table.find('(', 13);
-            expr += std::string(table.begin() + 13, table.begin() + static_cast<std::ptrdiff_t>(pos) + 1);
+            unsigned expr_prim_size = expr.size();
+
+            auto pos = t.find('(', expr_prim_size + 1);
+            expr += std::string(t.begin() + expr_prim_size + 1, t.begin() + static_cast<std::ptrdiff_t>(pos) + 1);
             std::string values;
             unsigned counter = 0;
-            while (pos = table.find('\t', pos + 1), pos != std::string::npos) {
-                 expr += std::string(table.begin() + static_cast<std::ptrdiff_t>(pos) + 1
-                         , table.begin() + static_cast<std::ptrdiff_t>(table.find(' ', pos + 1))) + ",";
-                 values += ":v" + std::to_string(counter++) + ',';
+            while (pos = t.find('\t', pos + 1), pos != std::string::npos) {
+                using diff_t = std::ptrdiff_t;
+                std::string next = {t.begin() + static_cast<diff_t>(pos) + 1, t.begin() + static_cast<diff_t>(t.find(' ', pos + 1))};
+                bool keyword = false;
+                for (auto e : sql_keywords) {
+                    if (e == next) {
+                        keyword = true;
+                        break;
+                    }
+                }
+                if (keyword)
+                    continue;
+                expr += next + ",";
+                values += ":v" + std::to_string(counter++) + ',';
             }
             expr.back() = ')';
             expr += " values (" + values;
@@ -619,14 +636,14 @@ namespace csvsql {
         }
 
         if (args.db.empty())
-            args.db = "sqlite3://db=:memory: timeout=2 share-cache=true";
+            args.db = "sqlite3://db=:memory:";
 
         soci::session session(args.db);
 
         for (auto & reader : r_man.get_readers()) {
             try {
                 create_table_composer composer(reader, args, table_names);
-                table_creator creator(session);
+                table_creator{args, session};
                 if (args.insert or (args.db.find(":memory:") != std::string::npos and !args.query.empty()))
                     table_inserter(args, session, composer).insert(reader);
             } catch(std::exception & e) {

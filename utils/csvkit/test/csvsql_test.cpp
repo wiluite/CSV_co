@@ -18,19 +18,6 @@
         call;                                   \
     }
 
-class db_file {
-    std::string file;
-public:
-    db_file() : file("foo.db") {}
-    ~db_file() {
-        if (std::filesystem::exists(std::filesystem::path(file)))
-            std::remove(file.c_str());
-    }
-    std::string operator()() {
-        return file;
-    }
-} dbfile;
-
 int main() {
     using namespace boost::ut;
     namespace tf = csvkit::test_facilities;
@@ -322,8 +309,22 @@ int main() {
         expect(cout_buffer.str().empty());
     };
 
+    class db_file {
+        std::string file;
+    public:
+        db_file() : file("foo.db") {}
+        ~db_file() {
+            if (std::filesystem::exists(std::filesystem::path(file)))
+                std::remove(file.c_str());
+        }
+        std::string operator()() {
+            return file;
+        }
+    } ;
+
     "before and after insert"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            db_file dbfile;
             Args() {
                 files = std::vector<std::string>{"dummy.csv"};
                 db = "sqlite3://db=" + dbfile();
@@ -334,8 +335,37 @@ int main() {
         } args;
 
         CALL_TEST_AND_REDIRECT_TO_COUT(
-                csvsql::sql<notrimming_reader_type>(args)
+            csvsql::sql<notrimming_reader_type>(args)
         )
-
     };
+
+    "no prefix unique constraint"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            db_file dbfile;
+            Args() {
+                files = std::vector<std::string>{"dummy.csv"};
+                db = "sqlite3://db=" + dbfile();
+                insert = true;
+                unique_constraint = "a";
+           }
+        } args;
+
+        {
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+            )
+        }
+
+        args.no_create = true;
+
+        bool catched = false;
+        try {
+            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
+        } catch(soci::soci_error const & e) {
+            expect(std::string(e.what()).find("UNIQUE constraint failed: dummy.a") != std::string::npos);
+            catched = true;
+        }
+        expect(catched);
+    };
+
 }
