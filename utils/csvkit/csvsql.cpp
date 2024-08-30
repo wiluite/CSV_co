@@ -437,24 +437,42 @@ namespace csvsql::detail {
                 stmt.execute(true);
             });
         }
-
+        soci::session & sql_;
+        create_table_composer & composer_;
+        std::string const & after_insert_;
     public:
-        table_inserter(soci::session & sql, create_table_composer & composer, auto & reader) {
-            data_holder.resize(composer.types().size());
-            indicators.resize(composer.types().size(), soci::i_ok);
+        table_inserter(auto const &args, soci::session & sql, create_table_composer & composer)
+        :sql_(sql), composer_(composer), after_insert_(args.after_insert) {
+            if (!args.before_insert.empty()) {
+                sql.begin();
+                sql << args.before_insert;
+                sql.commit();
+            }
+        }
+        ~table_inserter() {
+            if (!after_insert_.empty()) {
+                sql_.begin();
+                sql_ << after_insert_;
+                sql_.commit();
+            }
+        }
 
-            sql.begin();
-            auto prep = sql.prepare.operator<<(insert_expr().c_str());
+        void insert(auto & reader) {
+            data_holder.resize(composer_.types().size());
+            indicators.resize(composer_.types().size(), soci::i_ok);
+
+            sql_.begin();
+            auto prep = sql_.prepare.operator<<(insert_expr().c_str());
             reset_value_index();
-            for(auto e : composer.types()) {
+            for(auto e : composer_.types()) {
                 std::visit([&](auto & arg) {
                     prep = std::move(prep.operator,(soci::use(*arg, indicators[value_index])));
                 }, prepare_next_arg(e));
                 value_index++;
             }
             soci::statement stmt = prep;
-            insert_data(reader, composer, stmt);
-            sql.commit();
+            insert_data(reader, composer_, stmt);
+            sql_.commit();
         }
     };
 
@@ -610,7 +628,7 @@ namespace csvsql {
                 create_table_composer composer(reader, args, table_names);
                 table_creator creator(session);
                 if (args.insert or (args.db.find(":memory:") != std::string::npos and !args.query.empty()))
-                    table_inserter ti(session, composer, reader);
+                    table_inserter(args, session, composer).insert(reader);
             } catch(std::exception & e) {
                 if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
                     continue;

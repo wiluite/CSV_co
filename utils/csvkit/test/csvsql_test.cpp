@@ -18,6 +18,18 @@
         call;                                   \
     }
 
+class db_file {
+    std::string file;
+public:
+    db_file() : file("foo.db") {}
+    ~db_file() {
+        if (std::filesystem::exists(std::filesystem::path(file)))
+            std::remove(file.c_str());
+    }
+    std::string operator()() {
+        return file;
+    }
+} dbfile;
 
 int main() {
     using namespace boost::ut;
@@ -310,4 +322,20 @@ int main() {
         expect(cout_buffer.str().empty());
     };
 
+    "before and after insert"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            Args() {
+                files = std::vector<std::string>{"dummy.csv"};
+                db = "sqlite3://db=" + dbfile();
+                insert = true;
+                before_insert = "CREATE TABLE foobar (date DATE)"; //TODO: see multiple queries in the file. Do the same.
+                after_insert = "INSERT INTO dummy VALUES (0, 5, 6)";
+            }
+        } args;
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+        )
+
+    };
 }
