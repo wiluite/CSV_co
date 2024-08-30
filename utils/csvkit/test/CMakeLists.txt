@@ -481,6 +481,12 @@ if (IO_CSVKIT_UTILS)
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/irismeta.csv
         ${CMAKE_CURRENT_BINARY_DIR}/irismeta.csv)
+    add_custom_command(
+            TARGET csvsql_test POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_query.sql
+            ${CMAKE_CURRENT_BINARY_DIR}/test_query.sql)
+
     target_link_libraries(csvsql_test libcppp-reiconv.static simdutf soci_core -lpthread)
     add_test(csvsql_test csvsql_test)
 

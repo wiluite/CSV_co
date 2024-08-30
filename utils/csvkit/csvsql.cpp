@@ -375,7 +375,7 @@ namespace csvsql::detail {
             using func_type = std::function<void(elem_type const&)>;
 
             auto col = 0u;
-            static std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
+            std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
                 [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
                 , [&](elem_type const & e) {
                     if (!e.is_null()) {
@@ -477,7 +477,6 @@ namespace csvsql::detail {
                 update_query(query);
 
                 using namespace soci;
-
                 rowset<row> rs = (sql.prepare << query.c_str());
                 bool print_header = false;
                 for (auto && elem : rs) {

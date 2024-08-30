@@ -258,6 +258,7 @@ int main() {
             csvsql::sql<notrimming_reader_type>(args)
         )
         std::cin.rdbuf(cin_buf);
+
         expect(cout_buffer.str() == "1\n1\n");
     };
 
@@ -275,11 +276,11 @@ int main() {
 
         expect(cout_buffer.str() == "text\nChicago Reader\nChicago Sun-Times\nChicago Tribune\n");
     };
-#if 0
+
     "query file"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted3.csv"};
+                files = std::vector<std::string>{"testfixed_converted.csv"};
                 query = "test_query.sql"; //TODO: see multiple queries in the file. Do the same.
             }
         } args;
@@ -288,7 +289,9 @@ int main() {
             csvsql::sql<notrimming_reader_type>(args)
         )
 
-        expect(cout_buffer.str() == "text\nChicago Reader\nChicago Sun-Times\nChicago Tribune\n");
+//      question,text
+//      36,©
+        expect(cout_buffer.str() == "question,text\n36,©\n");
     };
 
     "query update"_test = [] {
@@ -304,7 +307,7 @@ int main() {
             csvsql::sql<notrimming_reader_type>(args)
         )
 
-        expect(cout_buffer.str() == "");
+        expect(cout_buffer.str().empty());
     };
-#endif
+
 }
