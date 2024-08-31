@@ -2,6 +2,7 @@ include_directories(../include ../include/csv_co/external ${CMAKE_BINARY_DIR}/in
 
 add_definitions( -DONLY_C_LOCALE=1 )
 if (MSVC)
+    add_definitions(/wd4702)
 else()
     add_definitions(-Wno-narrowing)
     add_definitions(-Wno-old-style-cast)

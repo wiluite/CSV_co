@@ -1392,5 +1392,22 @@ int main() {
         }
     };
 
+    "0 cols 0 rows after skip_rows of 1-row 1-col file"_test = [] {
+        {
+            reader r(" ");
+            expect(r.rows() == 1);
+            expect(r.cols() == 1);
+            r.skip_rows(1);
+            expect(r.cols<1>() == 0);
+            expect(r.rows<1>() == 0);
+        }
+        {
+            reader r(" ");
+            r.skip_rows(1);
+            expect(r.cols() == 0);
+            expect(r.rows() == 0);
+        }
+    };
+
 }
 

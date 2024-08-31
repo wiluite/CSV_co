@@ -806,7 +806,7 @@ namespace csvkit::cli {
         skip_lines(reader, args);
         auto header = obtain_header_and_<skip_header>(reader, args);
         
-        if (!reader.cols())
+        if (!reader.cols()) // alternatively : if (!reader.rows())
             throw std::runtime_error("Typify(). Columns == 0. Vain to do next actions!"); // well, vain to do rest things
 
         fixed_array_2d_replacement<typename Reader::template typed_span<csv_co::unquoted>> table(header.size(), reader.rows());

@@ -649,7 +649,7 @@ namespace csv_co {
         char const * data() const noexcept {
             char const *sa = nullptr;
             std::visit([&](auto &&r) noexcept {
-                sa = !src_offset ? ((r.size() >= 3 && r[0] == '\xef' && r[1] == '\xbb' && r[2] == '\xbf') ? &r[3] : &r[0]) : &r[src_offset];
+                sa = !src_offset ? ((r.size() >= 3 && r[0] == '\xef' && r[1] == '\xbb' && r[2] == '\xbf') ? &r[3] : &r[0]) : &r[0] + src_offset;
             }, src);
             return sa;
         }
