@@ -9,6 +9,7 @@
 #include "../utils/csvkit/csvsql.cpp"
 #include "strm_redir.h"
 #include "common_args.h"
+#include "cin_subst.h"
 
 #define CALL_TEST_AND_REDIRECT_TO_COUT(call)    \
     std::stringstream cout_buffer;              \
@@ -188,12 +189,11 @@ int main() {
         } args;
 
         std::istringstream iss("a,b,c\n4,2,3\n");
-        auto cin_buf = std::cin.rdbuf();
-        std::cin.rdbuf(iss.rdbuf());
+        cin_subst new_cin(iss);
+
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvsql::sql<notrimming_reader_type>(args)
         )
-        std::cin.rdbuf(cin_buf);
 
         auto no_tabs_rep = cout_buffer.str();
         std::replace(no_tabs_rep.begin(), no_tabs_rep.end(), '\t', ' ');
@@ -213,12 +213,11 @@ int main() {
         } args;
 
         std::istringstream iss("a,b,c\n1,2,3\n");
-        auto cin_buf = std::cin.rdbuf();
-        std::cin.rdbuf(iss.rdbuf());
+        cin_subst new_cin(iss);
+
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvsql::sql<notrimming_reader_type>(args)
         )
-        std::cin.rdbuf(cin_buf);
 
         expect(cout_buffer.str().find(R"(CREATE TABLE "stdin")") != std::string::npos);
         expect(cout_buffer.str().find(R"(CREATE TABLE "dummy")") != std::string::npos);
@@ -251,12 +250,11 @@ int main() {
         } args;
 
         std::istringstream iss(" ");
-        auto cin_buf = std::cin.rdbuf();
-        std::cin.rdbuf(iss.rdbuf());
+        cin_subst new_cin(iss);
+
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvsql::sql<notrimming_reader_type>(args)
         )
-        std::cin.rdbuf(cin_buf);
 
         expect(cout_buffer.str() == "1\n1\n");
     };

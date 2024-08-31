@@ -11,6 +11,7 @@
 #include "common_args.h"
 #include "test_reader_macros.h"
 #include "test_max_field_size_macros.h"
+#include "cin_subst.h"
 
 int main() {
     using namespace boost::ut;
@@ -34,9 +35,10 @@ int main() {
 
         args.files = std::vector<std::string>{"test_skip_lines.csv", "test_skip_lines.csv"};
         args.skip_lines = 3;
+
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
+        )
 
 //      a,b,c
 //      1,2,3
@@ -50,14 +52,13 @@ int main() {
         } args;
 
         std::ifstream ifs("test_skip_lines.csv");
-        auto cin_buf = std::cin.rdbuf();
-        std::cin.rdbuf(ifs.rdbuf());
+        cin_subst new_cin(ifs);
         args.files = std::vector<std::string>{"test_skip_lines.csv", "_"};
         args.skip_lines = 3;
+
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
-        std::cin.rdbuf(cin_buf);
+        )
 
 //      a,b,c
 //      1,2,3
@@ -71,9 +72,10 @@ int main() {
         } args;
 
         args.files = std::vector<std::string>{"dummy.csv"};
+
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
+        )
 
 //      a,b,c
 //      1,2,3
@@ -89,7 +91,7 @@ int main() {
         {
             CALL_TEST_AND_REDIRECT_TO_COUT(
                 csvstack::stack<notrimming_reader_type>(args)
-            );
+            )
 
 //      a,b,c
 //      1,2,3
@@ -102,7 +104,7 @@ int main() {
         {
             CALL_TEST_AND_REDIRECT_TO_COUT(
                 csvstack::stack<notrimming_reader_type>(args)
-            );
+            )
 
 //      a,b,c
 //      1,2,3
@@ -134,13 +136,12 @@ int main() {
 
         {
             std::ifstream ifs("dummy.csv");
-            auto cin_buf = std::cin.rdbuf();
-            std::cin.rdbuf(ifs.rdbuf());
+            cin_subst new_cin(ifs);
             args.files = std::vector<std::string>{"_", "dummy_col_shuffled_ragged.csv"};
+
             CALL_TEST_AND_REDIRECT_TO_COUT(
                 csvstack::stack<notrimming_reader_type>(args)
             );
-            std::cin.rdbuf(cin_buf);
 
 //      a,b,c,d
 //      1,2,3,
@@ -150,13 +151,12 @@ int main() {
         }
         {
             std::ifstream ifs("dummy.csv");
-            auto cin_buf = std::cin.rdbuf();
-            std::cin.rdbuf(ifs.rdbuf());
+            cin_subst new_cin(ifs);
             args.files = std::vector<std::string>{"dummy_col_shuffled_ragged.csv", "_"};
+
             CALL_TEST_AND_REDIRECT_TO_COUT(
                 csvstack::stack<notrimming_reader_type>(args)
             );
-            std::cin.rdbuf(cin_buf);
 
 //      b,c,a,d
 //      2,3,1,4
@@ -179,7 +179,7 @@ int main() {
         args.files = std::vector<std::string>{"dummy.csv", "dummy2.csv"};
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
+        )
 
 //      foo,a,b,c
 //      asd,1,2,3
@@ -199,7 +199,7 @@ int main() {
         args.files = std::vector<std::string>{"dummy.csv", "dummy2.csv"};
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
+        )
 
 //      path,a,b,c
 //      dummy.csv,1,2,3
@@ -218,7 +218,7 @@ int main() {
         args.files = std::vector<std::string>{"no_header_row.csv", "no_header_row2.csv"};
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
+        )
 
 //      a,b,c
 //      1,2,3
@@ -236,13 +236,12 @@ int main() {
 
         {
             std::ifstream ifs("no_header_row.csv");
-            auto cin_buf = std::cin.rdbuf();
-            std::cin.rdbuf(ifs.rdbuf());
+            cin_subst new_cin(ifs);
             args.files = std::vector<std::string>{"_", "no_header_row2.csv"};
+
             CALL_TEST_AND_REDIRECT_TO_COUT(
                 csvstack::stack<notrimming_reader_type>(args)
-            );
-            std::cin.rdbuf(cin_buf);
+            )
 
 //      a,b,c
 //      1,2,3
@@ -252,13 +251,12 @@ int main() {
         }
         {
             std::ifstream ifs("no_header_row.csv");
-            auto cin_buf = std::cin.rdbuf();
-            std::cin.rdbuf(ifs.rdbuf());
+            cin_subst new_cin(ifs);
             args.files = std::vector<std::string>{"no_header_row2.csv", "_"};
+
             CALL_TEST_AND_REDIRECT_TO_COUT(
                 csvstack::stack<notrimming_reader_type>(args)
-            );
-            std::cin.rdbuf(cin_buf);
+            )
 
 //      a,b,c
 //      4,5,6
@@ -281,7 +279,7 @@ int main() {
         args.files = std::vector<std::string>{"dummy.csv", "dummy3.csv"};
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
+        )
 
 //      hey,a,b,c
 //      foo,a,b,c
@@ -304,7 +302,7 @@ int main() {
         args.files = std::vector<std::string>{"no_header_row.csv", "no_header_row2.csv"};
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
+        )
 
 //      group,a,b,c
 //      no_header_row.csv,1,2,3
@@ -325,7 +323,7 @@ int main() {
         args.files = std::vector<std::string>{"no_header_row.csv", "no_header_row2.csv"};
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvstack::stack<notrimming_reader_type>(args)
-        );
+        )
 
 //      hello,a,b,c
 //      no_header_row.csv,1,2,3
