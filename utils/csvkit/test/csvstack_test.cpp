@@ -11,7 +11,7 @@
 #include "common_args.h"
 #include "test_reader_macros.h"
 #include "test_max_field_size_macros.h"
-#include "cin_subst.h"
+#include "stdin_subst.h"
 
 int main() {
     using namespace boost::ut;
@@ -52,7 +52,7 @@ int main() {
         } args;
 
         std::ifstream ifs("test_skip_lines.csv");
-        cin_subst new_cin(ifs);
+        stdin_subst new_cin(ifs);
         args.files = std::vector<std::string>{"test_skip_lines.csv", "_"};
         args.skip_lines = 3;
 
@@ -136,7 +136,7 @@ int main() {
 
         {
             std::ifstream ifs("dummy.csv");
-            cin_subst new_cin(ifs);
+            stdin_subst new_cin(ifs);
             args.files = std::vector<std::string>{"_", "dummy_col_shuffled_ragged.csv"};
 
             CALL_TEST_AND_REDIRECT_TO_COUT(
@@ -151,7 +151,7 @@ int main() {
         }
         {
             std::ifstream ifs("dummy.csv");
-            cin_subst new_cin(ifs);
+            stdin_subst new_cin(ifs);
             args.files = std::vector<std::string>{"dummy_col_shuffled_ragged.csv", "_"};
 
             CALL_TEST_AND_REDIRECT_TO_COUT(
@@ -236,7 +236,7 @@ int main() {
 
         {
             std::ifstream ifs("no_header_row.csv");
-            cin_subst new_cin(ifs);
+            stdin_subst new_cin(ifs);
             args.files = std::vector<std::string>{"_", "no_header_row2.csv"};
 
             CALL_TEST_AND_REDIRECT_TO_COUT(
@@ -251,7 +251,7 @@ int main() {
         }
         {
             std::ifstream ifs("no_header_row.csv");
-            cin_subst new_cin(ifs);
+            stdin_subst new_cin(ifs);
             args.files = std::vector<std::string>{"no_header_row2.csv", "_"};
 
             CALL_TEST_AND_REDIRECT_TO_COUT(

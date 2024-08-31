@@ -45,42 +45,47 @@ if (IO_CSVKIT_UTILS)
     add_executable(csvsql csvsql.cpp)
     target_include_directories(csvsql
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include
-        ${SQLITE3_INCLUDE_DIR}
-        ${POSTGRESQL_INCLUDE_DIR}
-        ${MYSQL_INCLUDE_DIR}
-        ${FIREBIRD_INCLUDE_DIR}
+        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR}  ${FIREBIRD_INCLUDE_DIR}
     )
-    target_link_libraries(csvsql PRIVATE
-        libcppp-reiconv.static
-        simdutf -lpthread
-        soci_core
-    )
+    target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core)
     if (UNIX)
     else()
-      if (MSVC)
-        add_custom_command(
-            TARGET csvsql POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_BINARY_DIR}/bin/soci_core_4_1.dll
-            ${CMAKE_CURRENT_BINARY_DIR}/soci_core_4_1.dll)
-      else()
-        add_custom_command(
-            TARGET csvsql POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
-            ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
-      endif()
+        if (MSVC)
+            add_custom_command(
+                    TARGET csvsql POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_BINARY_DIR}/bin/soci_core_4_1.dll
+                    ${CMAKE_CURRENT_BINARY_DIR}/soci_core_4_1.dll)
+        else()
+            add_custom_command(
+                    TARGET csvsql POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
+                    ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
+        endif()
     endif()
 
     add_executable(sql2csv sql2csv.cpp)
     target_include_directories(sql2csv
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include ${POSTGRESQL_INCLUDE_DIR} ${SQLITE3_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR})
-
-    target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf
-        soci_core
-    )
+        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} {POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR})
+    target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf soci_core soci_core -lpthread )
+    if (UNIX)
+    else()
+        if (MSVC)
+            add_custom_command(
+                    TARGET sql2csv POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_BINARY_DIR}/bin/soci_core_4_1.dll
+                    ${CMAKE_CURRENT_BINARY_DIR}/soci_core_4_1.dll)
+        else()
+            add_custom_command(
+                    TARGET sql2csv POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
+                    ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
+        endif()
+    endif()
 
 endif()
 

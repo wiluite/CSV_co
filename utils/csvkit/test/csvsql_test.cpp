@@ -9,7 +9,7 @@
 #include "../utils/csvkit/csvsql.cpp"
 #include "strm_redir.h"
 #include "common_args.h"
-#include "cin_subst.h"
+#include "stdin_subst.h"
 
 #define CALL_TEST_AND_REDIRECT_TO_COUT(call)    \
     std::stringstream cout_buffer;              \
@@ -189,7 +189,7 @@ int main() {
         } args;
 
         std::istringstream iss("a,b,c\n4,2,3\n");
-        cin_subst new_cin(iss);
+        stdin_subst new_cin(iss);
 
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvsql::sql<notrimming_reader_type>(args)
@@ -213,7 +213,7 @@ int main() {
         } args;
 
         std::istringstream iss("a,b,c\n1,2,3\n");
-        cin_subst new_cin(iss);
+        stdin_subst new_cin(iss);
 
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvsql::sql<notrimming_reader_type>(args)
@@ -250,7 +250,7 @@ int main() {
         } args;
 
         std::istringstream iss(" ");
-        cin_subst new_cin(iss);
+        stdin_subst new_cin(iss);
 
         CALL_TEST_AND_REDIRECT_TO_COUT(
             csvsql::sql<notrimming_reader_type>(args)
@@ -321,6 +321,7 @@ int main() {
     } ;
 
     "before and after insert"_test = [] {
+        // Longer test
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
             db_file dbfile;
             Args() {
