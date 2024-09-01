@@ -329,11 +329,11 @@ namespace csvsql::detail {
 
     class table_inserter {
 
-        [[nodiscard]] std::string static insert_expr() {
+        [[nodiscard]] std::string insert_expr() const {
             constexpr const std::array<std::string_view, 1> sql_keywords {{"UNIQUE"}};
             auto const t = create_table_composer::table();
-            std::string expr = "insert into ";
-            unsigned expr_prim_size = expr.size();
+            std::string expr = "insert" + (insert_prefix_.empty() ? "": " " + insert_prefix_) + " into ";
+            constexpr unsigned expr_prim_size = std::string_view("CREATE TABLE").size();
 
             auto pos = t.find('(', expr_prim_size + 1);
             expr += std::string(t.begin() + expr_prim_size + 1, t.begin() + static_cast<std::ptrdiff_t>(pos) + 1);
@@ -464,9 +464,10 @@ namespace csvsql::detail {
         soci::session & sql_;
         create_table_composer & composer_;
         std::string const & after_insert_;
+        std::string const & insert_prefix_;
     public:
         table_inserter(auto const &args, soci::session & sql, create_table_composer & composer)
-        :sql_(sql), composer_(composer), after_insert_(args.after_insert) {
+        :sql_(sql), composer_(composer), after_insert_(args.after_insert), insert_prefix_(args.prefix) {
             if (!args.before_insert.empty()) {
                 auto const statements = sql_split(std::stringstream(args.before_insert));
                 sql.begin();
@@ -490,7 +491,7 @@ namespace csvsql::detail {
             indicators.resize(composer_.types().size(), soci::i_ok);
 
             sql_.begin();
-            auto prep = sql_.prepare.operator<<(insert_expr().c_str());
+            auto prep = sql_.prepare.operator<<(insert_expr());
             reset_value_index();
             for(auto e : composer_.types()) {
                 std::visit([&](auto & arg) {

@@ -6,10 +6,6 @@
 #include <soci/sqlite3/soci-sqlite3.h>
 #endif
 
-#if defined (SOCI_HAVE_EMPTY)
-#include <soci/empty/soci-empty.h>
-#endif
-
 #if defined (SOCI_HAVE_POSTGRESQL)
 #include <soci/postgresql/soci-postgresql.h>
 #endif

@@ -354,17 +354,40 @@ int main() {
                 csvsql::sql<notrimming_reader_type>(args)
             )
         }
+        {   // now "unique constraint" exception
+            args.no_create = true;
+            bool catched = false;
+            try {
+                CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
+            } catch(soci::soci_error const & e) {
+                expect(std::string(e.what()).find("UNIQUE constraint failed: dummy.a") != std::string::npos);
+                catched = true;
+            }
+            expect(catched);
+        }
+    };
+
+    "prefix unique constraint"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            db_file dbfile;
+            Args() {
+                files = std::vector<std::string>{"dummy.csv"};
+                db = "sqlite3://db=" + dbfile();
+                insert = true;
+                unique_constraint = "a";
+           }
+        } args;
+
+        {
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+            )
+        }
 
         args.no_create = true;
+        args.prefix = "OR IGNORE";
 
-        bool catched = false;
-        try {
-            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
-        } catch(soci::soci_error const & e) {
-            expect(std::string(e.what()).find("UNIQUE constraint failed: dummy.a") != std::string::npos);
-            catched = true;
-        }
-        expect(catched);
+        expect(nothrow([&] {CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args);} )));
     };
 
 }
