@@ -278,7 +278,7 @@ int main() {
         struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"testfixed_converted.csv"};
-                query = "test_query.sql"; //TODO: see multiple queries in the file. Do the same.
+                query = "test_query.sql";
             }
         } args;
 
@@ -328,7 +328,7 @@ int main() {
                 files = std::vector<std::string>{"dummy.csv"};
                 db = "sqlite3://db=" + dbfile();
                 insert = true;
-                before_insert = "CREATE TABLE foobar (date DATE)"; //TODO: see multiple queries in the file. Do the same.
+                before_insert = "SELECT 1; CREATE TABLE foobar (date DATE)";
                 after_insert = "INSERT INTO dummy VALUES (0, 5, 6)";
             }
         } args;

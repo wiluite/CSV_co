@@ -61,6 +61,13 @@ namespace csvsql::detail {
         }
     };
 
+    auto sql_split = [](std::stringstream && string_like, char by = ';') {
+        std::vector<std::string> result;
+        for (std::string phrase; std::getline(string_like, phrase, by);)
+            result.push_back(phrase);
+        return result;
+    };
+
     template <typename ... r_types>
     struct readers_manager {
         auto & get_readers() {
@@ -461,15 +468,19 @@ namespace csvsql::detail {
         table_inserter(auto const &args, soci::session & sql, create_table_composer & composer)
         :sql_(sql), composer_(composer), after_insert_(args.after_insert) {
             if (!args.before_insert.empty()) {
+                auto const statements = sql_split(std::stringstream(args.before_insert));
                 sql.begin();
-                sql << args.before_insert;
+                for (auto & elem : statements)
+                    sql << elem;
                 sql.commit();
             }
         }
         ~table_inserter() {
             if (!after_insert_.empty()) {
+                auto const statements = sql_split(std::stringstream(after_insert_));
                 sql_.begin();
-                sql_ << after_insert_;
+                for (auto & elem : statements)
+                    sql_ << elem;
                 sql_.commit();
             }
         }
@@ -494,25 +505,33 @@ namespace csvsql::detail {
     };
 
     class query {
-        static void update_query(std::string & q) {
+        static auto queries(std::string const & q) {
+            std::vector<std::string> result;
+            std::stringstream queries;
             if (std::filesystem::exists(std::filesystem::path{q})) {
-                std::ifstream f (q);
-                assert(f.is_open());
+                auto f = std::make_unique<std::ifstream>(q);
+                assert(f->is_open());
                 std::string line;
-                q = {};
-                while (getline(f, line))
-                    q += line;
-                f.close();
-            }
+                for (; std::getline(*f, line, '\n');)
+                    queries << line;
+            } else
+                queries << q;
+            return sql_split(std::move(queries));
         }
     public:
         query(soci::session & sql, std::string const & q) {
             if (!q.empty()) {
-                auto query {q};
-                update_query(query);
+
+                auto q_array = queries(q);
+                std::for_each(q_array.begin(), q_array.end() - 1, [&](auto & elem){
+                    sql.begin();
+                    sql << elem;
+                    sql.commit();
+                });
 
                 using namespace soci;
-                rowset<row> rs = (sql.prepare << query.c_str());
+
+                rowset<row> rs = (sql.prepare << q_array.back());
                 bool print_header = false;
                 for (auto && elem : rs) {
                     row const &rr = elem;
