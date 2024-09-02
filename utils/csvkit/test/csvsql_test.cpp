@@ -7,6 +7,7 @@
 #include "ut.hpp"
 
 #include "../utils/csvkit/csvsql.cpp"
+#include "../utils/csvkit/sql2csv.cpp"
 #include "strm_redir.h"
 #include "common_args.h"
 #include "stdin_subst.h"
@@ -219,8 +220,8 @@ int main() {
             csvsql::sql<notrimming_reader_type>(args)
         )
 
-        expect(cout_buffer.str().find(R"(CREATE TABLE "stdin")") != std::string::npos);
-        expect(cout_buffer.str().find(R"(CREATE TABLE "dummy")") != std::string::npos);
+        expect(cout_buffer.str().find(R"(CREATE TABLE stdin)") != std::string::npos);
+        expect(cout_buffer.str().find(R"(CREATE TABLE dummy)") != std::string::npos);
     };
 
     "query"_test = [] {
@@ -387,7 +388,55 @@ int main() {
         args.no_create = true;
         args.prefix = "OR IGNORE";
 
-        expect(nothrow([&] {CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args);} )));
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args)) }));
+    };
+
+    "no create-if-not-exists"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            db_file dbfile;
+            Args() {
+                files = std::vector<std::string>{"foo1.csv"};
+                db = "sqlite3://db=" + dbfile();
+                insert = true;
+                tables = "foo";
+            }
+        } args;
+
+        {
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+            )
+        }
+
+        args.files = std::vector<std::string>{"foo2.csv"};
+        {
+            bool catched = false;
+            try {
+                CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
+            } catch(soci::soci_error const & e) {
+                expect(std::string(e.what()).find("table foo already exists") != std::string::npos);
+                catched = true;
+            }
+            expect(catched);
+        }
+    };
+
+    "create-if-not-exists"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+            db_file dbfile;
+            Args() {
+                files = std::vector<std::string>{"foo1.csv"};
+                db = "sqlite3://db=" + dbfile();
+                insert = true;
+                tables = "foo";
+            }
+        } args;
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(csvsql::sql<notrimming_reader_type>(args))
+
+        args.files = std::vector<std::string>{"foo2.csv"};
+        args.create_if_not_exists = true;
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args)) }));
     };
 
 }

@@ -95,6 +95,10 @@ namespace csvsql::detail {
         }
     };
 
+    auto create_table_phrase(auto const & args) {
+        return !args.create_if_not_exists ? std::string_view("CREATE TABLE ") : std::string_view("CREATE TABLE IF NOT EXISTS ");
+    }
+
     class create_table_composer {
         friend void reset_environment();
         static inline std::size_t file_no;
@@ -254,26 +258,32 @@ namespace csvsql::detail {
                 return stream.str();
             }
 
-            struct encloser {
-                encloser(auto const & args, std::vector<std::string> const & table_names) {
+            struct open_close {
+                open_close(auto const & args, std::vector<std::string> const & table_names) {
                     stream.str({});
                     stream.clear();
-                    stream << "CREATE TABLE ";
-                    if (table_names.size() > file_no)
-                        stream << table_names[file_no];
-                    else
-                        stream << std::filesystem::path{args.files[file_no]}.stem();
+                    stream << create_table_phrase(args);
+                    if (table_names.size() > file_no) {
+                        auto tn = table_names[file_no];
+                        csv_co::string_functions::unquote(tn, '"');
+                        stream << tn;
+                    }
+                    else {
+                        std::string tn = std::filesystem::path{args.files[file_no]}.stem();
+                        csv_co::string_functions::unquote(tn, '"');
+                        stream << tn;
+                    }
                     stream << " (\n\t";
                 }
-                ~encloser() {
+                ~open_close() {
                     stream << ");\n";
                 }
             private:
                 //std::string const & unique_constraint;
-            } encloser_;
+            } wrapper_;
             std::string const & unique_constraint;
             print_director(auto const & args, std::vector<std::string> const & table_names)
-                : encloser_(args, table_names),  unique_constraint(args.unique_constraint) {}
+                : wrapper_(args, table_names),  unique_constraint(args.unique_constraint) {}
         };
 
     private:
@@ -329,14 +339,14 @@ namespace csvsql::detail {
 
     class table_inserter {
 
-        [[nodiscard]] std::string insert_expr() const {
+        [[nodiscard]] std::string insert_expr(auto const & args) const {
             constexpr const std::array<std::string_view, 1> sql_keywords {{"UNIQUE"}};
             auto const t = create_table_composer::table();
             std::string expr = "insert" + (insert_prefix_.empty() ? "": " " + insert_prefix_) + " into ";
-            constexpr unsigned expr_prim_size = std::string_view("CREATE TABLE").size();
+            auto const expr_prim_size = create_table_phrase(args).size();
 
-            auto pos = t.find('(', expr_prim_size + 1);
-            expr += std::string(t.begin() + expr_prim_size + 1, t.begin() + static_cast<std::ptrdiff_t>(pos) + 1);
+            auto pos = t.find('(', expr_prim_size);
+            expr += std::string(t.begin() + expr_prim_size, t.begin() + static_cast<std::ptrdiff_t>(pos) + 1);
             std::string values;
             unsigned counter = 0;
             while (pos = t.find('\t', pos + 1), pos != std::string::npos) {
@@ -486,12 +496,12 @@ namespace csvsql::detail {
             }
         }
 
-        void insert(auto & reader) {
+        void insert(auto const &args, auto & reader) {
             data_holder.resize(composer_.types().size());
             indicators.resize(composer_.types().size(), soci::i_ok);
 
             sql_.begin();
-            auto prep = sql_.prepare.operator<<(insert_expr());
+            auto prep = sql_.prepare.operator<<(insert_expr(args));
             reset_value_index();
             for(auto e : composer_.types()) {
                 std::visit([&](auto & arg) {
@@ -643,6 +653,11 @@ namespace csvsql {
         if (args.chunk_size and !args.insert)
             throw std::runtime_error(need_insert("--chunk-size"));
 
+        // TODO: FixMe in the future.
+        if (args.create_if_not_exists and args.db.find("firebird") != std::string::npos) {
+            throw std::runtime_error("Sorry, we do not support the --create-if-not-exists option for Firebird DBMS client.");
+        }
+
         reset_environment();
         readers_manager<ReaderType> r_man;
         r_man.template set_readers<ReaderType>(args);
@@ -665,7 +680,7 @@ namespace csvsql {
                 create_table_composer composer(reader, args, table_names);
                 table_creator{args, session};
                 if (args.insert or (args.db.find(":memory:") != std::string::npos and !args.query.empty()))
-                    table_inserter(args, session, composer).insert(reader);
+                    table_inserter(args, session, composer).insert(args, reader);
             } catch(std::exception & e) {
                 if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
                     continue;
