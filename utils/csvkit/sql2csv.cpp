@@ -24,13 +24,18 @@ using namespace ::csvkit::cli;
 
 namespace sql2csv::detail {
     struct Args : argparse::Args {
-        std::filesystem::path & file = arg("The FILE to use as SQL query. If it and --query are omitted, the query is piped data via STDIN.").set_default("cin");
+        std::filesystem::path & query_file = arg("The FILE to use as SQL query. If it and --query are omitted, the query is piped data via STDIN.").set_default("cin");
         bool & verbose = flag("v,verbose", "A flag to toggle verbose.");
         bool & linenumbers = flag("l,linenumbers", "Insert a column of line numbers at the front of the output. Useful when piping to grep or as a simple primary key.");
         std::string & db = kwarg("db","If present, a 'soci' connection string to use to directly execute generated SQL on a database.").set_default(std::string(""));
         std::string & query = kwarg("query","The SQL query to execute. Overrides FILE and STDIN.").set_default(std::string(""));
         std::string & encoding = kwarg("e,encoding","Specify the encoding of the input query file.").set_default("UTF-8");
         bool & no_header = flag("H,no-header-row","Do not output column names.");
+
+        void welcome() final {
+            std::cout << "\nExecute an SQL query on a database and output the result to a CSV file.\n\n";
+        }
+
     };
 } /// detail
 
@@ -52,6 +57,9 @@ struct soci_backend_dependancy {
 #endif
 
 namespace sql2csv {
+    void recode_FILE(auto const & args) {
+    }
+
     template<typename ReaderType>
     void sql_to_csv(auto &args) {
         using namespace detail;

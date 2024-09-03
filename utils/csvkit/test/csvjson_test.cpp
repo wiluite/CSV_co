@@ -35,9 +35,20 @@ int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
+    struct csvjson_specific_args {
+        int indent {min_int_limit};
+        std::string key;
+        std::string lat;
+        std::string lon;
+        std::string type;
+        std::string geometry;
+        std::string crs;
+        bool no_bbox {false};
+        bool stream {false};
+    };
 
     "simple"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "dummy.csv"; }
         } args;
 
@@ -64,7 +75,7 @@ int main() {
     };
 
     "no blanks"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "blanks.csv"; }
         } args;
 
@@ -94,7 +105,7 @@ int main() {
     };
 
     "blanks"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() {
                 file = "blanks.csv";
                 blanks = true;
@@ -133,7 +144,7 @@ int main() {
     };
 
     "no header row"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() {
                 file = "no_header_row.csv";
                 no_header = true;
@@ -163,7 +174,7 @@ int main() {
     };
 
     "no inference"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() {
                 file = "dummy.csv";
                 no_inference = true;
@@ -194,7 +205,7 @@ int main() {
     };
 
     "indentation"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() {
                 file = "dummy.csv";
                 indent = 4;
@@ -208,7 +219,7 @@ int main() {
     };
 
     "keying"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() {
                 file = "dummy.csv";
                 key = "a";
@@ -245,7 +256,7 @@ int main() {
     };
 
     "duplicate keys"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() {
                 file = "dummy3.csv";
                 key = "a";
@@ -263,7 +274,7 @@ int main() {
     };
 
     "geojson with id"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() {
                 file = "test_geo.csv";
                 lat = "latitude";
@@ -306,7 +317,7 @@ int main() {
     };
 
     "geojson point"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() {
                 file = "test_geo.csv";
                 lat = "latitude";
@@ -328,7 +339,7 @@ int main() {
     //TODO: document no geometry option support
 
     "geojson with crs"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "test_geo.csv"; lat = "latitude"; lon = "longitude"; crs = "EPSG:4269";
             }
         } args;
@@ -346,7 +357,7 @@ int main() {
     };
 
     "geojson with no bbox"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "test_geo.csv"; lat = "latitude"; lon = "longitude"; no_bbox = true;
             }
         } args;
@@ -360,7 +371,7 @@ int main() {
     };
 
     "ndjson"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "testjson_converted.csv"; stream = true; }
         } args;
 
@@ -378,7 +389,7 @@ R"({"text": "Chicago Reader", "float": 1.0, "datetime": "1971-01-01T04:14:00", "
     };
 
     "ndjson streaming, no inference"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "testjson_converted.csv"; stream = true; no_inference = true; }
         } args;
 
@@ -395,7 +406,7 @@ R"({"text": "Chicago Reader", "float": "1.0", "datetime": "1971-01-01T04:14:00",
     };
 
     "ndgeojson"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "test_geo.csv"; lat = "latitude"; lon = "longitude"; stream = true; date_fmt = "%m/%d/%y";
             }
         } args;
@@ -426,7 +437,7 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
     };
 
     "ndgeojson streaming, no inference"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "test_geo.csv"; lat = "latitude"; lon = "longitude"; stream = true; date_fmt = "%m/%d/%y"; no_inference = true;
             }
         } args;
@@ -454,7 +465,6 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
 {"type": "Feature", "properties": {"slug": "sensor-device", "title": "Sensor Device", "artist": "Kurt Dyrhaug", "address": "University of Texas, Campus Drive", "type": "Sculpture", "photo_url": "http://media.hacktyler.com/artmap/photos/sensor-device.jpg", "photo_credit": "Photo by Christopher Groskopf. Used with permission.", "last_seen_date": "4/16/12"}, "geometry": {"type": "Point", "coordinates": [-95.250699, 32.317216]}}
 )");
 
-#if 1
         "max field size in geojson mode"_test = [&] {
             args.file = "test_field_size_limit.csv";
             args.lat = "Along";
@@ -486,11 +496,10 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
             Z_CHECK(csvjson::json, test_reader_r8, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
 #endif
         };
-#endif
     };
 
     "max field size"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::csvjson_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvjson_specific_args {
             Args() { file = "test_field_size_limit.csv"; }
         } args;
 

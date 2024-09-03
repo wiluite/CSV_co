@@ -27,9 +27,27 @@ int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
+    struct csvsql_specific_args {
+        std::vector<std::string> files;
+        std::string dialect;
+        std::string db;
+        std::string query;
+        bool insert {false};
+        std::string prefix;
+        std::string before_insert;
+        std::string after_insert;
+        std::string tables;
+        bool no_constraints {false};
+        std::string unique_constraint;
+        bool no_create {false};
+        bool create_if_not_exists {false};
+        bool overwrite {false};
+        std::string schema {false};
+        unsigned chunk_size {0};
+    };
 
     "create table"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"testfixed_converted.csv"};
                 tables = "foo";
@@ -57,7 +75,7 @@ int main() {
     };
 
     "no blanks"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"blanks.csv"};
                 tables = "foo";
@@ -82,7 +100,7 @@ int main() {
     };
 
     "blanks"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"blanks.csv"};
                 tables = "foo";
@@ -108,7 +126,7 @@ int main() {
     };
 
     "no inference"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"testfixed_converted.csv"};
                 tables = "foo";
@@ -137,7 +155,7 @@ int main() {
     };
 
     "no header row"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"no_header_row.csv"};
                 tables = "foo";
@@ -160,7 +178,7 @@ int main() {
     };
 
     "linenumbers"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"dummy.csv"};
                 tables = "foo";
@@ -183,7 +201,7 @@ int main() {
     };
 
     "stdin"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 tables = "foo";
             }
@@ -207,7 +225,7 @@ int main() {
     };
 
     "stdin and filename"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"_", "dummy.csv"};               
             }
@@ -225,7 +243,7 @@ int main() {
     };
 
     "query"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"iris.csv", "irismeta.csv"};
                 query = "SELECT m.usda_id, avg(i.sepal_length) AS mean_sepal_length FROM iris "
@@ -243,7 +261,7 @@ int main() {
     };
 
     "query empty"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{};
                 query = "SELECT 1";
@@ -261,7 +279,7 @@ int main() {
     };
 
     "query text"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"testfixed_converted.csv"};
                 query = "SELECT text FROM testfixed_converted WHERE text LIKE \"Chicago%\"";
@@ -276,7 +294,7 @@ int main() {
     };
 
     "query file"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"testfixed_converted.csv"};
                 query = "test_query.sql";
@@ -293,7 +311,7 @@ int main() {
     };
 
     "query update"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = std::vector<std::string>{"dummy.csv"};
                 no_inference = true;
@@ -323,7 +341,7 @@ int main() {
 
     "before and after insert"_test = [] {
         // Longer test
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
                 files = std::vector<std::string>{"dummy.csv"};
@@ -340,7 +358,7 @@ int main() {
     };
 
     "no prefix unique constraint"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
                 files = std::vector<std::string>{"dummy.csv"};
@@ -369,7 +387,7 @@ int main() {
     };
 
     "prefix unique constraint"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
                 files = std::vector<std::string>{"dummy.csv"};
@@ -392,7 +410,7 @@ int main() {
     };
 
     "no create-if-not-exists"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
                 files = std::vector<std::string>{"foo1.csv"};
@@ -422,7 +440,7 @@ int main() {
     };
 
     "create-if-not-exists"_test = [] {
-        struct Args : tf::common_args, tf::type_aware_args, tf::csvsql_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
                 files = std::vector<std::string>{"foo1.csv"};

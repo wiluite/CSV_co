@@ -1,5 +1,5 @@
 ///
-/// \file   test/csvsql_test.cpp
+/// \file   test/sql2csv_test.cpp
 /// \author wiluite
 /// \brief  Tests for the sql2csv utility.
 
@@ -7,9 +7,8 @@
 #include "ut.hpp"
 
 #include "../utils/csvkit/sql2csv.cpp"
+#include "../utils/csvkit/csvsql.cpp"
 #include "strm_redir.h"
-#include "common_args.h"
-
 
 #define CALL_TEST_AND_REDIRECT_TO_COUT(call)    \
     std::stringstream cout_buffer;              \
@@ -21,6 +20,25 @@
 
 int main() {
     using namespace boost::ut;
-    namespace tf = csvkit::test_facilities;
+
+    struct sql2csv_specific_args {
+        std::filesystem::path query_file;
+        std::string db;
+        std::string query;
+        bool linenumbers {false};
+        std::string encoding {"UTF-8"};
+        bool no_header {false};
+    };
+
+    "no query file"_test = [] {
+        struct Args : sql2csv_specific_args {
+            Args() {
+                query_file = "query";
+            }
+        } args;
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql_to_csv<notrimming_reader_type>(args))
+
+    };
 
 }

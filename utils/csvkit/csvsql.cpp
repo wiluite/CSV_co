@@ -61,9 +61,9 @@ namespace csvsql::detail {
         }
     };
 
-    auto sql_split = [](std::stringstream && string_like, char by = ';') {
+    auto sql_split = [](std::stringstream && strm, char by = ';') {
         std::vector<std::string> result;
-        for (std::string phrase; std::getline(string_like, phrase, by);)
+        for (std::string phrase; std::getline(strm, phrase, by);)
             result.push_back(phrase);
         return result;
     };
@@ -71,7 +71,6 @@ namespace csvsql::detail {
     template <typename ... r_types>
     struct readers_manager {
         auto & get_readers() {
-            static std::deque<r_types...> readers;
             return readers;
         }
         template<typename ReaderType>
@@ -86,13 +85,8 @@ namespace csvsql::detail {
                 get_readers().push_back(std::move(reader));
             }
         }
-        ~readers_manager() {
-            reset_readers();
-        }
     private:
-        auto reset_readers() {
-            get_readers().clear();
-        }
+        std::deque<r_types...> readers;
     };
 
     auto create_table_phrase(auto const & args) {
@@ -269,7 +263,7 @@ namespace csvsql::detail {
                         stream << tn;
                     }
                     else {
-                        std::string tn = std::filesystem::path{args.files[file_no]}.stem();
+                        auto tn = std::filesystem::path{args.files[file_no]}.stem().string();
                         csv_co::string_functions::unquote(tn, '"');
                         stream << tn;
                     }
@@ -278,8 +272,6 @@ namespace csvsql::detail {
                 ~open_close() {
                     stream << ");\n";
                 }
-            private:
-                //std::string const & unique_constraint;
             } wrapper_;
             std::string const & unique_constraint;
             print_director(auto const & args, std::vector<std::string> const & table_names)
@@ -516,24 +508,30 @@ namespace csvsql::detail {
     };
 
     class query {
-        static auto queries(std::string const & q) {
+        static auto queries(auto const & args) {
             std::vector<std::string> result;
             std::stringstream queries;
-            if (std::filesystem::exists(std::filesystem::path{q})) {
-                auto f = std::make_unique<std::ifstream>(q);
-                assert(f->is_open());
-                std::string line;
-                for (; std::getline(*f, line, '\n');)
-                    queries << line;
+            if (std::filesystem::exists(std::filesystem::path{args.query})) {
+                std::filesystem::path path{args.query};
+                auto const length = std::filesystem::file_size(path);
+                if (length == 0)
+                    throw std::runtime_error("Query file '" + args.query +"' exists, but it is empty.");
+                std::ifstream f(args.query);
+                if (!(f.is_open()))
+                    throw std::runtime_error("Error opening the query file: '" + args.query + "'.");
+                std::string queries_s;
+                for (std::string line; std::getline(f, line, '\n');)
+                    queries_s += line;
+                queries << recode_source(static_cast<std::string const&>(queries_s), args);
             } else
-                queries << q;
+                queries << args.query;
             return sql_split(std::move(queries));
         }
     public:
-        query(soci::session & sql, std::string const & q) {
+        query(auto const & args, soci::session & sql, std::string const & q) {
             if (!q.empty()) {
 
-                auto q_array = queries(q);
+                auto q_array = queries(args);
                 std::for_each(q_array.begin(), q_array.end() - 1, [&](auto & elem){
                     sql.begin();
                     sql << elem;
@@ -687,7 +685,7 @@ namespace csvsql {
                 throw;
             }
         }
-        query q(session, args.query);
+        query q(args, session, args.query);
     }
 
 }

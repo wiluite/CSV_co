@@ -533,6 +533,19 @@ namespace csvkit::cli {
         }
     }
 
+    std::string recode_source(std::string const & s, auto const & args) {
+        if (args.encoding == "UTF-8")  {
+            auto const check_result = encoding::is_source_utf8(s);
+            if (check_result.error) {
+                std::ostringstream oss;
+                to_stream(oss, "Your file is not \"UTF-8\" encoded. Please specify the correct encoding with the -e flag.\n");
+                throw std::runtime_error(oss.str()) ;
+            }
+            return s;
+        } else
+            return encoding::recode_source_from(s, args.encoding);
+    }
+
 #define runner_impl(reader_type_, reader_arg_, function_)                                            \
     reader_type_ r(reader_arg_);                                                                     \
     recode_source(r, args);                                                                          \
@@ -1003,10 +1016,10 @@ namespace csvkit::cli {
                     else
                         s += std::string("'" + elem.operator csv_co::cell_string() + "',");
                 });
-                if constexpr (std::is_same_v<std::decay_t<decltype(container[container.size() - 1])>, std::string>)
-                    s += std::string("'" + container[container.size() - 1] + "'");
+                if constexpr (std::is_same_v<std::decay_t<decltype(container.back())>, std::string>)
+                    s += std::string("'" + container.back() + "'");
                 else
-                    s += std::string("'" + container[container.size() - 1].operator csv_co::cell_string() +"'");
+                    s += std::string("'" + container.back().operator csv_co::cell_string() +"'");
                 return s;
             };
 

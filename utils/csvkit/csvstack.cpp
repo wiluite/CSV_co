@@ -201,7 +201,6 @@ namespace csvstack::detail {
     template <typename ... r_types>
     struct readers_manager {
         auto & get_readers() {
-            static std::deque<std::variant<r_types...>> readers;
             return readers;
         }
         template<typename ReaderType>
@@ -214,13 +213,8 @@ namespace csvstack::detail {
                 get_readers().push_back(std::move(reader));
             }
         }
-        ~readers_manager() {
-            reset_readers();
-        }
     private:
-        auto reset_readers() {
-            get_readers().clear();
-        }
+        std::deque<std::variant<r_types...>> readers;
     };
 
 }

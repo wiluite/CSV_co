@@ -10,6 +10,16 @@ using namespace ::csvkit::cli;
 
 #define TRY_TRANSFORM_UTF8_TO_ACTIVE_CODE_PAGE 0
 namespace csvclean::detail {
+    auto cp_transform(auto && transformer, auto & str) {
+        // Try block entry is widely cheap, and exception will raise (if raise) just once.
+        // On the first exception disable rest conversions.
+        try {
+            transformer.transform(str);
+        } catch (std::runtime_error const & e) {
+            // "Cannot convert ... from UTF-8 to ACP (active code page)
+            transformer.disable();
+        }
+    }
 
     void print_span(auto & ostream, auto && span) {
 #if defined(TRY_TRANSFORM_UTF8_TO_ACTIVE_CODE_PAGE) && (TRY_TRANSFORM_UTF8_TO_ACTIVE_CODE_PAGE)

@@ -13,14 +13,6 @@
 #include "test_max_field_size_macros.h"
 #include "stdin_subst.h"
 
-int main() {
-    using namespace boost::ut;
-    namespace tf = csvkit::test_facilities;
-
-#if defined (WIN32)
-    cfg < override > = {.colors={.none="", .pass="", .fail=""}};
-#endif
-
 #define CALL_TEST_AND_REDIRECT_TO_COUT(call) std::stringstream cout_buffer;                        \
                                              {                                                     \
                                                  redirect(cout)                                    \
@@ -28,9 +20,22 @@ int main() {
                                                  call;                                             \
                                              }
 
+int main() {
+    using namespace boost::ut;
+    namespace tf = csvkit::test_facilities;
+
+#if defined (WIN32)
+    cfg < override > = {.colors={.none="", .pass="", .fail=""}};
+#endif
+    struct csvstack_specific_args {
+        std::vector<std::string> files;
+        std::string groups;
+        std::string group_name;
+        bool filenames {false};
+    };
 
     "skip lines"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
         } args;
 
         args.files = std::vector<std::string>{"test_skip_lines.csv", "test_skip_lines.csv"};
@@ -48,7 +53,7 @@ int main() {
     };
 
     "skip lines stdin"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
         } args;
 
         std::ifstream ifs("test_skip_lines.csv");
@@ -68,7 +73,7 @@ int main() {
     };
 
     "single file stack"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
         } args;
 
         args.files = std::vector<std::string>{"dummy.csv"};
@@ -84,7 +89,7 @@ int main() {
     };
 
     "multiple file stack col"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
         } args;
 
         args.files = std::vector<std::string>{"dummy.csv", "dummy_col_shuffled.csv"};
@@ -115,7 +120,7 @@ int main() {
     };
 
     "multiple file stack col ragged"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
         } args;
 
         args.files = std::vector<std::string>{"dummy.csv", "dummy_col_shuffled_ragged.csv"};
@@ -131,7 +136,7 @@ int main() {
     };
 
     "multiple file stack col ragged stdin"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
         } args;
 
         {
@@ -169,7 +174,7 @@ int main() {
 
 
     "explicit grouping"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
             Args() {
                 group_name= "foo";
                 groups = "asd,sdf";
@@ -189,7 +194,7 @@ int main() {
     };
 
     "filenames grouping"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
             Args() {
                 group_name= "path";
                 filenames = true;
@@ -209,7 +214,7 @@ int main() {
     };
 
     "no header row basic"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
             Args() {
                 no_header = true;
             }
@@ -228,7 +233,7 @@ int main() {
     };
 
     "no header row basic stdin"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
             Args() {
                 no_header = true;
             }
@@ -268,7 +273,7 @@ int main() {
     };
 
     "grouped manual and named column"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
             Args() {
                 no_header = true;
                 groups = "foo,bar";
@@ -292,7 +297,7 @@ int main() {
     };
 
     "grouped filenames"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
             Args() {
                 no_header = true;
                 filenames = true;
@@ -312,7 +317,7 @@ int main() {
     };
 
     "grouped filenames and named column"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
             Args() {
                 no_header = true;
                 filenames = true;
@@ -334,7 +339,7 @@ int main() {
 
 
     "max field size"_test = [] {
-        struct Args : tf::common_args, tf::csvstack_specific_args {
+        struct Args : tf::common_args, csvstack_specific_args {
             Args() { files = std::vector<std::string>{"test_field_size_limit.csv"}; /*maxfieldsize = 100;*/ }
         } args;
 

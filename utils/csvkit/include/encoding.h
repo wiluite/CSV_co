@@ -52,9 +52,9 @@ namespace csvkit::cli::encoding::detail {
     }
 }
 
-#define recode(len_func, conv_func, divisor, type_name)                                             \
-    auto from_words = reader.size()/divisor;                                                        \
-    auto const * const src_start = reinterpret_cast<type_name const*>(reader.data());               \
+#define recode(len_func, conv_func, divisor, type_name, source)                                     \
+    auto from_words = source.size()/divisor;                                                        \
+    auto const * const src_start = reinterpret_cast<type_name const*>(source.data());               \
     auto l = len_func(src_start, from_words);                                                       \
     std::string new_rep (l,' ');                                                                    \
     size_t to_words = conv_func(src_start, from_words, new_rep.data());                             \
@@ -62,16 +62,20 @@ namespace csvkit::cli::encoding::detail {
     return new_rep;
 
 namespace csvkit::cli::encoding {
-    auto is_source_utf8(auto & reader) {
+    auto is_source_utf8(auto & source) {
         // NOTE: ISO-2022-JP detected as UTF-8 (otherwise impossible (python csvkit as well))
-        return validate_utf8_with_errors(reader.data(), reader.size());
+        return validate_utf8_with_errors(source.data(), source.size());
     }
 
     auto lookup_encoding(std::string & e_name) {
         using namespace detail;
         iconvlist(check_encoding_impl, static_cast<void*>(&e_name));
         if (!e_name_found()) {
-            int const i = std::atoi(e_name.c_str());
+            char * p_end{};
+            auto const i = std::strtol(e_name.c_str(), &p_end, 10);
+            const bool range_error = errno == ERANGE;
+            if (range_error)
+                throw std::runtime_error("Unexpected conversion error in lookup_encoding()");
             if (i) {
                 auto cp_name = "CP" + e_name;
                 iconvlist(check_encoding_impl, static_cast<void*>(&cp_name));
@@ -117,8 +121,8 @@ namespace csvkit::cli::encoding {
                 )
             {}
 
-        std::string convert(char * src_begin, char const * src_end) const {
-            char * src_ptr = src_begin;
+        std::string convert(char const * const src_begin, char const * const src_end) const {
+            char * src_ptr = const_cast<char*>(src_begin);
             size_t src_size = src_end - src_begin;
 
             std::vector<char> buf(BufSize);
@@ -145,9 +149,8 @@ namespace csvkit::cli::encoding {
             return dst;
         }
 
-        template <typename R>
-        std::string convert(R & r) const {
-            return convert(const_cast<char*>(r.data()), r.data() + r.size());
+        std::string convert(auto & src) const {
+            return convert(src.data(), src.data() + src.size());
         }
 
     private:
@@ -161,7 +164,6 @@ namespace csvkit::cli::encoding {
                 
                 default: 
                     throw std::runtime_error("iconv_converter: unknown error");
-                
             }
         }
 
@@ -174,23 +176,23 @@ namespace csvkit::cli::encoding {
     static_assert(!std::is_copy_assignable_v<iconv_converter<>>);
 
     /// Recodes test from given encoding to UTF-8
-    auto recode_source_from(auto & reader, std::string from) {
+    auto recode_source_from(auto & source, std::string from) {
 
         std::transform(from.begin(), from.end(), from.begin(), ::toupper);
         
         if (from == "UTF-16LE" or from == "UTF-16-LE") {
             //TODO: validate
-            recode(utf8_length_from_utf16le, convert_utf16le_to_utf8, 2, char16_t)
+            recode(utf8_length_from_utf16le, convert_utf16le_to_utf8, 2, char16_t, source)
         } else if (from == "UTF-16BE" or from == "UTF-16-BE") {
-            recode(utf8_length_from_utf16be, convert_utf16be_to_utf8, 2, char16_t)
+            recode(utf8_length_from_utf16be, convert_utf16be_to_utf8, 2, char16_t, source)
         } else if (from == "UTF-32LE" or from == "UTF-32-LE") {
-            recode(utf8_length_from_utf32, convert_utf32_to_utf8, 4, char32_t)
+            recode(utf8_length_from_utf32, convert_utf32_to_utf8, 4, char32_t, source)
         } else {
 
             if (!lookup_encoding(from))
                 throw std::runtime_error("LookupError: unknown encoding: " + from);
             
-            return iconv_converter(from).convert(reader);
+            return iconv_converter(from).convert(source);
         }
     }
 
@@ -201,17 +203,6 @@ namespace csvkit::cli::encoding {
 
     std::string iconv(const std::string& to, const std::string& from, std::string const & what) {
         return iconv_converter(from, to).convert(const_cast<char*>(what.data()), what.data()+what.size());
-    }
-
-    auto cp_transform(auto && transformer, auto & str) {        
-        // Try block entry is widely cheap, and exception will raise (if raise) just once.
-        // On the first exception disable rest conversions.
-        try {
-            transformer.transform(str);
-        } catch (std::runtime_error const & e) {
-            // "Cannot convert ... from UTF-8 to ACP (active code page)
-            transformer.disable();
-        }
     }
 
     class acp_transformer {

@@ -13,6 +13,13 @@
 #include "test_reader_macros.h"
 #include "test_max_field_size_macros.h"
 
+#define CALL_TEST_AND_REDIRECT_TO_COUT(name) std::stringstream cout_buffer; \
+{                                                                           \
+    redirect(cout)                                                          \
+    redirect_cout cr(cout_buffer.rdbuf());                                  \
+    test_reader_configurator_and_runner(args, name)                         \
+}
+
 int main() {
     using namespace boost::ut;
     namespace tf = csvkit::test_facilities;
@@ -20,16 +27,13 @@ int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
-
-    #define CALL_TEST_AND_REDIRECT_TO_COUT(name) std::stringstream cout_buffer;                        \
-                                                 {                                                     \
-                                                     redirect(cout)                                    \
-                                                     redirect_cout cr(cout_buffer.rdbuf());            \
-                                                     test_reader_configurator_and_runner(args, name)   \
-                                                 }
+    struct csvsort_specific_args {
+        bool r {false};
+        bool parallel_sort {true};
+    };
 
     "runs"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "test_utf8.csv"; }
         } args;
 
@@ -43,7 +47,7 @@ int main() {
     };
 
     "encoding"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "test_latin1.csv"; }
         } args;
 
@@ -70,7 +74,7 @@ int main() {
 
     "sort string reverse"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "testxls_converted.csv"; columns = "1"; r = true; }
         } args;
 
@@ -88,7 +92,7 @@ int main() {
 
     "sort date"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "testxls_converted.csv"; columns = "2"; date_fmt = "%Y-%m-%d";}
         } args;
 
@@ -106,7 +110,7 @@ int main() {
 
     "no blanks"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "blanks.csv"; }
         } args;
 
@@ -117,7 +121,7 @@ int main() {
 
     "blanks"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "blanks.csv"; blanks = true; }
         } args;
 
@@ -128,7 +132,7 @@ int main() {
 
     "no header row"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "no_header_row.csv"; no_inference = true; no_header = true; }
         } args;
 
@@ -139,7 +143,7 @@ int main() {
 
     "no inference"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "test_literal_order.csv"; no_inference = true; columns = "1"; }
         } args;
 
@@ -157,7 +161,7 @@ int main() {
 
     "sort_t_and_nulls"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "sort_ints_nulls.csv"; columns = "2"; }
         } args;
 
@@ -181,7 +185,7 @@ int main() {
     };
 
     "sort timedelta"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "timedelta.csv"; columns = "2"; }
         } args;
 
@@ -197,7 +201,7 @@ int main() {
     };
 
     "max field size"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvsort_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvsort_specific_args {
             Args() { file = "test_field_size_limit.csv"; maxfieldsize = 100; }
         } args;
 

@@ -40,9 +40,32 @@ int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
+    struct csvstat_specific_args {
+        bool csv {false};
+        bool json {false};
+        int indent {min_int_limit};
+        bool type {false};
+        bool nulls {false};
+        bool non_nulls {false};
+        bool unique {false};
+        bool min {false};
+        bool max {false};
+        bool sum {false};
+        bool mean {false};
+        bool median {false};
+        bool stdev {false};
+        bool len {false};
+        bool max_precision {false};
+        bool freq {false};
+        unsigned long freq_count {5ul};
+        bool count {false};
+        bool no_mdp {false};
+        bool no_grouping_sep {false};
+        std::string decimal_format {"%.3f"};
+    };
 
     "runs"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() { file = "test_utf8.csv"; }
         } args;
         {
@@ -61,7 +84,7 @@ int main() {
     };
 
     "encoding"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() { file = "test_latin1.csv"; }
         } args;
 
@@ -97,7 +120,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "columns"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "testxls_converted.csv";
                 columns = "2";
@@ -113,7 +136,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "linenumber"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "dummy.csv";
                 columns = "2";
@@ -129,7 +152,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "no header row"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "no_header_row.csv";
                 columns = "2";
@@ -146,7 +169,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "count only"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 count = true;
@@ -161,7 +184,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "unique"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 columns = "county";
@@ -177,7 +200,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "max length"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 columns = "county";
@@ -193,7 +216,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "freq list"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() { file = "ks_1033_data.csv"; }
         } args;
 
@@ -208,7 +231,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "freq"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 freq = true;
@@ -223,7 +246,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "freq count"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 freq_count = 1;
@@ -240,7 +263,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "csv"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 csv = true;
@@ -271,7 +294,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "csv_columns"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 csv = true;
@@ -304,7 +327,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
         using namespace rapidjson;
 
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 json = true;
@@ -339,7 +362,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     "json_columns"_test = [] {
         using namespace rapidjson;
 
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
                 json = true;
@@ -378,7 +401,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "decimal_format"_test = [&] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             // TODO:provide in csvstat the num_locale cell state many times in the session
             Args() {
                 file = "FY09_EDU_Recipients_by_State.csv";
@@ -419,7 +442,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "max_precision_on_off"_test = [&] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 columns = "1";
                 max_precision = true;
@@ -445,7 +468,7 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     };
 
     "max field size"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvstat_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "test_field_size_limit.csv";
             }

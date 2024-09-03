@@ -11,13 +11,6 @@
 #include "common_args.h"
 #include "test_max_field_size_macros.h"
 
-int main() {
-    using namespace boost::ut;
-
-#if defined (WIN32)
-    cfg < override > = {.colors={.none="", .pass="", .fail=""}};
-#endif
-
 #define CALL_TEST_AND_REDIRECT_TO_COUT(call) std::stringstream cout_buffer;                        \
                                              {                                                     \
                                                  redirect(cout)                                    \
@@ -25,9 +18,23 @@ int main() {
                                                  call;                                             \
                                              }
 
+int main() {
+    using namespace boost::ut;
+
+#if defined (WIN32)
+    cfg < override > = {.colors={.none="", .pass="", .fail=""}};
+#endif
+
+    struct csvjoin_specific_args {
+        std::vector<std::string> files;
+        bool right_join {false};
+        bool left_join {false};
+        bool outer_join {false};
+    };
+
     "runs"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::csvjoin_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, csvjoin_specific_args {
             Args() {
                 columns.clear();
             }
