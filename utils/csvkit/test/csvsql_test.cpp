@@ -310,6 +310,51 @@ int main() {
         expect(cout_buffer.str() == "question,text\n36,©\n");
     };
 
+    "no UTF-8 query file"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = std::vector<std::string>{"testfixed_converted.csv"};
+                query = "test_query_1252.sql";
+            }
+        } args;
+
+        expect(throws([&]{ CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) ) }));
+    };
+
+    "CP1252 query file"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = std::vector<std::string>{"testfixed_converted.csv"};
+                query = "test_query_1252.sql";
+                encoding = "CP1252";
+            }
+        } args;
+
+        expect(nothrow([&]{ 
+            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) ) 
+
+//          question,text
+//          36,©
+            expect(cout_buffer.str() == "question,text\n36,©\n");
+
+        }));
+    };
+
+    "empty query file"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = std::vector<std::string>{"testfixed_converted.csv"};
+                query = "test_query_empty.sql";
+            }
+        } args;
+
+        try {
+            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
+        } catch (std::exception const & e) {
+            expect(std::string(e.what()).find("Query file 'test_query_empty.sql' exists, but it is empty.") != std::string::npos);
+        }
+    };
+
     "query update"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {

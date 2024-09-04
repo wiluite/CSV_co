@@ -509,7 +509,6 @@ namespace csvsql::detail {
 
     class query {
         static auto queries(auto const & args) {
-            std::vector<std::string> result;
             std::stringstream queries;
             if (std::filesystem::exists(std::filesystem::path{args.query})) {
                 std::filesystem::path path{args.query};
