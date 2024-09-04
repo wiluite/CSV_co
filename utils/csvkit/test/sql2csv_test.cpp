@@ -20,7 +20,7 @@
 
 int main() {
     using namespace boost::ut;
-    
+
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif

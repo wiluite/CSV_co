@@ -533,7 +533,7 @@ namespace csvkit::cli {
         }
     }
 
-    std::string recode_source(std::string const & s, auto const & args) {
+    std::string recode_source(std::string && s, auto const & args) {
         if (args.encoding == "UTF-8")  {
             auto const check_result = encoding::is_source_utf8(s);
             if (check_result.error) {

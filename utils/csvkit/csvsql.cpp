@@ -522,7 +522,7 @@ namespace csvsql::detail {
                 std::string queries_s;
                 for (std::string line; std::getline(f, line, '\n');)
                     queries_s += line;
-                queries << recode_source(static_cast<std::string const&>(queries_s), args);
+                queries << recode_source(std::move(queries_s), args);
             } else
                 queries << args.query;
             return sql_split(std::move(queries));
