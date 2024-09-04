@@ -588,24 +588,24 @@ namespace csvsql::detail {
         create_table_composer::file_no = 0;
     }
 
-} ///detail
-
 #if !defined(__unix__)
-static
-struct soci_backend_dependancy {
-    soci_backend_dependancy() {
-    #if !defined(BOOST_UT_DISABLE_MODULE)
+    static
+    struct soci_backend_dependancy {
+        soci_backend_dependancy() {
+#if !defined(BOOST_UT_DISABLE_MODULE)
         std::string path = getenv("PATH");
         path = "PATH=" + path + ";..\\..\\external_deps";
         putenv(path.c_str());
-        #else
+#else
         std::string path = getenv("PATH");
         path = "PATH=" + path + ";..\\..\\..\\external_deps";
         putenv(path.c_str());
-    #endif
-    }
-} sbd;
 #endif
+        }
+    } sbd;
+#endif
+
+} ///detail
 
 namespace csvsql {
     template <typename ReaderType>

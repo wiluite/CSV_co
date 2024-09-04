@@ -20,6 +20,10 @@
 
 int main() {
     using namespace boost::ut;
+    
+#if defined (WIN32)
+    cfg < override > = {.colors={.none="", .pass="", .fail=""}};
+#endif
 
     struct sql2csv_specific_args {
         std::filesystem::path query_file;
@@ -38,7 +42,7 @@ int main() {
         } args;
 
         CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql_to_csv<notrimming_reader_type>(args))
-
+        expect(true);
     };
 
 }

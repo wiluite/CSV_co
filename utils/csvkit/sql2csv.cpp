@@ -37,12 +37,11 @@ namespace sql2csv::detail {
         }
 
     };
-} /// detail
 
 #if !defined(__unix__)
-static
-struct soci_backend_dependancy {
-    soci_backend_dependancy() {
+    static
+    struct soci_backend_dependancy {
+        soci_backend_dependancy() {
 #if !defined(BOOST_UT_DISABLE_MODULE)
         std::string path = getenv("PATH");
         path = "PATH=" + path + ";..\\..\\external_deps";
@@ -52,9 +51,11 @@ struct soci_backend_dependancy {
         path = "PATH=" + path + ";..\\..\\..\\external_deps";
         putenv(path.c_str());
 #endif
-    }
-} sbd;
+        }
+    } sbd;
 #endif
+
+} /// detail
 
 namespace sql2csv {
     void recode_FILE(auto const & args) {
