@@ -556,6 +556,11 @@ if (IO_CSVKIT_UTILS)
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/iris.csv
             ${CMAKE_CURRENT_BINARY_DIR}/iris.csv)
+    add_custom_command(
+            TARGET sql2csv_test POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/stdin_select
+            ${CMAKE_CURRENT_BINARY_DIR}/stdin_select)
 
     target_link_libraries(sql2csv_test libcppp-reiconv.static simdutf soci_core -lpthread)
     add_test(sql2csv_test sql2csv_test)

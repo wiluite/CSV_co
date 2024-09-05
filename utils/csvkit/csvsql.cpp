@@ -527,8 +527,8 @@ namespace csvsql::detail {
             return sql_split(std::move(queries));
         }
     public:
-        query(auto const & args, soci::session & sql, std::string const & q) {
-            if (!q.empty()) {
+        query(auto const & args, soci::session & sql) {
+            if (!args.query.empty()) {
 
                 auto q_array = queries(args);
                 std::for_each(q_array.begin(), q_array.end() - 1, [&](auto & elem){
@@ -684,7 +684,7 @@ namespace csvsql {
                 throw;
             }
         }
-        query q(args, session, args.query);
+        query q(args, session);
     }
 
 }

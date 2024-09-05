@@ -382,6 +382,9 @@ int main() {
         std::string operator()() {
             return file;
         }
+        std::string operator()() const {
+            return file;
+        }
     } ;
 
     "before and after insert"_test = [] {
@@ -393,13 +396,43 @@ int main() {
                 db = "sqlite3://db=" + dbfile();
                 insert = true;
                 before_insert = "SELECT 1; CREATE TABLE foobar (date DATE)";
-                after_insert = "INSERT INTO dummy VALUES (0, 5, 6)";
+                after_insert = "INSERT INTO dummy VALUES (0, 5, 6.1)";
             }
+            std::string str1;
         } args;
 
-        CALL_TEST_AND_REDIRECT_TO_COUT(
-            csvsql::sql<notrimming_reader_type>(args)
-        )
+        {
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+            )
+        }
+
+        struct sql2csv_specific_args {
+            std::filesystem::path query_file;
+            std::string db;
+            std::string query;
+            bool linenumbers {false};
+            std::string encoding {"UTF-8"};
+            bool no_header {false};
+        };
+
+        struct SQL2CSVArgs : sql2csv_specific_args {
+            SQL2CSVArgs(Args const & a) {
+                db = "sqlite3://db=" + a.dbfile();
+                query = "SELECT * FROM foobar";
+            }
+        } sql2csvargs(args);
+
+        expect(nothrow([&]{
+            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql_to_csv<notrimming_reader_type>(sql2csvargs))
+            expect(cout_buffer.str() == "date\n");
+        }));
+
+        sql2csvargs.query = "SELECT * from dummy";
+        expect(nothrow([&]{
+            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql_to_csv<notrimming_reader_type>(sql2csvargs))
+            expect(cout_buffer.str() == "a,b,c\n1,2,3\n0,5,6.1\n");
+        }));
     };
 
     "no prefix unique constraint"_test = [] {

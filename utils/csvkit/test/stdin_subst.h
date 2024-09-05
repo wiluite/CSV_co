@@ -12,3 +12,14 @@ struct stdin_subst {
 private:
     std::streambuf* cin_buf;
 };
+
+struct stdin_redir {
+    explicit stdin_redir(char const * const fn) {
+        auto res = freopen(fn, "r", stdin);
+        assert(res!=nullptr);
+    }
+    ~stdin_redir() {
+        fclose(stdin);
+        //fdopen(0,"r");
+    }
+};

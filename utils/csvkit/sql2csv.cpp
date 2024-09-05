@@ -20,11 +20,13 @@
 
 #include <iostream>
 #include <cli.h>
+#include <unistd.h>
+
 using namespace ::csvkit::cli;
 
 namespace sql2csv::detail {
     struct Args : argparse::Args {
-        std::filesystem::path & query_file = arg("The FILE to use as SQL query. If it and --query are omitted, the query is piped data via STDIN.").set_default("cin");
+        std::filesystem::path & query_file = arg("The FILE to use as SQL query. If it and --query are omitted, the query is piped data via STDIN.").set_default("");
         bool & verbose = flag("v,verbose", "A flag to toggle verbose.");
         bool & linenumbers = flag("l,linenumbers", "Insert a column of line numbers at the front of the output. Useful when piping to grep or as a simple primary key.");
         std::string & db = kwarg("db","If present, a 'soci' connection string to use to directly execute generated SQL on a database.").set_default(std::string(""));
@@ -35,7 +37,125 @@ namespace sql2csv::detail {
         void welcome() final {
             std::cout << "\nExecute an SQL query on a database and output the result to a CSV file.\n\n";
         }
+    };
 
+    auto read_standard_input()->std::string {
+        std::string result;
+        for (std::string input;;) {
+            std::getline(std::cin, input);
+            result += input;
+            if (std::cin.eof())
+                break;
+            result += '\n';
+        }
+        return result;
+    }
+
+    std::string & query_stdin() {
+        static std::string query_stdin_;
+        return query_stdin_;
+    }
+
+    auto sql_split = [](std::stringstream && strm, char by = ';') {
+        bool only_one = false;
+        std::string result_phrase;
+        for (std::string phrase; std::getline(strm, phrase, by);) {
+            if (!only_one) {
+                only_one = true;
+                result_phrase = std::move(phrase);
+            } else
+                throw std::runtime_error("Warning: You can only execute one statement at a time.");
+        }
+        return result_phrase;
+    };
+
+    class query {
+        static auto query_impl(auto const & args) {
+            std::stringstream queries;
+            if (!(args.query.empty())) {
+                queries << args.query;
+            } else
+            if (!args.query_file.empty()) {
+                if (std::filesystem::exists(std::filesystem::path{args.query_file})) {
+                    std::filesystem::path path{args.query_file};
+                    auto const length = std::filesystem::file_size(path);
+                    if (length == 0)
+                        throw std::runtime_error("Query file '" + args.query_file.string() +"' exists, but it is empty.");
+                    std::ifstream f(args.query_file);
+                    if (!(f.is_open()))
+                        throw std::runtime_error("Error opening the query file: '" + args.query_file.string() + "'.");
+                    std::string queries_s;
+                    for (std::string line; std::getline(f, line, '\n');)
+                        queries_s += line;
+                    queries << recode_source(std::move(queries_s), args);
+                } else
+                    throw std::runtime_error("No such file or directory: '" + args.query_file.string() + "'.");
+            } else {
+                assert(!query_stdin().empty());
+                queries << query_stdin();
+            }
+            return sql_split(std::move(queries));
+        }
+    public:
+        query(auto const & args, soci::session && sql) {
+            using namespace soci;
+
+            auto const q_s = query_impl(args);
+
+            rowset<row> rs = (sql.prepare << q_s);
+
+            bool print_header = false;
+            for (auto && elem : rs) {
+                row const &rr = elem;
+                if (!print_header) {
+                    std::cout << rr.get_properties(0).get_name();
+                    for (std::size_t i = 1; i != rr.size(); ++i)
+                        std::cout << ',' << rr.get_properties(i).get_name();
+                    std::cout << '\n';
+                    print_header = true;
+                }
+                auto print_data = [&](std::size_t i) {
+                    column_properties const & props = rr.get_properties(i);
+                    std::tm when{};
+                    switch(props.get_db_type())
+                    {
+                        case db_string:
+                            std::cout << rr.get<std::string>(i);
+                            break;
+                        case db_double:
+                            std::cout << rr.get<double>(i);
+                            break;
+                        case db_int32:
+                            std::cout << rr.get<int32_t>(i);
+                            break;
+                        case db_date:
+                            when = rr.get<std::tm>(i);
+                            std::cout << asctime(&when);
+                            break;
+                        default:
+                            break;
+                    }
+                };
+                print_data(0);
+                for (std::size_t i = 1; i != rr.size(); ++i) {
+                    std::cout << ',';
+                    print_data(i);
+                }
+                std::cout << '\n';
+            }
+            if (!print_header) { // no data - just print table header
+                soci::row v;
+                sql.once << q_s,into (v);
+                soci::column_properties const &prop = v.get_properties(0);
+                std::cout << prop.get_name();
+                for (auto i = 1u; i < v.size(); i++) {
+                    std::cout << ',';
+                    soci::column_properties const &prop = v.get_properties(i);
+                    std::cout << prop.get_name();
+                }
+                std::cout << '\n';
+            }
+        }
     };
 
 #if !defined(__unix__)
@@ -55,6 +175,7 @@ namespace sql2csv::detail {
     } sbd;
 #endif
 
+
 } /// detail
 
 namespace sql2csv {
@@ -64,6 +185,19 @@ namespace sql2csv {
     template<typename ReaderType>
     void sql_to_csv(auto &args) {
         using namespace detail;
+        if (args.query.empty() and args.query_file.empty() and isatty(STDIN_FILENO))
+            throw std::runtime_error("sql2csv: error: You must provide an input file or piped data.");
+
+        if ((args.query.empty() and args.query_file.empty() and !isatty(STDIN_FILENO)) or (args.query.empty() and args.query_file == "_")) {
+            query_stdin() = read_standard_input();
+            if (args.query_file == "_")
+                args.query_file.clear();
+        }
+
+        if (args.db.empty())
+            args.db = "sqlite3://db=:memory:";
+
+        query{args, soci::session{args.db}};
     }
 }
 
