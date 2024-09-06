@@ -104,7 +104,7 @@ add_custom_command(
 add_custom_command(
         TARGET csvcut_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/dummy.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
 add_custom_command(
         TARGET csvcut_test POST_BUILD
@@ -174,7 +174,7 @@ add_custom_command(
 add_custom_command(
         TARGET csvlook_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/dummy.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
 add_custom_command(
         TARGET csvlook_test POST_BUILD
@@ -290,7 +290,7 @@ add_custom_command(
 add_custom_command(
         TARGET csvjoin_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/dummy.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
 add_custom_command(
         TARGET csvjoin_test POST_BUILD
@@ -319,7 +319,7 @@ add_custom_command(
 add_custom_command(
         TARGET csvstack_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/dummy.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
 add_custom_command(
         TARGET csvstack_test POST_BUILD
@@ -364,7 +364,7 @@ add_executable(csvjson_test csvjson_test.cpp)
 add_custom_command(
         TARGET csvjson_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/dummy.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
 add_custom_command(
         TARGET csvjson_test POST_BUILD
@@ -414,7 +414,7 @@ add_custom_command(
 add_custom_command(
         TARGET csvgrep_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/dummy.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
 target_link_libraries(csvgrep_test libcppp-reiconv.static simdutf -lpthread)
 add_custom_command(
@@ -470,7 +470,7 @@ if (IO_CSVKIT_UTILS)
     add_custom_command(
         TARGET csvsql_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/dummy.csv
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
     add_custom_command(
         TARGET csvsql_test POST_BUILD
@@ -549,7 +549,7 @@ if (IO_CSVKIT_UTILS)
     add_custom_command(
             TARGET sql2csv_test POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv
+            ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/dummy.csv
             ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv)
     add_custom_command(
             TARGET sql2csv_test POST_BUILD
