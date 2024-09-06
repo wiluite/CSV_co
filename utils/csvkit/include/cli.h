@@ -275,14 +275,15 @@ namespace csvkit::cli {
 
     /// Returns the standard input stream as a standard string
     auto read_standard_input(auto &)->std::string {
-        std::string csv;
-        while (!std::cin.eof()) {
-            static std::string temp;
-            std::getline(std::cin, temp);
-            csv += temp;
-            csv += '\n';
+        std::string result;
+        for (std::string input;;) {
+            std::getline(std::cin, input);
+            result += input;
+            if (std::cin.eof())
+                break;
+            result += '\n';
         }
-        return {csv.begin(), csv.end() - 1};
+        return result;
     }
 
     /// The output precision representation class used for the csvstat's standard and csv print visitors (except for 'most common values')    

@@ -39,18 +39,6 @@ namespace sql2csv::detail {
         }
     };
 
-    auto read_standard_input()->std::string {
-        std::string result;
-        for (std::string input;;) {
-            std::getline(std::cin, input);
-            result += input;
-            if (std::cin.eof())
-                break;
-            result += '\n';
-        }
-        return result;
-    }
-
     std::string & query_stdin() {
         static std::string query_stdin_;
         return query_stdin_;
@@ -189,7 +177,7 @@ namespace sql2csv {
             throw std::runtime_error("sql2csv: error: You must provide an input file or piped data.");
 
         if ((args.query.empty() and args.query_file.empty() and !isatty(STDIN_FILENO)) or (args.query.empty() and args.query_file == "_")) {
-            query_stdin() = read_standard_input();
+            query_stdin() = read_standard_input(args);
             if (args.query_file == "_")
                 args.query_file.clear();
         }

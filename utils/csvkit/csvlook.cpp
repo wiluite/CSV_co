@@ -359,6 +359,17 @@ namespace csvlook {
             args.max_rows /= 2;
         std::size_t const rows_to_read = std::size_t(args.max_rows) + (args.no_header ? 0 : 1) + args.skip_lines + 1;
         std::size_t next_row = 0;
+
+        std::string result;
+        for (std::string input;;) {
+            std::getline(std::cin, input);
+            result += input;
+            if (std::cin.eof() || ++next_row >= rows_to_read)
+                break;
+            result += '\n';
+        }
+        return result;
+#if 0
         while (!std::cin.eof() && ++next_row < rows_to_read) {
             static std::string temp;
             std::getline(std::cin, temp);
@@ -366,6 +377,7 @@ namespace csvlook {
             csv += '\n';
         }
         return {csv.begin(), csv.end() - 1};
+#endif
     };
 
 } /// namespace
