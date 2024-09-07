@@ -442,9 +442,24 @@ namespace csvsql::detail {
                     }
                 }
                 , [&](elem_type const & e) {
-                    // STUB
                     if (!e.is_null()) {
-                        data_holder[col] = std::tm{};
+                        using namespace date;
+
+                        long double secs = e.timedelta_seconds();
+                        std::tm tm_{};
+                        date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
+                        auto daypoint = floor<days>(tp);
+                        year_month_day ymd = daypoint;
+                        tm_.tm_year = int(ymd.year()) - 1900;
+                        tm_.tm_mon = unsigned(ymd.month()) - 1;
+                        tm_.tm_mday = unsigned(ymd.day());
+                        hh_mm_ss tod{tp - daypoint};
+                        tm_.tm_hour = tod.hours().count();
+                        tm_.tm_min = tod.minutes().count();
+                        tm_.tm_sec = tod.seconds().count();
+                        double int_part;
+                        tm_.tm_isdst = std::modf(secs, &int_part) * 1000000;
+                        data_holder[col] = tm_;
                         indicators[col] = soci::i_ok;
                     } else {
                         data_holder[col] = std::tm{};
