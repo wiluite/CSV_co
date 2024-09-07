@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <cli.h>
+#include <rowset-query-impl.h>
 #include <iosfwd>
 #include <vector>
 #include <unordered_map>
@@ -422,9 +423,21 @@ namespace csvsql::detail {
                     }
                 }
                 , [&](elem_type const & e) {
-                    // STUB
                     if (!e.is_null()) {
-                        data_holder[col] = std::tm{};
+                        using namespace date;
+
+                        date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
+                        auto daypoint = floor<days>(tp);
+                        year_month_day ymd = daypoint;
+                        std::tm tm_{};
+                        tm_.tm_year = int(ymd.year()) - 1900;
+                        tm_.tm_mon = unsigned(ymd.month()) - 1;
+                        tm_.tm_mday = unsigned(ymd.day());
+                        hh_mm_ss tod{tp - daypoint};
+                        tm_.tm_hour = tod.hours().count();
+                        tm_.tm_min = tod.minutes().count();
+                        tm_.tm_sec = tod.seconds().count();
+                        data_holder[col] = tm_;
                         indicators[col] = soci::i_ok;
                     } else {
                         data_holder[col] = std::tm{};
@@ -432,9 +445,20 @@ namespace csvsql::detail {
                     }
                 }
                 , [&](elem_type const & e) {
-                    // STUB
                     if (!e.is_null()) {
-                        data_holder[col] = std::tm{};
+                        using namespace date;
+
+                        date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
+                        auto daypoint = floor<days>(tp);
+                        year_month_day ymd = daypoint;
+                        std::tm tm_{};
+                        tm_.tm_year = int(ymd.year()) - 1900;
+                        tm_.tm_mon = unsigned(ymd.month()) - 1;
+                        tm_.tm_mday = unsigned(ymd.day());
+                        tm_.tm_hour = 0;
+                        tm_.tm_min = 0;
+                        tm_.tm_sec = 0;
+                        data_holder[col] = tm_;
                         indicators[col] = soci::i_ok;
                     } else {
                         data_holder[col] = std::tm{};
@@ -446,10 +470,10 @@ namespace csvsql::detail {
                         using namespace date;
 
                         long double secs = e.timedelta_seconds();
-                        std::tm tm_{};
                         date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
                         auto daypoint = floor<days>(tp);
                         year_month_day ymd = daypoint;
+                        std::tm tm_{};
                         tm_.tm_year = int(ymd.year()) - 1900;
                         tm_.tm_mon = unsigned(ymd.month()) - 1;
                         tm_.tm_mday = unsigned(ymd.day());
@@ -544,7 +568,6 @@ namespace csvsql::detail {
     public:
         query(auto const & args, soci::session & sql) {
             if (!args.query.empty()) {
-
                 auto q_array = queries(args);
                 std::for_each(q_array.begin(), q_array.end() - 1, [&](auto & elem){
                     sql.begin();
@@ -552,48 +575,8 @@ namespace csvsql::detail {
                     sql.commit();
                 });
 
-                using namespace soci;
-
-                rowset<row> rs = (sql.prepare << q_array.back());
-                bool print_header = false;
-                for (auto && elem : rs) {
-                    row const &rr = elem;
-                    if (!print_header) {
-                        std::cout << rr.get_properties(0).get_name();
-                        for (std::size_t i = 1; i != rr.size(); ++i)
-                            std::cout << ',' << rr.get_properties(i).get_name();
-                        std::cout << '\n';
-                        print_header = true;
-                    }
-                    auto print_data = [&](std::size_t i) {
-                        column_properties const & props = rr.get_properties(i);
-                        std::tm when{};
-                        switch(props.get_db_type())
-                        {
-                            case db_string:
-                                std::cout << rr.get<std::string>(i);
-                                break;
-                            case db_double:
-                                std::cout << rr.get<double>(i);
-                                break;
-                            case db_int32:
-                                std::cout << std::boolalpha << static_cast<bool>(rr.get<int32_t>(i));
-                                break;
-                            case db_date:
-                                when = rr.get<std::tm>(i);
-                                std::cout << asctime(&when);
-                                break;
-                            default:
-                                break;
-                        }
-                    };
-                    print_data(0);
-                    for (std::size_t i = 1; i != rr.size(); ++i) {
-                        std::cout << ',';
-                        print_data(i);
-                    }
-                    std::cout << '\n';
-                }
+                using namespace ::csvkit::cli::sql;
+                rowset_query(sql, args, q_array.back());
             }
         }
     };
