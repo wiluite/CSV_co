@@ -374,7 +374,7 @@ int main() {
     class db_file {
         std::string file;
     public:
-        db_file() : file("foo.db") {}
+        db_file(char const * const name = "foo.db") : file(name) {}
         ~db_file() {
             if (std::filesystem::exists(std::filesystem::path(file)))
                 std::remove(file.c_str());
@@ -385,7 +385,7 @@ int main() {
         std::string operator()() const {
             return file;
         }
-    } ;
+    };
 
     "before and after insert"_test = [] {
         // Longer test

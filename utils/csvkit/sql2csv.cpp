@@ -96,10 +96,14 @@ namespace sql2csv::detail {
             for (auto && elem : rs) {
                 row const &rr = elem;
                 if (!print_header) {
-                    std::cout << rr.get_properties(0).get_name();
-                    for (std::size_t i = 1; i != rr.size(); ++i)
-                        std::cout << ',' << rr.get_properties(i).get_name();
-                    std::cout << '\n';
+                    if (!args.no_header) {
+                        if (args.linenumbers)
+                            std::cout << "line_number" << ',';
+                        std::cout << rr.get_properties(0).get_name();
+                        for (std::size_t i = 1; i != rr.size(); ++i)
+                            std::cout << ',' << rr.get_properties(i).get_name();
+                        std::cout << '\n';
+                    }
                     print_header = true;
                 }
                 auto print_data = [&](std::size_t i) {
@@ -124,6 +128,10 @@ namespace sql2csv::detail {
                             break;
                     }
                 };
+                if (args.linenumbers) {
+                    static auto line = 1ul;
+                    std::cout << line++ << ',';
+                }
                 print_data(0);
                 for (std::size_t i = 1; i != rr.size(); ++i) {
                     std::cout << ',';
@@ -132,16 +140,21 @@ namespace sql2csv::detail {
                 std::cout << '\n';
             }
             if (!print_header) { // no data - just print table header
-                soci::row v;
-                sql.once << q_s,into (v);
-                soci::column_properties const &prop = v.get_properties(0);
-                std::cout << prop.get_name();
-                for (auto i = 1u; i < v.size(); i++) {
-                    std::cout << ',';
-                    soci::column_properties const &prop = v.get_properties(i);
+                if (!args.no_header) {
+                    soci::row v;
+                    sql.once << q_s,into (v);
+                    if (args.linenumbers)
+                        std::cout << "line_number" << ',';
+
+                    soci::column_properties const &prop = v.get_properties(0);
                     std::cout << prop.get_name();
+                    for (auto i = 1u; i < v.size(); i++) {
+                        std::cout << ',';
+                        soci::column_properties const &prop = v.get_properties(i);
+                        std::cout << prop.get_name();
+                    }
+                    std::cout << '\n';
                 }
-                std::cout << '\n';
             }
         }
     };
