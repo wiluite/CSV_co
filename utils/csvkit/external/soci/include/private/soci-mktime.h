@@ -44,7 +44,7 @@ inline
 void
 mktime_from_ymdhms(tm& t,
                    int year, int month, int day,
-                   int hour, int minute, int second)
+                   int hour, int minute, int second, unsigned microseconds=0)
 {
     t.tm_isdst = -1;
     t.tm_year = year - 1900;
@@ -53,8 +53,8 @@ mktime_from_ymdhms(tm& t,
     t.tm_hour = hour;
     t.tm_min  = minute;
     t.tm_sec  = second;
-
     timegm_impl(&t);
+    t.tm_isdst = static_cast<int>(microseconds);
 }
 
 // Helper function for parsing datetime values.

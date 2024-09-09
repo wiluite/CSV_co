@@ -55,7 +55,7 @@ namespace csvsql::detail {
         std::string & db_schema = kwarg("db-schema","Optional name of database schema to create table(s) in.").set_default(std::string(""));
         bool &no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
         unsigned & chunk_size = kwarg("chunk-size","Chunk size for batch insert into the table. Requires --insert.").set_default(0);
-        bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported");
+        bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
 
         void welcome() final {
             std::cout << "\nGenerate SQL statements for one or more CSV files, or execute those statements directly on a database, and execute one or more SQL queries.\n\n";
@@ -704,7 +704,7 @@ int main(int argc, char * argv[]) {
             csvsql::sql<skipinitspace_reader_type>(args);
     }
     catch (soci::soci_error const & e) {
-        std::cout << e.what() << std::endl;
+        std::cout << e.get_error_message() << std::endl;
     }
     catch (std::exception const & e) {
         std::cout << e.what() << std::endl;

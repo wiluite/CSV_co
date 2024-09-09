@@ -26,7 +26,7 @@ namespace csvlook {
         bool & no_number_ellipsis = flag("no-number-ellipsis","Disable the ellipsis if --max-precision is exceeded.");
         bool & no_inference = flag("I,no-inference", "Disable type inference when parsing the input. This disables the reformatting of values.");
         std::string & glob_locale = kwarg("G,glob-locale", "Superseded global locale.").set_default("C");
-        bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported");
+        bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
 
         void welcome() final {
             std::cout << "\nRender a CSV file in the console as a Markdown-compatible, fixed-width table.\n\n";

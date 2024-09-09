@@ -89,7 +89,17 @@ void soci::details::parse_std_tm(char const * buf, std::tm & t)
         }
     }
 
-    mktime_from_ymdhms(t, year, month, day, hour, minute, second);
+    unsigned microseconds = 0;
+    char const * p_usec;
+    if ((p_usec = strchr(buf, '.')) != nullptr) {
+
+        errno = 0;
+        char *end;
+        const unsigned us = strtol(p_usec + 1, &end, 10);
+        const bool range_error = errno == ERANGE;
+        microseconds = range_error ? 0 : us;
+    }
+    mktime_from_ymdhms(t, year, month, day, hour, minute, second, microseconds);
 }
 
 

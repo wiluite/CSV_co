@@ -13,6 +13,10 @@ namespace csvkit::cli::sql {
 
         rowset<row> rs = (sql.prepare << q_s);
 
+        std::tm d;
+        char timeString_v2[std::size("yyyy-mm-dd")];
+        char timeString_v11[std::size("yyyy-mm-dd hh:mm:ss.uuuuuu")];
+
         bool print_header = false;
         for (auto && elem : rs) {
             row const &rr = elem;
@@ -27,10 +31,6 @@ namespace csvkit::cli::sql {
                 }
                 print_header = true;
             }
-
-            std::tm d;
-            char timeString_v1[std::size("yyyy-mm-dd hh:mm:ss")];
-            char timeString_v2[std::size("yyyy-mm-dd")];
 
             auto print_data = [&](std::size_t i) {
                 column_properties const & props = rr.get_properties(i);
@@ -60,8 +60,10 @@ namespace csvkit::cli::sql {
                             std::strftime(std::data(timeString_v2), std::size(timeString_v2),"%Y-%m-%d", &d);
                             std::cout << timeString_v2;
                         } else {
-                            std::strftime(std::data(timeString_v1), std::size(timeString_v1),"%Y-%m-%d %H:%M:%S", &d);
-                            std::cout << timeString_v1;
+                            snprintf(timeString_v11, std::size(timeString_v11), "%d-%02d-%02d %02d:%02d:%02d.%06d",
+                                d.tm_year + 1900, d.tm_mon + 1, d.tm_mday, d.tm_hour, d.tm_min, d.tm_sec, d.tm_isdst);
+                            std::cout << timeString_v11;
+
                             if (col2time[i] == if_time::no)
                                 col2time[i] = if_time::yes;
                         }

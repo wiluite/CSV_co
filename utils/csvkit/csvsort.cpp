@@ -22,7 +22,7 @@ namespace csvsort {
         std::string & columns = kwarg("c,columns","A comma-separated list of column indices, names or ranges to sort by, e.g. \"1,id,3-5\".").set_default("all columns");
         bool & r = flag("r,reverse", "Sort in descending order.");
         bool & no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
-        bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported.");
+        bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported.").set_default(true);
         bool & parallel_sort = flag("p,parallel-sort", "Use parallel sort.");
 
         void welcome() final {

@@ -149,7 +149,7 @@ int main(int argc, char * argv[]) {
         sql2csv::sql_to_csv<notrimming_reader_type>(args);
     }
     catch (soci::soci_error const & e) {
-        std::cout << e.what() << std::endl;
+        std::cout << e.get_error_message() << std::endl;
     }
     catch (std::exception const & e) {
         std::cout << e.what() << std::endl;

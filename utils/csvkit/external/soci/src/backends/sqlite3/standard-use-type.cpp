@@ -172,15 +172,15 @@ void sqlite3_standard_use_type_backend::pre_use(indicator const * ind)
         {
             col.type_ = dt_date;
             col.dataType_ = db_date;
-            static const size_t bufSize = 20;
+            static const size_t bufSize = 32;
             std::tm &t = exchange_type_cast<x_stdtm>(data_);
 
             col.buffer_.data_ = new char[bufSize];
             col.buffer_.size_
                 = snprintf(
-                    col.buffer_.data_, bufSize, "%d-%02d-%02d %02d:%02d:%02d",
+                    col.buffer_.data_, bufSize, "%d-%02d-%02d %02d:%02d:%02d.%06d",
                     t.tm_year + 1900, t.tm_mon + 1, t.tm_mday,
-                    t.tm_hour, t.tm_min, t.tm_sec
+                    t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst
                 );
             break;
         }

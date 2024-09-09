@@ -48,7 +48,7 @@ namespace csvstat {
         bool &no_grouping_sep = flag("G,no-grouping-separator", "Do not use grouping separators in decimal numbers");
         bool &no_inference = flag("I,no-inference","Disable type inference when parsing the input. Disable reformatting of values.");
         bool &no_mdp = flag("no-mdp,no-max-precision","Do not calculate most decimal places.");
-        bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported");
+        bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
 
         void welcome() final {
             std::cout << "\nPrint descriptive statistics for each column in a CSV file.\n\n";
