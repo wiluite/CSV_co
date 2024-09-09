@@ -13,7 +13,7 @@ namespace csvkit::cli::sql {
 
         rowset<row> rs = (sql.prepare << q_s);
 
-        std::tm d;
+        std::tm d{};
         char timeString_v2[std::size("yyyy-mm-dd")];
         char timeString_v11[std::size("yyyy-mm-dd hh:mm:ss.uuuuuu")];
 

@@ -26,7 +26,6 @@ int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
-
     struct sql2csv_specific_args {
         std::filesystem::path query_file;
         std::string db;

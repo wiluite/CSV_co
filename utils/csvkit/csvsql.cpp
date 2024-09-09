@@ -24,6 +24,7 @@
 #include <iosfwd>
 #include <vector>
 #include <unordered_map>
+#include <soci_backend_dep.h>
 
 // TODO:
 //  2. get rid of blanks calculations in typify() for csvsql  (--no-constraints mode)
@@ -372,6 +373,9 @@ namespace csvsql::detail {
         };
 
         using generic_bool = int32_t;
+        class simple_inserter {
+
+        };
         using db_types=std::variant<double, std::string, std::tm, generic_bool>;
         using db_types_ptr = mp_transform<std::add_pointer_t, db_types>;
 
@@ -586,22 +590,7 @@ namespace csvsql::detail {
     }
 
 #if !defined(__unix__)
-    static
-    struct soci_backend_dependancy {
-        soci_backend_dependancy() {
-            std::string path = getenv("PATH");
-#if !defined(BOOST_UT_DISABLE_MODULE)
-            path = "PATH=" + path + ";..\\..\\external_deps";
-#else
-            path = "PATH=" + path + ";..\\..\\..\\external_deps";
-#endif
-            #if !defined(_MSC_VER)
-                putenv(path.c_str());
-            #else
-                _putenv(path.c_str());
-            #endif
-        }
-    } sbd;
+    static soci_backend_dependency sbd;
 #endif
 
 } ///detail

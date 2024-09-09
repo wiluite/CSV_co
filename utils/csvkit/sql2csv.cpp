@@ -28,6 +28,7 @@
   #define STDIN_FILENO 0
   #define isatty _isatty
 #endif
+#include <soci_backend_dep.h>
 
 using namespace ::csvkit::cli;
 
@@ -98,24 +99,8 @@ namespace sql2csv::detail {
     };
 
 #if !defined(__unix__)
-    static
-    struct soci_backend_dependency {
-        soci_backend_dependency() {
-            std::string path = getenv("PATH");
-#if !defined(BOOST_UT_DISABLE_MODULE)
-            path = "PATH=" + path + ";..\\..\\external_deps";
-#else
-            path = "PATH=" + path + ";..\\..\\..\\external_deps";
+    static soci_backend_dependency sbd;
 #endif
-            #if !defined(_MSC_VER)
-                putenv(path.c_str());
-            #else
-                _putenv(path.c_str());
-            #endif
-        }
-    } sbd;
-#endif
-
 
 } /// detail
 
