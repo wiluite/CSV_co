@@ -372,140 +372,182 @@ namespace csvsql::detail {
             using type = L<F<T>...>;
         };
 
-        using generic_bool = int32_t;
-        class simple_inserter {
-
-        };
-        using db_types=std::variant<double, std::string, std::tm, generic_bool>;
-        using db_types_ptr = mp_transform<std::add_pointer_t, db_types>;
-
-        std::vector<db_types> data_holder;
-        std::vector<soci::indicator> indicators;
-        using ct = column_type;
-        std::map<ct, db_types> type2value = {{ct::bool_t, generic_bool{}}, {ct::text_t, std::string{}}, {ct::number_t, double{}}
-            , {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, std::tm{}}
-        };
-
         inline static unsigned value_index;
         void static reset_value_index() {
             value_index = 0;
         }
 
-        db_types_ptr& prepare_next_arg(auto arg) {
-            static db_types_ptr each_next;
-            data_holder[value_index] = type2value[arg];
-            std::visit([&](auto & arg) {
-                each_next = &arg;
-            }, data_holder[value_index]);
-            return each_next;
-        };
+        using generic_bool = int32_t;
 
-        void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt) {
-            using reader_type = std::decay_t<decltype(reader)>;
-            using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
-            using func_type = std::function<void(elem_type const&)>;
+        class simple_inserter {
+            using db_types=std::variant<double, std::string, std::tm, generic_bool>;
+            using db_types_ptr = mp_transform<std::add_pointer_t, db_types>;
 
-            auto col = 0u;
-            std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
-                [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
-                , [&](elem_type const & e) {
-                    if (!e.is_null()) {
-                        data_holder[col] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
-                        indicators[col] = soci::i_ok;
-                    } else {
-                        data_holder[col] = static_cast<generic_bool>(false);
-                        indicators[col] = soci::i_null;
-                    }
-                }
-                , [&](elem_type const & e) {
-                    if (!e.is_null()) {
-                        data_holder[col] = static_cast<double>(e.num());
-                        indicators[col] = soci::i_ok;
-                    } else {
-                        data_holder[col] = static_cast<double>(0);
-                        indicators[col] = soci::i_null;
-                    }
-                }
-                , [&](elem_type const & e) {
-                    if (!e.is_null()) {
-                        using namespace date;
+            std::vector<db_types> data_holder;
+            std::vector<soci::indicator> indicators;
 
-                        date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
-                        auto day_point = floor<days>(tp);
-                        year_month_day ymd = day_point;
-                        std::tm tm_{};
-                        tm_.tm_year = int(ymd.year()) - 1900;
-                        tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                        tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                        hh_mm_ss tod{tp - day_point};
-                        tm_.tm_hour = tod.hours().count();
-                        tm_.tm_min = tod.minutes().count();
-                        tm_.tm_sec = static_cast<int>(tod.seconds().count());
-                        data_holder[col] = tm_;
-                        indicators[col] = soci::i_ok;
-                    } else {
-                        data_holder[col] = std::tm{};
-                        indicators[col] = soci::i_null;
-                    }
-                }
-                , [&](elem_type const & e) {
-                    if (!e.is_null()) {
-                        using namespace date;
-
-                        date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
-                        auto day_point = floor<days>(tp);
-                        year_month_day ymd = day_point;
-                        std::tm tm_{};
-                        tm_.tm_year = int(ymd.year()) - 1900;
-                        tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                        tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                        tm_.tm_hour = 0;
-                        tm_.tm_min = 0;
-                        tm_.tm_sec = 0;
-                        data_holder[col] = tm_;
-                        indicators[col] = soci::i_ok;
-                    } else {
-                        data_holder[col] = std::tm{};
-                        indicators[col] = soci::i_null;
-                    }
-                }
-                , [&](elem_type const & e) {
-                    if (!e.is_null()) {
-                        using namespace date;
-
-                        long double secs = e.timedelta_seconds();
-                        date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-                        auto day_point = floor<days>(tp);
-                        year_month_day ymd = day_point;
-                        std::tm tm_{};
-                        tm_.tm_year = int(ymd.year()) - 1900;
-                        tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                        tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                        hh_mm_ss tod{tp - day_point};
-                        tm_.tm_hour = tod.hours().count();
-                        tm_.tm_min = tod.minutes().count();
-                        tm_.tm_sec = static_cast<int>(tod.seconds().count());
-                        double int_part;
-                        tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                        data_holder[col] = tm_;
-                        indicators[col] = soci::i_ok;
-                    } else {
-                        data_holder[col] = std::tm{};
-                        indicators[col] = soci::i_null;
-                    }
-                }
-                , [&](elem_type const & e) { data_holder[col] = e.str(); }
+            using ct = column_type;
+            std::map<ct, db_types> type2value = {{ct::bool_t, generic_bool{}}, {ct::text_t, std::string{}}, {ct::number_t, double{}}
+                    , {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, std::tm{}}
             };
 
-            reader.run_rows([&] (auto & row_span) {
-                col = 0u;
-                for (auto & elem : row_span) {
-                    fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
-                    col++;
+            table_inserter & parent_;
+            soci::session & sql_;
+            create_table_composer & composer_;
+
+            void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt) {
+                using reader_type = std::decay_t<decltype(reader)>;
+                using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
+                using func_type = std::function<void(elem_type const&)>;
+
+                auto col = 0u;
+                std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
+                        [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                data_holder[col] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
+                                indicators[col] = soci::i_ok;
+                            } else {
+                                data_holder[col] = static_cast<generic_bool>(false);
+                                indicators[col] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                data_holder[col] = static_cast<double>(e.num());
+                                indicators[col] = soci::i_ok;
+                            } else {
+                                data_holder[col] = static_cast<double>(0);
+                                indicators[col] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                using namespace date;
+
+                                date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
+                                auto day_point = floor<days>(tp);
+                                year_month_day ymd = day_point;
+                                std::tm tm_{};
+                                tm_.tm_year = int(ymd.year()) - 1900;
+                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+                                hh_mm_ss tod{tp - day_point};
+                                tm_.tm_hour = tod.hours().count();
+                                tm_.tm_min = tod.minutes().count();
+                                tm_.tm_sec = static_cast<int>(tod.seconds().count());
+                                data_holder[col] = tm_;
+                                indicators[col] = soci::i_ok;
+                            } else {
+                                data_holder[col] = std::tm{};
+                                indicators[col] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                using namespace date;
+
+                                date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
+                                auto day_point = floor<days>(tp);
+                                year_month_day ymd = day_point;
+                                std::tm tm_{};
+                                tm_.tm_year = int(ymd.year()) - 1900;
+                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+                                tm_.tm_hour = 0;
+                                tm_.tm_min = 0;
+                                tm_.tm_sec = 0;
+                                data_holder[col] = tm_;
+                                indicators[col] = soci::i_ok;
+                            } else {
+                                data_holder[col] = std::tm{};
+                                indicators[col] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                using namespace date;
+
+                                long double secs = e.timedelta_seconds();
+                                date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
+                                auto day_point = floor<days>(tp);
+                                year_month_day ymd = day_point;
+                                std::tm tm_{};
+                                tm_.tm_year = int(ymd.year()) - 1900;
+                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+                                hh_mm_ss tod{tp - day_point};
+                                tm_.tm_hour = tod.hours().count();
+                                tm_.tm_min = tod.minutes().count();
+                                tm_.tm_sec = static_cast<int>(tod.seconds().count());
+                                double int_part;
+                                tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                data_holder[col] = tm_;
+                                indicators[col] = soci::i_ok;
+                            } else {
+                                data_holder[col] = std::tm{};
+                                indicators[col] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) { data_holder[col] = e.str(); }
+                };
+
+                reader.run_rows([&] (auto & row_span) {
+                    col = 0u;
+                    for (auto & elem : row_span) {
+                        fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
+                        col++;
+                    }
+                    stmt.execute(true);
+                });
+            }
+
+        public:
+            simple_inserter(table_inserter & parent, soci::session & sql, create_table_composer & composer)
+            : parent_(parent), sql_(sql), composer_(composer) {}
+
+            void insert(auto const &args, auto & reader) {
+                data_holder.resize(composer_.types().size());
+                indicators.resize(composer_.types().size(), soci::i_ok);
+
+                sql_.begin();
+
+                auto prep = sql_.prepare.operator<<(parent_.insert_expr(args));
+                reset_value_index();
+
+                auto prepare_next_arg = [&](auto arg) -> db_types_ptr& {
+                    static db_types_ptr each_next;
+                    data_holder[value_index] = type2value[arg];
+                    std::visit([&](auto & arg) {
+                        each_next = &arg;
+                    }, data_holder[value_index]);
+                    return each_next;
+                };
+
+                for(auto e : composer_.types()) {
+                    std::visit([&](auto & arg) {
+                        prep = std::move(prep.operator,(soci::use(*arg, indicators[value_index])));
+                    }, prepare_next_arg(e));
+                    value_index++;
                 }
-                stmt.execute(true);
-            });
-        }
+                soci::statement stmt = prep;
+                insert_data(reader, composer_, stmt);
+
+                sql_.commit();
+            }
+        };
+
+        class batch_bulk_inserter {
+            table_inserter & parent_;
+            soci::session & sql_;
+            create_table_composer & composer_;
+
+        public:
+            batch_bulk_inserter (table_inserter & parent, soci::session & sql, create_table_composer & composer)
+            : parent_(parent), sql_(sql), composer_(composer) {}
+            void insert(auto const &args, auto & reader) {}
+        };
+
         soci::session & sql_;
         create_table_composer & composer_;
         std::string const & after_insert_;
@@ -532,21 +574,10 @@ namespace csvsql::detail {
         }
 
         void insert(auto const &args, auto & reader) {
-            data_holder.resize(composer_.types().size());
-            indicators.resize(composer_.types().size(), soci::i_ok);
-
-            sql_.begin();
-            auto prep = sql_.prepare.operator<<(insert_expr(args));
-            reset_value_index();
-            for(auto e : composer_.types()) {
-                std::visit([&](auto & arg) {
-                    prep = std::move(prep.operator,(soci::use(*arg, indicators[value_index])));
-                }, prepare_next_arg(e));
-                value_index++;
-            }
-            soci::statement stmt = prep;
-            insert_data(reader, composer_, stmt);
-            sql_.commit();
+            if (args.chunk_size <= 1)
+                simple_inserter(*this, sql_, composer_).insert(args, reader);
+            else
+                batch_bulk_inserter(*this, sql_, composer_).insert(args, reader);
         }
     };
 
@@ -636,7 +667,7 @@ namespace csvsql {
             throw std::runtime_error(need_insert("--create-if-not-exists option"));
         if (args.overwrite and !args.insert)
             throw std::runtime_error(need_insert("--overwrite"));
-        if (args.chunk_size and !args.insert)
+        if (args.chunk_size and !args.insert and args.query.empty())
             throw std::runtime_error(need_insert("--chunk-size"));
 
         // TODO: FixMe in the future.
@@ -665,7 +696,7 @@ namespace csvsql {
             try {
                 create_table_composer composer(reader, args, table_names);
                 table_creator{args, session};
-                if (args.insert or (args.db.find(":memory:") != std::string::npos and !args.query.empty()))
+                if (args.insert or (args.db == "sqlite3://db=:memory:" and !args.query.empty()))
                     table_inserter(args, session, composer).insert(args, reader);
             } catch(std::exception & e) {
                 if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
