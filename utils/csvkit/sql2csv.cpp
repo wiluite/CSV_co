@@ -21,7 +21,13 @@
 #include <iostream>
 #include <cli.h>
 #include <rowset-query-impl.h>
-#include <unistd.h>
+#if !defined(_MSC_VER)
+  #include <unistd.h>
+#else
+  #include <io.h>
+  #define STDIN_FILENO 0
+  #define isatty _isatty
+#endif
 
 using namespace ::csvkit::cli;
 
@@ -63,8 +69,7 @@ namespace sql2csv::detail {
             std::stringstream queries;
             if (!(args.query.empty())) {
                 queries << args.query;
-            } else
-            if (!args.query_file.empty()) {
+            } else if (!args.query_file.empty()) {
                 if (std::filesystem::exists(std::filesystem::path{args.query_file})) {
                     std::filesystem::path path{args.query_file};
                     auto const length = std::filesystem::file_size(path);
@@ -94,17 +99,19 @@ namespace sql2csv::detail {
 
 #if !defined(__unix__)
     static
-    struct soci_backend_dependancy {
-        soci_backend_dependancy() {
+    struct soci_backend_dependency {
+        soci_backend_dependency() {
+            std::string path = getenv("PATH");
 #if !defined(BOOST_UT_DISABLE_MODULE)
-        std::string path = getenv("PATH");
-        path = "PATH=" + path + ";..\\..\\external_deps";
-        putenv(path.c_str());
+            path = "PATH=" + path + ";..\\..\\external_deps";
 #else
-        std::string path = getenv("PATH");
-        path = "PATH=" + path + ";..\\..\\..\\external_deps";
-        putenv(path.c_str());
+            path = "PATH=" + path + ";..\\..\\..\\external_deps";
 #endif
+            #if !defined(_MSC_VER)
+                putenv(path.c_str());
+            #else
+                _putenv(path.c_str());
+            #endif
         }
     } sbd;
 #endif

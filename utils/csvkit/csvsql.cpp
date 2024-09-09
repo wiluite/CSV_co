@@ -427,16 +427,16 @@ namespace csvsql::detail {
                         using namespace date;
 
                         date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
-                        auto daypoint = floor<days>(tp);
-                        year_month_day ymd = daypoint;
+                        auto day_point = floor<days>(tp);
+                        year_month_day ymd = day_point;
                         std::tm tm_{};
                         tm_.tm_year = int(ymd.year()) - 1900;
-                        tm_.tm_mon = unsigned(ymd.month()) - 1;
-                        tm_.tm_mday = unsigned(ymd.day());
-                        hh_mm_ss tod{tp - daypoint};
+                        tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                        tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+                        hh_mm_ss tod{tp - day_point};
                         tm_.tm_hour = tod.hours().count();
                         tm_.tm_min = tod.minutes().count();
-                        tm_.tm_sec = tod.seconds().count();
+                        tm_.tm_sec = static_cast<int>(tod.seconds().count());
                         data_holder[col] = tm_;
                         indicators[col] = soci::i_ok;
                     } else {
@@ -449,12 +449,12 @@ namespace csvsql::detail {
                         using namespace date;
 
                         date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
-                        auto daypoint = floor<days>(tp);
-                        year_month_day ymd = daypoint;
+                        auto day_point = floor<days>(tp);
+                        year_month_day ymd = day_point;
                         std::tm tm_{};
                         tm_.tm_year = int(ymd.year()) - 1900;
-                        tm_.tm_mon = unsigned(ymd.month()) - 1;
-                        tm_.tm_mday = unsigned(ymd.day());
+                        tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                        tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
                         tm_.tm_hour = 0;
                         tm_.tm_min = 0;
                         tm_.tm_sec = 0;
@@ -471,18 +471,18 @@ namespace csvsql::detail {
 
                         long double secs = e.timedelta_seconds();
                         date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-                        auto daypoint = floor<days>(tp);
-                        year_month_day ymd = daypoint;
+                        auto day_point = floor<days>(tp);
+                        year_month_day ymd = day_point;
                         std::tm tm_{};
                         tm_.tm_year = int(ymd.year()) - 1900;
-                        tm_.tm_mon = unsigned(ymd.month()) - 1;
-                        tm_.tm_mday = unsigned(ymd.day());
-                        hh_mm_ss tod{tp - daypoint};
+                        tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                        tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+                        hh_mm_ss tod{tp - day_point};
                         tm_.tm_hour = tod.hours().count();
                         tm_.tm_min = tod.minutes().count();
-                        tm_.tm_sec = tod.seconds().count();
+                        tm_.tm_sec = static_cast<int>(tod.seconds().count());
                         double int_part;
-                        tm_.tm_isdst = std::modf(secs, &int_part) * 1000000;
+                        tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
                         data_holder[col] = tm_;
                         indicators[col] = soci::i_ok;
                     } else {
@@ -589,15 +589,17 @@ namespace csvsql::detail {
     static
     struct soci_backend_dependancy {
         soci_backend_dependancy() {
+            std::string path = getenv("PATH");
 #if !defined(BOOST_UT_DISABLE_MODULE)
-        std::string path = getenv("PATH");
-        path = "PATH=" + path + ";..\\..\\external_deps";
-        putenv(path.c_str());
+            path = "PATH=" + path + ";..\\..\\external_deps";
 #else
-        std::string path = getenv("PATH");
-        path = "PATH=" + path + ";..\\..\\..\\external_deps";
-        putenv(path.c_str());
+            path = "PATH=" + path + ";..\\..\\..\\external_deps";
 #endif
+            #if !defined(_MSC_VER)
+                putenv(path.c_str());
+            #else
+                _putenv(path.c_str());
+            #endif
         }
     } sbd;
 #endif

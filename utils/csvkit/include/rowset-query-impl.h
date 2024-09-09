@@ -98,8 +98,8 @@ namespace csvkit::cli::sql {
                 std::cout << prop.get_name();
                 for (auto i = 1u; i < v.size(); i++) {
                     std::cout << ',';
-                    column_properties const &prop = v.get_properties(i);
-                    std::cout << prop.get_name();
+                    column_properties const &p = v.get_properties(i);
+                    std::cout << p.get_name();
                 }
                 std::cout << '\n';
             }
