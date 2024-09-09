@@ -26,6 +26,7 @@ int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
+
     struct sql2csv_specific_args {
         std::filesystem::path query_file;
         std::string db;
@@ -88,9 +89,8 @@ int main() {
 
     "stdin"_test = [] {
         struct Args : sql2csv_specific_args {
-            Args() {
-                //NOTE: we do not use any option, only piped text: "select cast(3.1415 * 13.37 as integer) as answer"
-            }
+            //NOTE: we do not use any option, only piped text: "select cast(3.1415 * 13.37 as integer) as answer"
+            Args() = default;
         } args;
 
         stdin_redir sr("stdin_select");
@@ -155,7 +155,7 @@ int main() {
     class db_file {
         std::string file;
     public:
-        db_file(char const * const name = "foo2.db") : file(name) {}
+        explicit db_file(char const * const name = "foo2.db") : file(name) {}
         ~db_file() {
             if (std::filesystem::exists(std::filesystem::path(file)))
                 std::remove(file.c_str());
@@ -213,7 +213,7 @@ int main() {
         db_file dbfile;
         auto expected = csvsql(dbfile, "test_utf8.csv");
         struct Args : sql2csv_specific_args {
-            Args(db_file & dbfile) {
+            explicit Args(db_file & dbfile) {
                 db = "sqlite3://db=" + dbfile();
                 query = "select * from foo";
             }
@@ -226,7 +226,7 @@ int main() {
         db_file dbfile;
         auto expected = csvsql(dbfile, "dummy.csv");
         struct Args : sql2csv_specific_args {
-            Args(db_file & dbfile) {
+            explicit Args(db_file & dbfile) {
                 db = "sqlite3://db=" + dbfile();
                 query = "select * from foo";
                 no_header = true;
@@ -241,7 +241,7 @@ int main() {
         db_file dbfile;
         auto expected = csvsql(dbfile, "dummy.csv");
         struct Args : sql2csv_specific_args {
-            Args(db_file & dbfile) {
+            explicit Args(db_file & dbfile) {
                 db = "sqlite3://db=" + dbfile();
                 query = "select * from foo";
                 linenumbers = true;
@@ -256,7 +256,7 @@ int main() {
         db_file dbfile;
         auto expected = csvsql(dbfile, "iris.csv");
         struct Args : sql2csv_specific_args {
-            Args(db_file & dbfile) {
+            explicit Args(db_file & dbfile) {
                 db = "sqlite3://db=" + dbfile();
                 query = "select * from foo where species LIKE '%'";
             }
