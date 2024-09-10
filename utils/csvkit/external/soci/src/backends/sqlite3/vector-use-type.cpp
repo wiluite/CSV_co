@@ -171,16 +171,17 @@ void sqlite3_vector_use_type_backend::pre_use(indicator const * ind)
             case x_stdtm:
             {
                 std::tm &tm = (*static_cast<std::vector<exchange_type_traits<x_stdtm>::value_type> *>(data_))[i];
-                static const size_t bufSize = 20;
+                static const size_t bufSize = 32;
 
                 col.type_ = dt_date;
                 col.dataType_ = db_date;
                 col.buffer_.data_ = new char[bufSize];
                 col.buffer_.size_
-                    = snprintf(col.buffer_.data_, bufSize, "%d-%02d-%02d %02d:%02d:%02d",
+                    = snprintf(col.buffer_.data_, bufSize, "%d-%02d-%02d %02d:%02d:%02d.%06d",
                         tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-                        tm.tm_hour, tm.tm_min, tm.tm_sec
-                    );
+                        tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst
+                );
+
                 break;
             }
 

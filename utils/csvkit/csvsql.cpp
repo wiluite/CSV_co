@@ -388,7 +388,7 @@ namespace csvsql::detail {
 
             using ct = column_type;
             std::map<ct, db_types> type2value = {{ct::bool_t, generic_bool{}}, {ct::text_t, std::string{}}, {ct::number_t, double{}}
-                    , {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, std::tm{}}
+            , {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, std::tm{}}
             };
 
             table_inserter & parent_;
@@ -408,7 +408,6 @@ namespace csvsql::detail {
                                 data_holder[col] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
                                 indicators[col] = soci::i_ok;
                             } else {
-                                data_holder[col] = static_cast<generic_bool>(false);
                                 indicators[col] = soci::i_null;
                             }
                         }
@@ -417,7 +416,6 @@ namespace csvsql::detail {
                                 data_holder[col] = static_cast<double>(e.num());
                                 indicators[col] = soci::i_ok;
                             } else {
-                                data_holder[col] = static_cast<double>(0);
                                 indicators[col] = soci::i_null;
                             }
                         }
@@ -433,13 +431,12 @@ namespace csvsql::detail {
                                 tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
                                 tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
                                 hh_mm_ss tod{tp - day_point};
-                                tm_.tm_hour = tod.hours().count();
-                                tm_.tm_min = tod.minutes().count();
+                                tm_.tm_hour = static_cast<int>(tod.hours().count());
+                                tm_.tm_min = static_cast<int>(tod.minutes().count());
                                 tm_.tm_sec = static_cast<int>(tod.seconds().count());
                                 data_holder[col] = tm_;
                                 indicators[col] = soci::i_ok;
                             } else {
-                                data_holder[col] = std::tm{};
                                 indicators[col] = soci::i_null;
                             }
                         }
@@ -460,7 +457,6 @@ namespace csvsql::detail {
                                 data_holder[col] = tm_;
                                 indicators[col] = soci::i_ok;
                             } else {
-                                data_holder[col] = std::tm{};
                                 indicators[col] = soci::i_null;
                             }
                         }
@@ -477,19 +473,25 @@ namespace csvsql::detail {
                                 tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
                                 tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
                                 hh_mm_ss tod{tp - day_point};
-                                tm_.tm_hour = tod.hours().count();
-                                tm_.tm_min = tod.minutes().count();
+                                tm_.tm_hour = static_cast<int>(tod.hours().count());
+                                tm_.tm_min = static_cast<int>(tod.minutes().count());
                                 tm_.tm_sec = static_cast<int>(tod.seconds().count());
                                 double int_part;
                                 tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
                                 data_holder[col] = tm_;
                                 indicators[col] = soci::i_ok;
                             } else {
-                                data_holder[col] = std::tm{};
                                 indicators[col] = soci::i_null;
                             }
                         }
-                        , [&](elem_type const & e) { data_holder[col] = e.str(); }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                data_holder[col] = e.str();
+                                indicators[col] = soci::i_ok;
+                            } else {
+                                indicators[col] = soci::i_null;
+                            }
+                        }
                 };
 
                 reader.run_rows([&] (auto & row_span) {
@@ -538,14 +540,177 @@ namespace csvsql::detail {
         };
 
         class batch_bulk_inserter {
+            using db_types=std::variant<std::vector<double>, std::vector<std::string>, std::vector<std::tm>, std::vector<generic_bool>>;
+            using db_types_ptr = mp_transform<std::add_pointer_t, db_types>;
+            static_assert(std::is_same_v<db_types_ptr, std::variant<std::vector<double>*, std::vector<std::string>*, std::vector<std::tm>*, std::vector<generic_bool>*>>);
+
+            std::vector<db_types> data_holder;
+            std::vector<std::vector<soci::indicator>> indicators;
+
+            using ct = column_type;
+            template <typename T>
+            using vec = std::vector<T>;
+            std::map<ct, db_types> type2value = {{ct::bool_t, vec<generic_bool>{}}, {ct::text_t, vec<std::string>{}}
+            , {ct::number_t, vec<double>{}}, {ct::datetime_t, vec<std::tm>{}}, {ct::date_t, vec<std::tm>{}}
+            , {ct::timedelta_t, vec<std::tm>{}}
+            };
+
             table_inserter & parent_;
             soci::session & sql_;
             create_table_composer & composer_;
 
+            void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt, unsigned chunk_size) {
+                using reader_type = std::decay_t<decltype(reader)>;
+                using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
+                using func_type = std::function<void(elem_type const&)>;
+
+                auto col = 0u;
+                auto offset = 0u;
+                std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
+                        [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                (std::get<3>(data_holder[col]))[offset] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
+                                indicators[col][offset] = soci::i_ok;
+                            } else {
+                                indicators[col][offset] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                (std::get<0>(data_holder[col]))[offset] = static_cast<double>(e.num());
+                                indicators[col][offset] = soci::i_ok;
+                            } else {
+                                indicators[col][offset] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                using namespace date;
+
+                                date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
+                                auto day_point = floor<days>(tp);
+                                year_month_day ymd = day_point;
+                                std::tm tm_{};
+                                tm_.tm_year = int(ymd.year()) - 1900;
+                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+                                hh_mm_ss tod{tp - day_point};
+                                tm_.tm_hour = static_cast<int>(tod.hours().count());
+                                tm_.tm_min = static_cast<int>(tod.minutes().count());
+                                tm_.tm_sec = static_cast<int>(tod.seconds().count());
+                                (std::get<2>(data_holder[col]))[offset] = tm_;
+                                indicators[col][offset] = soci::i_ok;
+                            } else {
+                                indicators[col][offset] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                using namespace date;
+
+                                date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
+                                auto day_point = floor<days>(tp);
+                                year_month_day ymd = day_point;
+                                std::tm tm_{};
+                                tm_.tm_year = int(ymd.year()) - 1900;
+                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+                                tm_.tm_hour = 0;
+                                tm_.tm_min = 0;
+                                tm_.tm_sec = 0;
+                                (std::get<2>(data_holder[col]))[offset] = tm_;
+                                indicators[col][offset] = soci::i_ok;
+                            } else {
+                                indicators[col][offset] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                using namespace date;
+
+                                long double secs = e.timedelta_seconds();
+                                date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
+                                auto day_point = floor<days>(tp);
+                                year_month_day ymd = day_point;
+                                std::tm tm_{};
+                                tm_.tm_year = int(ymd.year()) - 1900;
+                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+                                hh_mm_ss tod{tp - day_point};
+                                tm_.tm_hour = static_cast<int>(tod.hours().count());
+                                tm_.tm_min = static_cast<int>(tod.minutes().count());
+                                tm_.tm_sec = static_cast<int>(tod.seconds().count());
+                                double int_part;
+                                tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                (std::get<2>(data_holder[col]))[offset] = tm_;
+                                indicators[col][offset] = soci::i_ok;
+                            } else {
+                                indicators[col][offset] = soci::i_null;
+                            }
+                        }
+                        , [&](elem_type const & e) {
+                            if (!e.is_null()) {
+                                (std::get<1>(data_holder[col]))[offset] = e.str();
+                                indicators[col][offset] = soci::i_ok;
+                            } else {
+                                indicators[col][offset] = soci::i_null;
+                            }
+                        }
+                };
+
+                reader.run_rows([&] (auto & row_span) {
+                    col = 0u;
+                    for (auto & elem : row_span) {
+                        fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
+                        col++;
+                    }
+                    if (++offset == chunk_size) {
+                        stmt.execute(true);
+                        offset = 0;
+                    }
+                });
+                // Insert rest data less than the chunk
+                if (offset) {
+                    for (auto & vec : data_holder)
+                        std::visit([&](auto & arg) {
+                            arg.resize(offset);
+                        }, vec);
+                    for (auto & ind : indicators)
+                        ind.resize(offset);
+                    stmt.execute(true);
+                }
+            }
         public:
             batch_bulk_inserter (table_inserter & parent, soci::session & sql, create_table_composer & composer)
             : parent_(parent), sql_(sql), composer_(composer) {}
-            void insert(auto const &args, auto & reader) {}
+            void insert(auto const &args, auto & reader) {
+                data_holder.resize(composer_.types().size());
+                indicators.resize(composer_.types().size(), std::vector<soci::indicator>{args.chunk_size, soci::i_ok});
+
+                sql_.begin();
+                auto prep = sql_.prepare.operator<<(parent_.insert_expr(args));
+                reset_value_index();
+
+                for(auto e : composer_.types()) {
+                    std::visit([&](auto & arg) {
+                        prep = std::move(prep.operator,(soci::use(*arg, indicators[value_index])));
+                    }, [&](auto arg) -> db_types_ptr & {
+                        static db_types_ptr each_next;
+                        data_holder[value_index] = type2value[arg];
+                        std::visit([&](auto &arg) {
+                            arg.resize(args.chunk_size);
+                            each_next = &arg;
+                        }, data_holder[value_index]);
+                        return each_next;
+                    }(e));
+                    value_index++;
+                }
+                soci::statement stmt = prep;
+                insert_data(reader, composer_, stmt, args.chunk_size);
+
+                sql_.commit();
+            }
         };
 
         soci::session & sql_;
