@@ -7,8 +7,8 @@
 #define CSV_CO_CLI_H
 //TODO: All piping between utils and text encoding application should be redone or finally implemented.
 #include "col_types.h"
-#include "argparse.hpp"
-#include "transwarp.h"
+#include "../external/argparse/argparse.hpp"
+#include "../external/transwarp/transwarp.h"
 #include "reader-bridge-impl.hpp"
 #include <filesystem>
 #include <functional>

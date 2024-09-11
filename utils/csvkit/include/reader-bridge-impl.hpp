@@ -6,11 +6,11 @@
 #pragma once
 
 #include <csv_co/reader.hpp>
-#include <csv_co/external/data_type.h>
+#include <csv_co/external/vince-csv-parser/data_type.h>
 #include <unordered_set>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <deque>
-#include "date.h"
+#include "../external/date/date.h"
 #include <codecvt>
 
 namespace csv_co::csvkit {

@@ -18,9 +18,9 @@
     #endif
 #endif
 
-#include "csv_co/external/enum_data_type.h"
+#include "csv_co/external/vince-csv-parser/enum_data_type.h"
 #include "external/has_member.hpp"
-#include "external/ezgz.hpp"
+#include "external/ezgz/ezgz.hpp"
 //-----------------------------
 
 #if (IS_CLANG==0)
