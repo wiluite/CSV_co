@@ -20,7 +20,7 @@ find_path(SQLITE3_INCLUDE_DIR
   PATHS
   ${CMAKE_BINARY_DIR}/external_deps/src)
 
-set(SQLITE3_NAMES csvsql_sqlite3)
+set(SQLITE3_NAMES local_sqlite3)
 find_library(SQLITE3_LIBRARY
   NAMES ${SQLITE3_NAMES}
   PATHS

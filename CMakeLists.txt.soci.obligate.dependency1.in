@@ -8,7 +8,7 @@ endif()
 if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 endif()
-add_library(csvsql_sqlite3 SHARED src/sqlite3.c)
+add_library(local_sqlite3 SHARED src/sqlite3.c)
 
 add_definitions(-DSQLITE_ENABLE_RTREE)
 add_definitions(-DSQLITE_ENABLE_FTS4)

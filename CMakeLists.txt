@@ -27,7 +27,7 @@ endif()
 
 if (IO_CSVKIT_UTILS) # Some C stuff (before any added C++ definitions)
 configure_file(CMakeLists.txt.soci.obligate.dependency1.in external_deps/CMakeLists.txt)
-file(COPY ${CMAKE_SOURCE_DIR}/utils/csvkit/external/csvsql_sqlite3/src DESTINATION "${CMAKE_BINARY_DIR}/external_deps")
+file(COPY ${CMAKE_SOURCE_DIR}/utils/csvkit/external/local_sqlite3/src DESTINATION "${CMAKE_BINARY_DIR}/external_deps")
 execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" . WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/external_deps" )
 execute_process(COMMAND "${CMAKE_COMMAND}" --build . WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/external_deps" )
 endif()
