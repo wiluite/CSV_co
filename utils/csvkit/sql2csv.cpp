@@ -28,7 +28,7 @@
   #define STDIN_FILENO 0
   #define isatty _isatty
 #endif
-#include <soci_backend_dep.h>
+#include <local_sqlite3_dep.h>
 
 using namespace ::csvkit::cli;
 
@@ -99,7 +99,7 @@ namespace sql2csv::detail {
     };
 
 #if !defined(__unix__)
-    static soci_backend_dependency sbd;
+    static local_sqlite3_dependency lsd;
 #endif
 
 } /// detail

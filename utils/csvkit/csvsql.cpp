@@ -24,7 +24,7 @@
 #include <iosfwd>
 #include <vector>
 #include <unordered_map>
-#include <soci_backend_dep.h>
+#include <local_sqlite3_dep.h>
 
 // TODO:
 //  2. get rid of blanks calculations in typify() for csvsql  (--no-constraints mode)
@@ -786,7 +786,7 @@ namespace csvsql::detail {
     }
 
 #if !defined(__unix__)
-    static soci_backend_dependency sbd;
+    static local_sqlite3_dependency lsd;
 #endif
 
 } ///detail

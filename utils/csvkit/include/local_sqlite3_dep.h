@@ -2,13 +2,14 @@
 // Created by wiluite on 09.09.2024.
 //
 
-#ifndef CSV_CO_SOCI_BACKEND_DEP_H
-#define CSV_CO_SOCI_BACKEND_DEP_H
+#pragma once
+
 #include <string>
+
 #if !defined(__unix__)
 
-struct soci_backend_dependency {
-    soci_backend_dependency() {
+struct local_sqlite3_dependency {
+    local_sqlite3_dependency() {
         std::string path = getenv("PATH");
 #if !defined(BOOST_UT_DISABLE_MODULE)
         path = "PATH=" + path + R"(;..\..\external_deps)";
@@ -23,5 +24,3 @@ struct soci_backend_dependency {
     }
 };
 #endif
-
-#endif //CSV_CO_SOCI_BACKEND_DEP_H
