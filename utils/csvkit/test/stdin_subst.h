@@ -15,11 +15,18 @@ private:
 
 struct stdin_redir {
     explicit stdin_redir(char const * const fn) {
-        auto res = freopen(fn, "r", stdin);
-        assert(res!=nullptr);
+#ifndef _MSC_VER
+        strm = freopen(fn, "r", stdin);
+        assert(strm != nullptr);
+#else
+        auto err = freopen_s(&strm, fn, "r", stdin);
+        assert(err == 0);
+#endif
     }
     ~stdin_redir() {
+        fclose(strm);
         fclose(stdin);
-        //fdopen(0,"r");
     }
+private:
+    FILE *strm = nullptr;
 };

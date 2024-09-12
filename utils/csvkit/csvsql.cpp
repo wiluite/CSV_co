@@ -24,7 +24,14 @@
 #include <iosfwd>
 #include <vector>
 #include <unordered_map>
-#include <local_sqlite3_dep.h>
+#include <local-sqlite3-dep.h>
+#if !defined(_MSC_VER)
+#include <unistd.h>
+#else
+#include <io.h>
+#define STDIN_FILENO 0
+#define isatty _isatty
+#endif
 
 // TODO:
 //  2. get rid of blanks calculations in typify() for csvsql  (--no-constraints mode)
@@ -387,8 +394,8 @@ namespace csvsql::detail {
             std::vector<soci::indicator> indicators;
 
             using ct = column_type;
-            std::map<ct, db_types> type2value = {{ct::bool_t, generic_bool{}}, {ct::text_t, std::string{}}, {ct::number_t, double{}}
-            , {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, std::tm{}}
+            std::unordered_map<ct, db_types> type2value = {{ct::bool_t, generic_bool{}}, {ct::text_t, std::string{}}
+            , {ct::number_t, double{}}, {ct::datetime_t, std::tm{}}, {ct::date_t, std::tm{}}, {ct::timedelta_t, std::tm{}}
             };
 
             table_inserter & parent_;
@@ -550,9 +557,8 @@ namespace csvsql::detail {
             using ct = column_type;
             template <typename T>
             using vec = std::vector<T>;
-            std::map<ct, db_types> type2value = {{ct::bool_t, vec<generic_bool>{}}, {ct::text_t, vec<std::string>{}}
-            , {ct::number_t, vec<double>{}}, {ct::datetime_t, vec<std::tm>{}}, {ct::date_t, vec<std::tm>{}}
-            , {ct::timedelta_t, vec<std::tm>{}}
+            std::unordered_map<ct, db_types> type2value = {{ct::bool_t, vec<generic_bool>{}}, {ct::text_t, vec<std::string>{}}
+            , {ct::number_t, vec<double>{}}, {ct::datetime_t, vec<std::tm>{}}, {ct::date_t, vec<std::tm>{}}, {ct::timedelta_t, vec<std::tm>{}}
             };
 
             table_inserter & parent_;
@@ -796,6 +802,9 @@ namespace csvsql {
     void sql(auto & args) {
 
         using namespace detail;
+        //if (args.query.empty() and args.query_file.empty() and isatty(STDIN_FILENO))
+        if (args.files.empty() and isatty(STDIN_FILENO))
+            throw std::runtime_error("csvsql: error: You must provide an input file or piped data.");
 
         std::vector<std::string> table_names;
         if (!args.tables.empty())

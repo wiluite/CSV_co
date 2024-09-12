@@ -28,7 +28,7 @@
   #define STDIN_FILENO 0
   #define isatty _isatty
 #endif
-#include <local_sqlite3_dep.h>
+#include <local-sqlite3-dep.h>
 
 using namespace ::csvkit::cli;
 
@@ -105,19 +105,18 @@ namespace sql2csv::detail {
 } /// detail
 
 namespace sql2csv {
-    void recode_FILE(auto const & args) {
-    }
-
     template<typename ReaderType>
     void sql_to_csv(auto &args) {
         using namespace detail;
         if (args.query.empty() and args.query_file.empty() and isatty(STDIN_FILENO))
             throw std::runtime_error("sql2csv: error: You must provide an input file or piped data.");
 
-        if ((args.query.empty() and args.query_file.empty() and !isatty(STDIN_FILENO)) or (args.query.empty() and args.query_file == "_")) {
-            query_stdin() = read_standard_input(args);
-            if (args.query_file == "_")
-                args.query_file.clear();
+        if (args.query.empty()) {
+            if ((args.query_file.empty() and !isatty(STDIN_FILENO)) or args.query_file == "_") {
+                query_stdin() = read_standard_input(args);
+                if (args.query_file == "_")
+                    args.query_file.clear();
+            }
         }
 
         if (args.db.empty())

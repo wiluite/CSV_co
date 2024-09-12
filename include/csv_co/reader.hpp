@@ -1269,7 +1269,7 @@ namespace csv_co {
         mutable notification_cb_t notification_cb;
 
         inline static std::unordered_map<cell_string, unsigned> col_name_2_index_map;
-        static constexpr char const * const arg_is_empty = "Argument cannot be empty";
+        static constexpr char const * const arg_is_empty = "Argument can not be empty.";
     public:
         using trim_policy_type = TrimPolicy;
         using quote_type = Quote;

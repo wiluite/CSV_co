@@ -204,6 +204,7 @@ int main() {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 tables = "foo";
+                files = {"_"};
             }
         } args;
 
@@ -224,10 +225,31 @@ int main() {
 )");
     };
 
+    "piped stdin"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() = default; // NOTE: now we do not use '_' placeholder to help. We read a csv file and pipe it with us.
+        } args;
+
+        std::istringstream iss(" ");
+        stdin_redir sr("piped_stdin");
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(
+            csvsql::sql<notrimming_reader_type>(args)
+        )
+
+        auto no_tabs_rep = cout_buffer.str();
+        std::replace(no_tabs_rep.begin(), no_tabs_rep.end(), '\t', ' ');
+        expect(no_tabs_rep == R"(CREATE TABLE stdin (
+ a DATETIME NOT NULL
+);
+)");
+    };
+
+
     "stdin and filename"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"_", "dummy.csv"};               
+                files = {"_", "dummy.csv"};
             }
         } args;
 
@@ -263,7 +285,7 @@ int main() {
     "query empty"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{};
+                files = {"_"};
                 query = "SELECT 1";
             }
         } args;
@@ -374,7 +396,7 @@ int main() {
     class db_file {
         std::string file;
     public:
-        db_file(char const * const name = "foo.db") : file(name) {}
+        explicit db_file(char const * const name = "foo.db") : file(name) {}
         ~db_file() {
             if (std::filesystem::exists(std::filesystem::path(file)))
                 std::remove(file.c_str());
@@ -417,7 +439,7 @@ int main() {
         };
 
         struct SQL2CSVArgs : sql2csv_specific_args {
-            SQL2CSVArgs(Args const & a) {
+            explicit SQL2CSVArgs(Args const & a) {
                 db = "sqlite3://db=" + a.dbfile();
                 query = "SELECT * FROM foobar";
             }
