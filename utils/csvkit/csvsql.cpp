@@ -185,6 +185,7 @@ namespace csvsql::detail {
             };
 
             struct firebird_printer : generic_printer {
+                void print(datetime_column_tag, bool blanks, unsigned) override { to_stream(stream, "TIMESTAMP", (blanks ? "" : " NOT NULL")); }
                 void print(timedelta_column_tag) override { to_stream(stream, "TIMESTAMP");}
                 void print(timedelta_column_tag, bool blanks, unsigned) override { to_stream(stream, "TIMESTAMP", (blanks ? "" : " NOT NULL"));}
                 void print(text_column_tag) override { throw std::runtime_error("VARCHAR requires a length on dialect firebird");}
@@ -333,8 +334,11 @@ namespace csvsql::detail {
     class table_creator {
     public:
         explicit table_creator (auto const & args, soci::session & sql) {
-            if (!args.no_create)
+            if (!args.no_create) {
+                sql.begin();
                 sql << create_table_composer::table();
+                sql.commit();
+            }
         }
     };
 
@@ -782,6 +786,7 @@ namespace csvsql::detail {
                 });
 
                 using namespace ::csvkit::cli::sql;
+
                 rowset_query(sql, args, q_array.back());
             }
         }

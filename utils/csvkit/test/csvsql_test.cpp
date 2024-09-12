@@ -53,6 +53,13 @@ private:
     std::string output;
 };
 
+struct table_dropper {
+    table_dropper(std::string const & db, char const * const table_name) {
+        soci::session sql (db);
+        sql << "DROP TABLE " << table_name;
+    }
+};
+
 int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
@@ -383,8 +390,8 @@ int main() {
             }
         } args;
 
-        expect(nothrow([&]{ 
-            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) ) 
+        expect(nothrow([&]{
+            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
 
 //          question,text
 //          36,©
@@ -585,8 +592,64 @@ int main() {
 //          a,b,c
 //          1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000
             expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000\n");
+            table_dropper{db_conn, "stdin"};
+        }
+    };
+#endif
+
+#if 0
+#if defined(SOCI_HAVE_POSTGRESQL)
+    "PostgreSQL date, datetime, timedelta"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = {"_"};
+                insert = true;
+                query = "SELECT * FROM stdin";
+            }
+        } args;
+        std::string db_conn = getenv("SOCI_DB_POSTGRESQL");
+        if (!db_conn.empty()) {
+            args.db = db_conn;
+            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,2 days 01:14:47.123\n");
+            stdin_subst new_cin(iss);
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                    csvsql::sql<notrimming_reader_type>(args)
+            )
+
+//          a,b,c
+//          1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000
+//            expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000\n");
+            std::cerr << cout_buffer.str() << std::endl;
 
             SQL2CSV{db_conn, "drop table stdin"}.call();
+        }
+    };
+#endif
+#endif
+
+#if defined(SOCI_HAVE_FIREBIRD)
+    "Firebird date, datetime, timedelta"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = {"_"};
+                insert = true;
+                query = "SELECT * FROM stdin";
+            }
+        } args;
+        std::string db_conn = getenv("SOCI_DB_FIREBIRD");
+        if (!db_conn.empty()) {
+
+            args.db = db_conn;
+            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,2 days 01:14:47.123\n");
+            stdin_subst new_cin(iss);
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+            )
+
+//          A,B,C
+//          1971-01-01,1971-01-01 04:14:00.-00001,1970-01-03 01:14:47.-00001
+            expect(cout_buffer.str() == "A,B,C\n1971-01-01,1971-01-01 04:14:00.-00001,1970-01-03 01:14:47.-00001\n");
+            table_dropper{db_conn, "stdin"};
         }
     };
 #endif

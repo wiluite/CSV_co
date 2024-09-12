@@ -20,6 +20,7 @@ namespace csvkit::cli::sql {
             row const &rr = elem;
             if (!rr.size())
                 return; // we had supposed it was a "select", but it was another statement!
+
             if (!print_header) {
                 if (!args.no_header) {
                     if (args.linenumbers)
