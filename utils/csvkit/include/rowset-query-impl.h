@@ -10,16 +10,16 @@ namespace csvkit::cli::sql {
             yes
         };
         std::map<unsigned, if_time> col2time;
-
         rowset<row> rs = (sql.prepare << q_s);
 
         std::tm d{};
         char timeString_v2[std::size("yyyy-mm-dd")];
         char timeString_v11[std::size("yyyy-mm-dd hh:mm:ss.uuuuuu")];
-
         bool print_header = false;
         for (auto && elem : rs) {
             row const &rr = elem;
+            if (!rr.size())
+                return; // we had supposed it was a "select", but it was another statement!
             if (!print_header) {
                 if (!args.no_header) {
                     if (args.linenumbers)

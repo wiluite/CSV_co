@@ -20,13 +20,44 @@
         call;                                   \
     }
 
-int main() {
-    using namespace boost::ut;
-    namespace tf = csvkit::test_facilities;
 
+using namespace boost::ut;
+namespace tf = csvkit::test_facilities;
+
+class SQL2CSV {
+public:
+    SQL2CSV(std::string const & db, std::string const & query) {
+        sql2csvargs.db = db;
+        sql2csvargs.query = query;
+    }
+    SQL2CSV& call() {
+        expect(nothrow([&]{
+            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql_to_csv<notrimming_reader_type>(sql2csvargs))
+            output = cout_buffer.str();
+        }));
+        return *this;
+    }
+    [[nodiscard]] std::string cout_buffer() const {
+        return output;
+    }
+private:
+    struct sql2csv_specific_args {
+        std::filesystem::path query_file;
+        std::string db;
+        std::string query;
+        bool linenumbers {false};
+        std::string encoding {"UTF-8"};
+        bool no_header {false};
+    } sql2csvargs;
+
+    std::string output;
+};
+
+int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
+
     struct csvsql_specific_args {
         std::vector<std::string> files;
         std::string dialect;
@@ -49,7 +80,7 @@ int main() {
     "create table"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted.csv"};
+                files = {"testfixed_converted.csv"};
                 tables = "foo";
                 date_lib_parser = true;
             }
@@ -77,7 +108,7 @@ int main() {
     "no blanks"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"blanks.csv"};
+                files = {"blanks.csv"};
                 tables = "foo";
             }
         } args;
@@ -102,7 +133,7 @@ int main() {
     "blanks"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"blanks.csv"};
+                files = {"blanks.csv"};
                 tables = "foo";
                 blanks = true;
             }
@@ -128,7 +159,7 @@ int main() {
     "no inference"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted.csv"};
+                files = {"testfixed_converted.csv"};
                 tables = "foo";
                 date_lib_parser = true;
                 no_inference = true;
@@ -157,7 +188,7 @@ int main() {
     "no header row"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"no_header_row.csv"};
+                files = {"no_header_row.csv"};
                 tables = "foo";
                 no_header = true;
             }
@@ -180,7 +211,7 @@ int main() {
     "linenumbers"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"dummy.csv"};
+                files = {"dummy.csv"};
                 tables = "foo";
                 linenumbers = true;
             }
@@ -267,7 +298,7 @@ int main() {
     "query"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"iris.csv", "irismeta.csv"};
+                files = {"iris.csv", "irismeta.csv"};
                 query = "SELECT m.usda_id, avg(i.sepal_length) AS mean_sepal_length FROM iris "
                         "AS i JOIN irismeta AS m ON (i.species = m.species) GROUP BY m.species";
             }
@@ -303,7 +334,7 @@ int main() {
     "query text"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted.csv"};
+                files = {"testfixed_converted.csv"};
                 query = "SELECT text FROM testfixed_converted WHERE text LIKE \"Chicago%\"";
             }
         } args;
@@ -318,7 +349,7 @@ int main() {
     "query file"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted.csv"};
+                files = {"testfixed_converted.csv"};
                 query = "test_query.sql";
             }
         } args;
@@ -335,7 +366,7 @@ int main() {
     "no UTF-8 query file"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted.csv"};
+                files = {"testfixed_converted.csv"};
                 query = "test_query_1252.sql";
             }
         } args;
@@ -346,7 +377,7 @@ int main() {
     "CP1252 query file"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted.csv"};
+                files = {"testfixed_converted.csv"};
                 query = "test_query_1252.sql";
                 encoding = "CP1252";
             }
@@ -365,7 +396,7 @@ int main() {
     "empty query file"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"testfixed_converted.csv"};
+                files = {"testfixed_converted.csv"};
                 query = "test_query_empty.sql";
             }
         } args;
@@ -380,7 +411,7 @@ int main() {
     "query update"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
-                files = std::vector<std::string>{"dummy.csv"};
+                files = {"dummy.csv"};
                 no_inference = true;
                 query = "UPDATE dummy SET a=10 WHERE a=1";
             }
@@ -414,7 +445,7 @@ int main() {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
-                files = std::vector<std::string>{"dummy.csv"};
+                files = {"dummy.csv"};
                 db = "sqlite3://db=" + dbfile();
                 insert = true;
                 before_insert = "SELECT 1; CREATE TABLE foobar (date DATE)";
@@ -429,39 +460,15 @@ int main() {
             )
         }
 
-        struct sql2csv_specific_args {
-            std::filesystem::path query_file;
-            std::string db;
-            std::string query;
-            bool linenumbers {false};
-            std::string encoding {"UTF-8"};
-            bool no_header {false};
-        };
-
-        struct SQL2CSVArgs : sql2csv_specific_args {
-            explicit SQL2CSVArgs(Args const & a) {
-                db = "sqlite3://db=" + a.dbfile();
-                query = "SELECT * FROM foobar";
-            }
-        } sql2csvargs(args);
-
-        expect(nothrow([&]{
-            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql_to_csv<notrimming_reader_type>(sql2csvargs))
-            expect(cout_buffer.str() == "date\n");
-        }));
-
-        sql2csvargs.query = "SELECT * from dummy";
-        expect(nothrow([&]{
-            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql_to_csv<notrimming_reader_type>(sql2csvargs))
-            expect(cout_buffer.str() == "a,b,c\n1,2,3\n0,5,6.1\n");
-        }));
+        expect(SQL2CSV{"sqlite3://db=" + args.dbfile(), "SELECT * FROM foobar"}.call().cout_buffer() == "date\n");
+        expect(SQL2CSV{"sqlite3://db=" + args.dbfile(), "SELECT * from dummy"}.call().cout_buffer() == "a,b,c\n1,2,3\n0,5,6.1\n");
     };
 
     "no prefix unique constraint"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
-                files = std::vector<std::string>{"dummy.csv"};
+                files = {"dummy.csv"};
                 db = "sqlite3://db=" + dbfile();
                 insert = true;
                 unique_constraint = "a";
@@ -490,7 +497,7 @@ int main() {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
-                files = std::vector<std::string>{"dummy.csv"};
+                files = {"dummy.csv"};
                 db = "sqlite3://db=" + dbfile();
                 insert = true;
                 unique_constraint = "a";
@@ -513,7 +520,7 @@ int main() {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
-                files = std::vector<std::string>{"foo1.csv"};
+                files = {"foo1.csv"};
                 db = "sqlite3://db=" + dbfile();
                 insert = true;
                 tables = "foo";
@@ -526,7 +533,7 @@ int main() {
             )
         }
 
-        args.files = std::vector<std::string>{"foo2.csv"};
+        args.files = {"foo2.csv"};
         {
             bool catched = false;
             try {
@@ -543,7 +550,7 @@ int main() {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             db_file dbfile;
             Args() {
-                files = std::vector<std::string>{"foo1.csv"};
+                files = {"foo1.csv"};
                 db = "sqlite3://db=" + dbfile();
                 insert = true;
                 tables = "foo";
@@ -552,9 +559,36 @@ int main() {
 
         CALL_TEST_AND_REDIRECT_TO_COUT(csvsql::sql<notrimming_reader_type>(args))
 
-        args.files = std::vector<std::string>{"foo2.csv"};
+        args.files = {"foo2.csv"};
         args.create_if_not_exists = true;
         expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args)) }));
     };
+
+#if defined(SOCI_HAVE_MYSQL)
+    "MySQL date, datetime, timedelta"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = {"_"};
+                insert = true;
+                query = "SELECT * FROM stdin";
+            }
+        } args;
+        std::string db_conn = getenv("SOCI_DB_MYSQL");
+        if (!db_conn.empty()) {
+            args.db = db_conn;
+            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,2 days 01:14:47.123\n");
+            stdin_subst new_cin(iss);
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+            )
+
+//          a,b,c
+//          1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000
+            expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000\n");
+
+            SQL2CSV{db_conn, "drop table stdin"}.call();
+        }
+    };
+#endif
 
 }
