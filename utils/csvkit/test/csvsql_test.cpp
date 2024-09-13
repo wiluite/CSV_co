@@ -614,7 +614,6 @@ int main() {
     };
 #endif
 
-#if 0
 #if defined(SOCI_HAVE_POSTGRESQL)
     "PostgreSQL date, datetime, timedelta"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
@@ -627,21 +626,19 @@ int main() {
         std::string db_conn = getenv("SOCI_DB_POSTGRESQL");
         if (!db_conn.empty()) {
             args.db = db_conn;
-            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,2 days 01:14:47.123\n");
+            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,3 days 01:14:10.737 \n");
             stdin_subst new_cin(iss);
             CALL_TEST_AND_REDIRECT_TO_COUT(
-                    csvsql::sql<notrimming_reader_type>(args)
+                csvsql::sql<notrimming_reader_type>(args)
             )
 
 //          a,b,c
-//          1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000
-//            expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000\n");
-            std::cerr << cout_buffer.str() << std::endl;
+//          1971-01-01,1971-01-01 04:14:00.000000,73:14:10.737
+            expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,73:14:10.737\n");
 
             SQL2CSV{db_conn, "drop table stdin"}.call();
         }
     };
-#endif
 #endif
 
 #if defined(SOCI_HAVE_FIREBIRD)

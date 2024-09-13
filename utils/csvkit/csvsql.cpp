@@ -419,6 +419,7 @@ namespace csvsql::detail {
             table_inserter & parent_;
             soci::session & sql_;
             create_table_composer & composer_;
+            bool pg_backend {false};
 
             void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt) {
                 using reader_type = std::decay_t<decltype(reader)>;
@@ -479,14 +480,26 @@ namespace csvsql::detail {
 
                                 long double secs = e.timedelta_seconds();
                                 date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-                                auto day_point = floor<days>(tp);
-                                std::tm tm_{};
-                                fill_date(tm_, day_point);
-                                fill_time(tm_, hh_mm_ss{tp - day_point});
-                                double int_part;
-                                tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                                data_holder[col] = tm_;
-                                indicators[col] = soci::i_ok;
+                                if (pg_backend) {
+                                    auto day_point = floor<date::days>(tp);
+                                    std::tm t{};
+                                    fill_time(t, hh_mm_ss{tp - day_point});
+                                    double int_part;
+                                    t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                    char buf[80];
+                                    snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
+                                    data_holder[col] = buf;
+                                    indicators[col] = soci::i_ok;
+                                } else {
+                                    auto day_point = floor<date::days>(tp);
+                                    std::tm tm_{};
+                                    fill_date(tm_, day_point);
+                                    fill_time(tm_, hh_mm_ss{tp - day_point});
+                                    double int_part;
+                                    tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                    data_holder[col] = tm_;
+                                    indicators[col] = soci::i_ok;
+                                }
                             } else {
                                 indicators[col] = soci::i_null;
                             }
@@ -512,8 +525,11 @@ namespace csvsql::detail {
             }
 
         public:
-            simple_inserter(auto const & args, table_inserter & parent, soci::session & sql, create_table_composer & composer)
-            : parent_(parent), sql_(sql), composer_(composer) {}
+            simple_inserter(table_inserter & parent, soci::session & sql, create_table_composer & composer)
+            : parent_(parent), sql_(sql), composer_(composer), pg_backend(sql.get_backend_name() == "postgresql") {
+                if (pg_backend)
+                    type2value[ct::timedelta_t] = std::string{};
+            }
 
             void insert(auto const &args, auto & reader) {
                 data_holder.resize(composer_.types().size());
@@ -732,7 +748,7 @@ namespace csvsql::detail {
 
         void insert(auto const &args, auto & reader) {
             if (args.chunk_size <= 1)
-                simple_inserter(args, *this, sql_, composer_).insert(args, reader);
+                simple_inserter(*this, sql_, composer_).insert(args, reader);
             else
                 batch_bulk_inserter(*this, sql_, composer_).insert(args, reader);
         }
