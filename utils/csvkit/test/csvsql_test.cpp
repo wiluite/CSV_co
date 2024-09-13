@@ -571,6 +571,23 @@ int main() {
         expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args)) }));
     };
 
+    "batch_bulk_inserter"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = {"_"};
+                insert = true;
+                query = "SELECT * FROM stdin";
+                chunk_size = 3;
+            }
+        } args;
+        std::istringstream iss("a,b\n1,1972-04-14\n3,1973-05-15\n5,1974-06-16\n7, \n9,04/18/1976\n");
+        stdin_subst new_cin(iss);
+        CALL_TEST_AND_REDIRECT_TO_COUT(
+            csvsql::sql<notrimming_reader_type>(args)
+        )
+        expect(cout_buffer.str() == "a,b\n1,1972-04-14\n3,1973-05-15\n5,1974-06-16\n7,\n9,1976-04-18\n");
+    };
+
 #if defined(SOCI_HAVE_MYSQL)
     "MySQL date, datetime, timedelta"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {

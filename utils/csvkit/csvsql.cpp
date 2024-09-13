@@ -390,6 +390,20 @@ namespace csvsql::detail {
 
         using generic_bool = int32_t;
 
+        static inline auto fill_date = [](std::tm & tm_, auto & day_point) {
+            using namespace date;
+            year_month_day ymd = day_point;
+            tm_.tm_year = int(ymd.year()) - 1900;
+            tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
+            tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
+        };
+        static inline auto fill_time = [](std::tm & tm_, auto const & tod) {
+            using namespace date;
+            tm_.tm_hour = static_cast<int>(tod.hours().count());
+            tm_.tm_min = static_cast<int>(tod.minutes().count());
+            tm_.tm_sec = static_cast<int>(tod.seconds().count());
+        };
+
         class simple_inserter {
             using db_types=std::variant<double, std::string, std::tm, generic_bool>;
             using db_types_ptr = mp_transform<std::add_pointer_t, db_types>;
@@ -436,15 +450,9 @@ namespace csvsql::detail {
 
                                 date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
                                 auto day_point = floor<days>(tp);
-                                year_month_day ymd = day_point;
                                 std::tm tm_{};
-                                tm_.tm_year = int(ymd.year()) - 1900;
-                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                                hh_mm_ss tod{tp - day_point};
-                                tm_.tm_hour = static_cast<int>(tod.hours().count());
-                                tm_.tm_min = static_cast<int>(tod.minutes().count());
-                                tm_.tm_sec = static_cast<int>(tod.seconds().count());
+                                fill_date(tm_, day_point);
+                                fill_time(tm_, hh_mm_ss{tp - day_point});
                                 data_holder[col] = tm_;
                                 indicators[col] = soci::i_ok;
                             } else {
@@ -457,14 +465,8 @@ namespace csvsql::detail {
 
                                 date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
                                 auto day_point = floor<days>(tp);
-                                year_month_day ymd = day_point;
                                 std::tm tm_{};
-                                tm_.tm_year = int(ymd.year()) - 1900;
-                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                                tm_.tm_hour = 0;
-                                tm_.tm_min = 0;
-                                tm_.tm_sec = 0;
+                                fill_date(tm_, day_point);
                                 data_holder[col] = tm_;
                                 indicators[col] = soci::i_ok;
                             } else {
@@ -478,15 +480,9 @@ namespace csvsql::detail {
                                 long double secs = e.timedelta_seconds();
                                 date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
                                 auto day_point = floor<days>(tp);
-                                year_month_day ymd = day_point;
                                 std::tm tm_{};
-                                tm_.tm_year = int(ymd.year()) - 1900;
-                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                                hh_mm_ss tod{tp - day_point};
-                                tm_.tm_hour = static_cast<int>(tod.hours().count());
-                                tm_.tm_min = static_cast<int>(tod.minutes().count());
-                                tm_.tm_sec = static_cast<int>(tod.seconds().count());
+                                fill_date(tm_, day_point);
+                                fill_time(tm_, hh_mm_ss{tp - day_point});
                                 double int_part;
                                 tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
                                 data_holder[col] = tm_;
@@ -516,7 +512,7 @@ namespace csvsql::detail {
             }
 
         public:
-            simple_inserter(table_inserter & parent, soci::session & sql, create_table_composer & composer)
+            simple_inserter(auto const & args, table_inserter & parent, soci::session & sql, create_table_composer & composer)
             : parent_(parent), sql_(sql), composer_(composer) {}
 
             void insert(auto const &args, auto & reader) {
@@ -600,15 +596,9 @@ namespace csvsql::detail {
 
                                 date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
                                 auto day_point = floor<days>(tp);
-                                year_month_day ymd = day_point;
                                 std::tm tm_{};
-                                tm_.tm_year = int(ymd.year()) - 1900;
-                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                                hh_mm_ss tod{tp - day_point};
-                                tm_.tm_hour = static_cast<int>(tod.hours().count());
-                                tm_.tm_min = static_cast<int>(tod.minutes().count());
-                                tm_.tm_sec = static_cast<int>(tod.seconds().count());
+                                fill_date(tm_, day_point);
+                                fill_time(tm_, hh_mm_ss{tp - day_point});
                                 (std::get<2>(data_holder[col]))[offset] = tm_;
                                 indicators[col][offset] = soci::i_ok;
                             } else {
@@ -621,15 +611,15 @@ namespace csvsql::detail {
 
                                 date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
                                 auto day_point = floor<days>(tp);
-                                year_month_day ymd = day_point;
                                 std::tm tm_{};
-                                tm_.tm_year = int(ymd.year()) - 1900;
-                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                                tm_.tm_hour = 0;
-                                tm_.tm_min = 0;
-                                tm_.tm_sec = 0;
+                                fill_date(tm_, day_point);
                                 (std::get<2>(data_holder[col]))[offset] = tm_;
+#if 0
+                                std::visit([&](auto & arg){
+                                    if constexpr(std::is_same_v<decltype(arg), std::vector<std::tm>>)
+                                        (arg)[offset] = tm_;
+                                }, data_holder[col]);
+#endif
                                 indicators[col][offset] = soci::i_ok;
                             } else {
                                 indicators[col][offset] = soci::i_null;
@@ -642,17 +632,9 @@ namespace csvsql::detail {
                                 long double secs = e.timedelta_seconds();
                                 date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
                                 auto day_point = floor<days>(tp);
-                                year_month_day ymd = day_point;
                                 std::tm tm_{};
-                                tm_.tm_year = int(ymd.year()) - 1900;
-                                tm_.tm_mon = static_cast<int>(static_cast<unsigned>(ymd.month())) - 1;
-                                tm_.tm_mday = static_cast<int>(static_cast<unsigned>(ymd.day()));
-                                hh_mm_ss tod{tp - day_point};
-                                tm_.tm_hour = static_cast<int>(tod.hours().count());
-                                tm_.tm_min = static_cast<int>(tod.minutes().count());
-                                tm_.tm_sec = static_cast<int>(tod.seconds().count());
-                                double int_part;
-                                tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                fill_date(tm_, day_point);
+                                fill_time(tm_, hh_mm_ss{tp - day_point});
                                 (std::get<2>(data_holder[col]))[offset] = tm_;
                                 indicators[col][offset] = soci::i_ok;
                             } else {
@@ -750,7 +732,7 @@ namespace csvsql::detail {
 
         void insert(auto const &args, auto & reader) {
             if (args.chunk_size <= 1)
-                simple_inserter(*this, sql_, composer_).insert(args, reader);
+                simple_inserter(args, *this, sql_, composer_).insert(args, reader);
             else
                 batch_bulk_inserter(*this, sql_, composer_).insert(args, reader);
         }
@@ -807,7 +789,6 @@ namespace csvsql {
     void sql(auto & args) {
 
         using namespace detail;
-        //if (args.query.empty() and args.query_file.empty() and isatty(STDIN_FILENO))
         if (args.files.empty() and isatty(STDIN_FILENO))
             throw std::runtime_error("csvsql: error: You must provide an input file or piped data.");
 

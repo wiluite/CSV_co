@@ -41,6 +41,11 @@ if (IO_CSVKIT_UTILS)
     else()
         set(FIREBIRD_INCLUDE_DIR "")
     endif()
+    if (SOCI_HAVE_ORACLE)
+        message("YOU WILL HAVE ORACLE BACKEND FOR YOUR I/O UTILS.")
+    else()
+        set(ORACLE_INCLUDE_DIR "")
+    endif()
 
     add_executable(csvsql csvsql.cpp)
     target_include_directories(csvsql
