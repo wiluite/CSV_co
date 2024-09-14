@@ -10,7 +10,9 @@
 
 struct local_sqlite3_dependency {
     local_sqlite3_dependency() {
-        std::string path = getenv("PATH");
+        std::string path;
+        if (char const * env_p = getenv("PATH"))
+            path = env_p;
 #if !defined(BOOST_UT_DISABLE_MODULE)
         path = "PATH=" + path + R"(;..\..\external_deps)";
 #else

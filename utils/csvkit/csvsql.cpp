@@ -18,6 +18,10 @@
 #include <soci/firebird/soci-firebird.h>
 #endif
 
+#if defined(SOCI_HAVE_ORACLE)
+#include <soci/oracle/soci-oracle.h>
+#endif
+
 #include <iostream>
 #include <cli.h>
 #include <rowset-query-impl.h>
@@ -46,7 +50,7 @@ namespace csvsql::detail {
         std::string & date_fmt = kwarg("date-format","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
         std::string & datetime_fmt = kwarg("datetime-format","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
 
-        std::string & dialect = kwarg("i,dialect","Dialect of SQL {mysql,postgresql,sqlite,firebird} to generate. Cannot be used with --db or --query. ").set_default(std::string(""));
+        std::string & dialect = kwarg("i,dialect","Dialect of SQL {mysql,postgresql,sqlite,firebird,oracle} to generate. Cannot be used with --db or --query. ").set_default(std::string(""));
         std::string & db = kwarg("db","If present, a 'soci' connection string to use to directly execute generated SQL on a database.").set_default(std::string(""));
         std::string & query = kwarg("query","Execute one or more SQL queries delimited by \";\" and output the result of the last query as CSV. QUERY may be a filename. --query may be specified multiple times.").set_default(std::string(""));
         bool &insert = flag("insert", "Insert the data into the table. Requires --db.");
@@ -192,12 +196,25 @@ namespace csvsql::detail {
                 void print(text_column_tag, bool blanks, unsigned) override { throw std::runtime_error("VARCHAR requires a length on dialect firebird");}
             };
 
+            struct oracle_printer : generic_printer {
+                void print_name(std::string const & name) override {
+                    if (name == "date" or name == "integer" or name == "float")
+                        stream << std::quoted(name, '"', '"');
+                    else
+                        generic_printer::print_name_or_quoted_name(name, '"');
+                }
+                void print(number_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "DECIMAL(38, ", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
+                void print(timedelta_column_tag) override { to_stream(stream, "INTERVAL DAY TO SECOND"); }
+                void print(timedelta_column_tag, bool blanks, unsigned) override { to_stream(stream, "INTERVAL DAY TO SECOND", (blanks ? "" : " NOT NULL")); }
+            };
+
             using printer_dialect = std::string;
             static inline std::unordered_map<printer_dialect, std::shared_ptr<printer>> printer_map {
                   {"mysql", std::make_shared<mysql_printer>()}
                 , {"postgresql", std::make_shared<postgresql_printer>()}
                 , {"sqlite", std::make_shared<sqlite_printer>()}
                 , {"firebird", std::make_shared<firebird_printer>()}
+                , {"oracle", std::make_shared<oracle_printer>()}
                 , {"generic", std::make_shared<generic_printer>()}
             };
 
@@ -294,7 +311,7 @@ namespace csvsql::detail {
                  return "generic";
             if (!args.dialect.empty())
                  return args.dialect;
-            std::vector<std::string> dialects {"mysql", "postgresql", "sqlite", "firebird"};
+            std::vector<std::string> dialects {"mysql", "postgresql", "sqlite", "firebird", "oracle"};
             for (auto elem : dialects) {
                 if (args.db.find(elem) != std::string::npos)
                     return elem;
@@ -336,7 +353,13 @@ namespace csvsql::detail {
         explicit table_creator (auto const & args, soci::session & sql) {
             if (!args.no_create) {
                 sql.begin();
-                sql << create_table_composer::table();
+                if (sql.get_backend_name() == "oracle") {
+                    // It does not accept a semicolon at the end of a statement.
+                    std::string s = create_table_composer::table();
+                    sql << std::string{s.cbegin(), s.cend() - 2};
+                } else {
+                    sql << create_table_composer::table();
+                }
                 sql.commit();
             }
         }
@@ -489,7 +512,6 @@ namespace csvsql::detail {
                                     char buf[80];
                                     snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
                                     data_holder[col] = buf;
-                                    indicators[col] = soci::i_ok;
                                 } else {
                                     auto day_point = floor<date::days>(tp);
                                     std::tm tm_{};
@@ -498,8 +520,8 @@ namespace csvsql::detail {
                                     double int_part;
                                     tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
                                     data_holder[col] = tm_;
-                                    indicators[col] = soci::i_ok;
                                 }
+                                indicators[col] = soci::i_ok;
                             } else {
                                 indicators[col] = soci::i_null;
                             }
@@ -580,6 +602,7 @@ namespace csvsql::detail {
             table_inserter & parent_;
             soci::session & sql_;
             create_table_composer & composer_;
+            bool pg_backend {false};
 
             void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt, unsigned chunk_size) {
                 using reader_type = std::decay_t<decltype(reader)>;
@@ -647,11 +670,24 @@ namespace csvsql::detail {
 
                                 long double secs = e.timedelta_seconds();
                                 date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-                                auto day_point = floor<days>(tp);
-                                std::tm tm_{};
-                                fill_date(tm_, day_point);
-                                fill_time(tm_, hh_mm_ss{tp - day_point});
-                                (std::get<2>(data_holder[col]))[offset] = tm_;
+                                if (pg_backend) {
+                                    auto day_point = floor<date::days>(tp);
+                                    std::tm t{};
+                                    fill_time(t, hh_mm_ss{tp - day_point});
+                                    double int_part;
+                                    t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                    char buf[80];
+                                    snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
+                                    (std::get<1>(data_holder[col]))[offset] = buf;
+                                } else {
+                                    auto day_point = floor<date::days>(tp);
+                                    std::tm tm_{};
+                                    fill_date(tm_, day_point);
+                                    fill_time(tm_, hh_mm_ss{tp - day_point});
+                                    double int_part;
+                                    tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                    (std::get<2>(data_holder[col]))[offset] = tm_;
+                                }
                                 indicators[col][offset] = soci::i_ok;
                             } else {
                                 indicators[col][offset] = soci::i_null;
@@ -691,12 +727,16 @@ namespace csvsql::detail {
             }
         public:
             batch_bulk_inserter (table_inserter & parent, soci::session & sql, create_table_composer & composer)
-            : parent_(parent), sql_(sql), composer_(composer) {}
+            : parent_(parent), sql_(sql), composer_(composer), pg_backend(sql.get_backend_name() == "postgresql") {
+                if (pg_backend)
+                    type2value[ct::timedelta_t] = std::vector{std::string{}};
+            }
             void insert(auto const &args, auto & reader) {
                 data_holder.resize(composer_.types().size());
                 indicators.resize(composer_.types().size(), std::vector<soci::indicator>{args.chunk_size, soci::i_ok});
 
                 sql_.begin();
+#if 1
                 auto prep = sql_.prepare.operator<<(parent_.insert_expr(args));
                 reset_value_index();
 
@@ -714,9 +754,10 @@ namespace csvsql::detail {
                     }(e));
                     value_index++;
                 }
+
                 soci::statement stmt = prep;
                 insert_data(reader, composer_, stmt, args.chunk_size);
-
+#endif
                 sql_.commit();
             }
         };
@@ -821,7 +862,7 @@ namespace csvsql {
         if (!args.dialect.empty()) {
             std::vector<std::string_view> svv{"mysql", "postgresql", "sqlite", "firebird"};
             if (!std::any_of(svv.cbegin(), svv.cend(), [&](auto elem){ return elem == args.dialect;}))
-                throw std::runtime_error("csvsql: error: argument -i/--dialect: invalid choice: '" + args.dialect + "' (choose from 'mysql', 'postgresql', 'sqlite', 'firebird').");
+                throw std::runtime_error("csvsql: error: argument -i/--dialect: invalid choice: '" + args.dialect + "' (choose from 'mysql', 'postgresql', 'sqlite', 'firebird', 'oracle').");
             if (!args.db.empty() or !args.query.empty())
                 throw std::runtime_error("csvsql: error: The --dialect option is only valid when neither --db nor --query are specified.");
         }

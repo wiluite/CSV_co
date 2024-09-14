@@ -60,6 +60,22 @@ struct table_dropper {
     }
 };
 
+std::string get_db_conn(char const * const env_var_name) {
+    std::string db_conn;
+    if (char const * env_p = getenv(env_var_name)) {
+        db_conn = env_p;
+        if (!db_conn.empty()) {
+            // Well, further: we must unquote the quoted env var, because the SOCI framework imply DB connection
+            // string can not be quoted (otherwise, SOCI does not evaluate the backend to load, properly).
+            csv_co::string_functions::unquote(db_conn, '"');
+            // So, why an ENV VAR can be quoted? This is because there can be complicated things like:
+            // "oracle://service=//127.0.0.1:1521/xepdb1 user=usr password=pswd", and getenv can't extract it as is
+            // from the environment.
+        }
+    }
+    return db_conn;
+}
+
 int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
@@ -597,7 +613,7 @@ int main() {
                 query = "SELECT * FROM stdin";
             }
         } args;
-        std::string db_conn = getenv("SOCI_DB_MYSQL");
+        std::string db_conn = get_db_conn("SOCI_DB_MYSQL");
         if (!db_conn.empty()) {
             args.db = db_conn;
             std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,2 days 01:14:47.123\n");
@@ -621,12 +637,13 @@ int main() {
                 files = {"_"};
                 insert = true;
                 query = "SELECT * FROM stdin";
+                //chunk_size = 2;
             }
         } args;
-        std::string db_conn = getenv("SOCI_DB_POSTGRESQL");
+        std::string db_conn = get_db_conn("SOCI_DB_POSTGRESQL");
         if (!db_conn.empty()) {
             args.db = db_conn;
-            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,3 days 01:14:10.737 \n");
+            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,3 days 01:14:10.737\n");
             stdin_subst new_cin(iss);
             CALL_TEST_AND_REDIRECT_TO_COUT(
                 csvsql::sql<notrimming_reader_type>(args)
@@ -635,8 +652,7 @@ int main() {
 //          a,b,c
 //          1971-01-01,1971-01-01 04:14:00.000000,73:14:10.737
             expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,73:14:10.737\n");
-
-            SQL2CSV{db_conn, "drop table stdin"}.call();
+            table_dropper{db_conn, "stdin"};
         }
     };
 #endif
@@ -650,7 +666,7 @@ int main() {
                 query = "SELECT * FROM stdin";
             }
         } args;
-        std::string db_conn = getenv("SOCI_DB_FIREBIRD");
+        std::string db_conn = get_db_conn("SOCI_DB_FIREBIRD");
         if (!db_conn.empty()) {
 
             args.db = db_conn;

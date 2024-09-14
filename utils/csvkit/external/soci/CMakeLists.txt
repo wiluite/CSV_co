@@ -14,6 +14,12 @@ cmake_minimum_required(VERSION 2.8...3.20 FATAL_ERROR)
 
 project(SOCI)
 
+if (MSVC)
+    add_definitions(/wd4244)
+else()
+    add_definitions(-Wno-maybe-uninitialized)
+endif()
+
 if(NOT DEFINED CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 14)
   set(CMAKE_CXX_STANDARD 14)
 endif()

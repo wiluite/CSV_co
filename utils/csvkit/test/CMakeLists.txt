@@ -451,6 +451,7 @@ if (IO_CSVKIT_UTILS)
         ${POSTGRESQL_INCLUDE_DIR}
         ${MYSQL_INCLUDE_DIR}
         ${FIREBIRD_INCLUDE_DIR}
+        ${ORACLE_INCLUDE_DIR}
     )
     add_custom_command(
         TARGET csvsql_test POST_BUILD
@@ -540,6 +541,7 @@ if (IO_CSVKIT_UTILS)
         ${POSTGRESQL_INCLUDE_DIR}
         ${MYSQL_INCLUDE_DIR}
         ${FIREBIRD_INCLUDE_DIR}
+        ${ORACLE_INCLUDE_DIR}
     )
     add_custom_command(
             TARGET sql2csv_test POST_BUILD

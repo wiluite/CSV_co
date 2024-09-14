@@ -22,22 +22,22 @@ find_package(Threads REQUIRED)
 if (IO_CSVKIT_UTILS)
 
     if (SOCI_HAVE_SQLITE3)
-        message("You will have sqlite3 backend for your i/o utils.")
+        message("YOU WILL HAVE SQLITE3 BACKEND FOR YOUR I/O UTILS.")
     else()
         set(SQLITE3_INCLUDE_DIR "")
     endif()
     if (SOCI_HAVE_POSTGRESQL)
-        message("You will have postgresql backend for your i/o utils.")
+        message("YOU WILL HAVE POSTGRESQL BACKEND FOR YOUR I/O UTILS.")
     else()
         set(POSTGRESQL_INCLUDE_DIR "")
     endif()
     if (SOCI_HAVE_MYSQL)
-        message("You will have mysql backend for your i/o utils.")
+        message("YOU WILL HAVE MYSQL BACKEND FOR YOUR I/O UTILS.")
     else()
         set(MYSQL_INCLUDE_DIR "")
     endif()
     if (SOCI_HAVE_FIREBIRD)
-        message("You will have firebird backend for your i/o utils.")
+        message("YOU WILL HAVE FIREBIRD BACKEND FOR YOUR I/O UTILS.")
     else()
         set(FIREBIRD_INCLUDE_DIR "")
     endif()
@@ -50,7 +50,7 @@ if (IO_CSVKIT_UTILS)
     add_executable(csvsql csvsql.cpp)
     target_include_directories(csvsql
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR}  ${FIREBIRD_INCLUDE_DIR}
+        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR}
     )
     target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core)
     if (UNIX)
@@ -73,7 +73,7 @@ if (IO_CSVKIT_UTILS)
     add_executable(sql2csv sql2csv.cpp)
     target_include_directories(sql2csv
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR}  ${FIREBIRD_INCLUDE_DIR}
+        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR}
     )
     target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core)
     if (UNIX)

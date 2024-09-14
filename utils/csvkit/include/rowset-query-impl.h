@@ -69,6 +69,9 @@ namespace csvkit::cli::sql {
                                 col2time[i] = if_time::yes;
                         }
                         break;
+                    case db_int64:
+                        std::cout << rr.get<int64_t>(i); // oracle non-doubles (ints)
+                        break;
                     default:
                         break;
                 }
