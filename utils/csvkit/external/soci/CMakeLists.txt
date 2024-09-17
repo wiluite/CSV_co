@@ -35,6 +35,8 @@ include(SociUtilities)
 # Build features and variants
 ##############################################################################
 option(WITH_BOOST "Enable Boost usage" OFF)
+option(SOCI_ORACLE "Enable Oracle backend" ON)
+option(SOCI_DB2 "Enable DB2 backend" OFF)
 option(SOCI_TESTS "Enable tests" OFF)
 option(SOCI_ODBC "Enable odbc backend" OFF)
 option(SOCI_EMPTY "Enable empty backend" OFF)

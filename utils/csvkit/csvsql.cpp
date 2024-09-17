@@ -29,6 +29,8 @@
 #include <vector>
 #include <unordered_map>
 #include <local-sqlite3-dep.h>
+#include <dbms-backend-id.h>
+
 #if !defined(_MSC_VER)
 #include <unistd.h>
 #else
@@ -442,7 +444,7 @@ namespace csvsql::detail {
             table_inserter & parent_;
             soci::session & sql_;
             create_table_composer & composer_;
-            bool pg_backend {false};
+            SOCI::backend_id backend_id_ {SOCI::backend_id::ANOTHER};
 
             void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt) {
                 using reader_type = std::decay_t<decltype(reader)>;
@@ -503,23 +505,29 @@ namespace csvsql::detail {
 
                                 long double secs = e.timedelta_seconds();
                                 date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-                                if (pg_backend) {
-                                    auto day_point = floor<date::days>(tp);
-                                    std::tm t{};
-                                    fill_time(t, hh_mm_ss{tp - day_point});
+                                auto day_point = floor<date::days>(tp);
+                                std::tm t{};
+                                switch (backend_id_) {
                                     double int_part;
-                                    t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
                                     char buf[80];
-                                    snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
-                                    data_holder[col] = buf;
-                                } else {
-                                    auto day_point = floor<date::days>(tp);
-                                    std::tm tm_{};
-                                    fill_date(tm_, day_point);
-                                    fill_time(tm_, hh_mm_ss{tp - day_point});
-                                    double int_part;
-                                    tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                                    data_holder[col] = tm_;
+                                    case SOCI::backend_id::PG:
+                                        fill_time(t, hh_mm_ss{tp - day_point});
+                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                        snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
+                                        data_holder[col] = buf;
+                                        break;
+                                    case SOCI::backend_id::ORCL:
+                                        fill_time(t, hh_mm_ss{tp - day_point});
+                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                        snprintf(buf, 80, "%d %02d:%02d:%02d.%06d", day_point.time_since_epoch().count(), t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
+                                        data_holder[col] = buf;
+                                        break;
+                                    default:
+                                        fill_date(t, day_point);
+                                        fill_time(t, hh_mm_ss{tp - day_point});
+                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                        data_holder[col] = t;
+                                        break;
                                 }
                                 indicators[col] = soci::i_ok;
                             } else {
@@ -548,8 +556,12 @@ namespace csvsql::detail {
 
         public:
             simple_inserter(table_inserter & parent, soci::session & sql, create_table_composer & composer)
-            : parent_(parent), sql_(sql), composer_(composer), pg_backend(sql.get_backend_name() == "postgresql") {
-                if (pg_backend)
+            : parent_(parent), sql_(sql), composer_(composer) {
+                if (sql.get_backend_name() == "postgresql")
+                    backend_id_ = SOCI::backend_id::PG; else
+                if (sql.get_backend_name() == "oracle")
+                    backend_id_ = SOCI::backend_id::ORCL;
+                if (backend_id_ == SOCI::backend_id::PG or backend_id_ == SOCI::backend_id::ORCL)
                     type2value[ct::timedelta_t] = std::string{};
             }
 
@@ -602,7 +614,7 @@ namespace csvsql::detail {
             table_inserter & parent_;
             soci::session & sql_;
             create_table_composer & composer_;
-            bool pg_backend {false};
+            SOCI::backend_id backend_id_ {SOCI::backend_id::ANOTHER};
 
             void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt, unsigned chunk_size) {
                 using reader_type = std::decay_t<decltype(reader)>;
@@ -670,23 +682,30 @@ namespace csvsql::detail {
 
                                 long double secs = e.timedelta_seconds();
                                 date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-                                if (pg_backend) {
-                                    auto day_point = floor<date::days>(tp);
-                                    std::tm t{};
-                                    fill_time(t, hh_mm_ss{tp - day_point});
+                                auto day_point = floor<date::days>(tp);
+                                std::tm t{};
+
+                                switch (backend_id_) {
                                     double int_part;
-                                    t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
                                     char buf[80];
-                                    snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
-                                    (std::get<1>(data_holder[col]))[offset] = buf;
-                                } else {
-                                    auto day_point = floor<date::days>(tp);
-                                    std::tm tm_{};
-                                    fill_date(tm_, day_point);
-                                    fill_time(tm_, hh_mm_ss{tp - day_point});
-                                    double int_part;
-                                    tm_.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                                    (std::get<2>(data_holder[col]))[offset] = tm_;
+                                    case SOCI::backend_id::PG:
+                                        fill_time(t, hh_mm_ss{tp - day_point});
+                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                        snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
+                                        (std::get<1>(data_holder[col]))[offset] = buf;
+                                        break;
+                                    case SOCI::backend_id::ORCL:
+                                        fill_time(t, hh_mm_ss{tp - day_point});
+                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                        snprintf(buf, 80, "%d %02d:%02d:%02d.%06d", day_point.time_since_epoch().count(), t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
+                                        (std::get<1>(data_holder[col]))[offset] = buf;
+                                        break;
+                                    default:
+                                        fill_date(t, day_point);
+                                        fill_time(t, hh_mm_ss{tp - day_point});
+                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                        (std::get<2>(data_holder[col]))[offset] = t;
+                                        break;
                                 }
                                 indicators[col][offset] = soci::i_ok;
                             } else {
@@ -727,8 +746,12 @@ namespace csvsql::detail {
             }
         public:
             batch_bulk_inserter (table_inserter & parent, soci::session & sql, create_table_composer & composer)
-            : parent_(parent), sql_(sql), composer_(composer), pg_backend(sql.get_backend_name() == "postgresql") {
-                if (pg_backend)
+            : parent_(parent), sql_(sql), composer_(composer) {
+                if (sql.get_backend_name() == "postgresql")
+                    backend_id_ = SOCI::backend_id::PG; else
+                if (sql.get_backend_name() == "oracle")
+                    backend_id_ = SOCI::backend_id::ORCL;
+                if (backend_id_ == SOCI::backend_id::PG or backend_id_ == SOCI::backend_id::ORCL)
                     type2value[ct::timedelta_t] = std::vector{std::string{}};
             }
             void insert(auto const &args, auto & reader) {
@@ -736,7 +759,6 @@ namespace csvsql::detail {
                 indicators.resize(composer_.types().size(), std::vector<soci::indicator>{args.chunk_size, soci::i_ok});
 
                 sql_.begin();
-#if 1
                 auto prep = sql_.prepare.operator<<(parent_.insert_expr(args));
                 reset_value_index();
 
@@ -757,7 +779,6 @@ namespace csvsql::detail {
 
                 soci::statement stmt = prep;
                 insert_data(reader, composer_, stmt, args.chunk_size);
-#endif
                 sql_.commit();
             }
         };

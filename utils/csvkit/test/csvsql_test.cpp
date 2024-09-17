@@ -81,6 +81,8 @@ int main() {
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
 
+    OutputCodePage65001 ocp65001;
+
     struct csvsql_specific_args {
         std::vector<std::string> files;
         std::string dialect;
@@ -604,6 +606,33 @@ int main() {
         expect(cout_buffer.str() == "a,b\n1,1972-04-14\n3,1973-05-15\n5,1974-06-16\n7,\n9,1976-04-18\n");
     };
 
+#if defined(SOCI_HAVE_SQLITE3)
+    "Sqlite3 date, datetime, timedelta"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = {"_"};
+                insert = true;
+                query = "SELECT * FROM stdin";
+                chunk_size = 2;
+            }
+        } args;
+        std::string db_conn = get_db_conn("SOCI_DB_SQLITE3");
+        if (!db_conn.empty()) {
+            args.db = db_conn;
+            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,2 days 01:14:47.123\n");
+            stdin_subst new_cin(iss);
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+            )
+
+//          a,b,c
+//          1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.123000
+            expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.123000\n");
+            table_dropper{db_conn, "stdin"};
+        }
+    };
+#endif
+
 #if defined(SOCI_HAVE_MYSQL)
     "MySQL date, datetime, timedelta"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
@@ -637,21 +666,21 @@ int main() {
                 files = {"_"};
                 insert = true;
                 query = "SELECT * FROM stdin";
-                //chunk_size = 2;
+                chunk_size = 1;
             }
         } args;
         std::string db_conn = get_db_conn("SOCI_DB_POSTGRESQL");
         if (!db_conn.empty()) {
             args.db = db_conn;
-            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,3 days 01:14:10.737\n");
+            std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,5 days 01:14:10.737\n");
             stdin_subst new_cin(iss);
             CALL_TEST_AND_REDIRECT_TO_COUT(
                 csvsql::sql<notrimming_reader_type>(args)
             )
 
 //          a,b,c
-//          1971-01-01,1971-01-01 04:14:00.000000,73:14:10.737
-            expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,73:14:10.737\n");
+//          1971-01-01,1971-01-01 04:14:00.000000,121:14:10.737
+            expect(cout_buffer.str() == "a,b,c\n1971-01-01,1971-01-01 04:14:00.000000,121:14:10.737\n");
             table_dropper{db_conn, "stdin"};
         }
     };
@@ -664,11 +693,11 @@ int main() {
                 files = {"_"};
                 insert = true;
                 query = "SELECT * FROM stdin";
+                chunk_size = 2;
             }
         } args;
         std::string db_conn = get_db_conn("SOCI_DB_FIREBIRD");
         if (!db_conn.empty()) {
-
             args.db = db_conn;
             std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,2 days 01:14:47.123\n");
             stdin_subst new_cin(iss);
@@ -678,7 +707,36 @@ int main() {
 
 //          A,B,C
 //          1971-01-01,1971-01-01 04:14:00.-00001,1970-01-03 01:14:47.-00001
-            expect(cout_buffer.str() == "A,B,C\n1971-01-01,1971-01-01 04:14:00.-00001,1970-01-03 01:14:47.-00001\n");
+            expect(cout_buffer.str() == "A,B,C\n1971-01-01,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000\n");
+            table_dropper{db_conn, "stdin"};
+        }
+    };
+#endif
+
+#if defined(SOCI_HAVE_ORACLE)
+    "Oracle date, datetime, timedelta"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = {"_"};
+                insert = true;
+                query = "SELECT * FROM stdin";
+                chunk_size = 2;
+            }
+        } args;
+        std::string db_conn = get_db_conn("SOCI_DB_ORACLE");
+        if (!db_conn.empty()) {
+            args.db = db_conn;
+            std::istringstream iss("a,b,c\n1971-01-01,2973-02-01T04:14:01, 2 d 01:14:47.123\n1972-01-01,1972-01-01 04:14:00,01:14:47.123\n");
+            stdin_subst new_cin(iss);
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                csvsql::sql<notrimming_reader_type>(args)
+            )
+
+
+//          A,B,C
+//          1971-01-01,01-JAN-71 04.14.01.000000 AM,"2 days, 01:14:47.123000"
+//          1972-01-01,01-JAN-72 04.14.00.000000 AM,01:14:47.123000
+            expect(cout_buffer.str() == "A,B,C\n1971-01-01,01-FEB-73 04.14.01.000000 AM,\"2 days, 01:14:47.123000\"\n1972-01-01,01-JAN-72 04.14.00.000000 AM,01:14:47.123000\n");
             table_dropper{db_conn, "stdin"};
         }
     };
