@@ -15,6 +15,7 @@ if (MSVC)
 else()
     add_definitions(-Wno-old-style-cast)
     add_definitions(-Wno-narrowing)
+    add_definitions(-Wno-unused-but-set-variable)
 endif()
 
 find_package(Threads REQUIRED)

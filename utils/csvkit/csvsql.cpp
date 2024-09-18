@@ -554,23 +554,7 @@ namespace csvsql::detail {
                 });
             }
 
-        public:
-            simple_inserter(table_inserter & parent, soci::session & sql, create_table_composer & composer)
-            : parent_(parent), sql_(sql), composer_(composer) {
-                if (sql.get_backend_name() == "postgresql")
-                    backend_id_ = SOCI::backend_id::PG; else
-                if (sql.get_backend_name() == "oracle")
-                    backend_id_ = SOCI::backend_id::ORCL;
-                if (backend_id_ == SOCI::backend_id::PG or backend_id_ == SOCI::backend_id::ORCL)
-                    type2value[ct::timedelta_t] = std::string{};
-            }
-
-            void insert(auto const &args, auto & reader) {
-                data_holder.resize(composer_.types().size());
-                indicators.resize(composer_.types().size(), soci::i_ok);
-
-                sql_.begin();
-
+            auto prepare_statement_object(auto const & args) {
                 auto prep = sql_.prepare.operator<<(parent_.insert_expr(args));
                 reset_value_index();
 
@@ -589,7 +573,27 @@ namespace csvsql::detail {
                     }, prepare_next_arg(e));
                     value_index++;
                 }
-                soci::statement stmt = prep;
+                return prep;
+            }
+        public:
+            simple_inserter(table_inserter & parent, soci::session & sql, create_table_composer & composer)
+            : parent_(parent), sql_(sql), composer_(composer) {
+                if (sql.get_backend_name() == "postgresql")
+                    backend_id_ = SOCI::backend_id::PG;
+                else if (sql.get_backend_name() == "oracle")
+                    backend_id_ = SOCI::backend_id::ORCL;
+
+                if (backend_id_ == SOCI::backend_id::PG or backend_id_ == SOCI::backend_id::ORCL)
+                    type2value[ct::timedelta_t] = std::string{};
+            }
+
+            void insert(auto const &args, auto & reader) {
+                data_holder.resize(composer_.types().size());
+                indicators.resize(composer_.types().size(), soci::i_ok);
+
+                sql_.begin();
+
+                soci::statement stmt = prepare_statement_object(args);
                 insert_data(reader, composer_, stmt);
 
                 sql_.commit();
@@ -616,10 +620,16 @@ namespace csvsql::detail {
             create_table_composer & composer_;
             SOCI::backend_id backend_id_ {SOCI::backend_id::ANOTHER};
 
-            void insert_data(auto & reader, create_table_composer & composer, soci::statement & stmt, unsigned chunk_size) {
+            void insert_data(auto & reader, create_table_composer & composer, auto const & args) {
                 using reader_type = std::decay_t<decltype(reader)>;
                 using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
                 using func_type = std::function<void(elem_type const&)>;
+
+                std::function<void (soci::statement&, decltype(args) const &)> bulk_mode_fixer;
+                if (backend_id_ == SOCI::backend_id::MYSQL or backend_id_ == SOCI::backend_id::PG)
+                    bulk_mode_fixer = [&](soci::statement& stmt, decltype(args) & args) { stmt = prepare_statement_object(args);};
+                else
+                    bulk_mode_fixer = [](soci::statement&, decltype(args) const &) {};
 
                 auto col = 0u;
                 auto offset = 0u;
@@ -665,12 +675,6 @@ namespace csvsql::detail {
                                 std::tm tm_{};
                                 fill_date(tm_, day_point);
                                 (std::get<2>(data_holder[col]))[offset] = tm_;
-#if 0
-                                std::visit([&](auto & arg){
-                                    if constexpr(std::is_same_v<decltype(arg), std::vector<std::tm>>)
-                                        (arg)[offset] = tm_;
-                                }, data_holder[col]);
-#endif
                                 indicators[col][offset] = soci::i_ok;
                             } else {
                                 indicators[col][offset] = soci::i_null;
@@ -722,17 +726,20 @@ namespace csvsql::detail {
                         }
                 };
 
+                soci::statement stmt = prepare_statement_object(args);
                 reader.run_rows([&] (auto & row_span) {
                     col = 0u;
                     for (auto & elem : row_span) {
                         fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
                         col++;
                     }
-                    if (++offset == chunk_size) {
+                    if (++offset == args.chunk_size) {
                         stmt.execute(true);
+                        bulk_mode_fixer(stmt, args);
                         offset = 0;
                     }
                 });
+
                 // Insert rest data less than the chunk
                 if (offset) {
                     for (auto & vec : data_holder)
@@ -744,21 +751,8 @@ namespace csvsql::detail {
                     stmt.execute(true);
                 }
             }
-        public:
-            batch_bulk_inserter (table_inserter & parent, soci::session & sql, create_table_composer & composer)
-            : parent_(parent), sql_(sql), composer_(composer) {
-                if (sql.get_backend_name() == "postgresql")
-                    backend_id_ = SOCI::backend_id::PG; else
-                if (sql.get_backend_name() == "oracle")
-                    backend_id_ = SOCI::backend_id::ORCL;
-                if (backend_id_ == SOCI::backend_id::PG or backend_id_ == SOCI::backend_id::ORCL)
-                    type2value[ct::timedelta_t] = std::vector{std::string{}};
-            }
-            void insert(auto const &args, auto & reader) {
-                data_holder.resize(composer_.types().size());
-                indicators.resize(composer_.types().size(), std::vector<soci::indicator>{args.chunk_size, soci::i_ok});
 
-                sql_.begin();
+            auto prepare_statement_object(auto const & args) {
                 auto prep = sql_.prepare.operator<<(parent_.insert_expr(args));
                 reset_value_index();
 
@@ -776,9 +770,28 @@ namespace csvsql::detail {
                     }(e));
                     value_index++;
                 }
+                return prep;
+            }
 
-                soci::statement stmt = prep;
-                insert_data(reader, composer_, stmt, args.chunk_size);
+        public:
+            batch_bulk_inserter (table_inserter & parent, soci::session & sql, create_table_composer & composer)
+            : parent_(parent), sql_(sql), composer_(composer) {
+                if (sql.get_backend_name() == "postgresql")
+                    backend_id_ = SOCI::backend_id::PG;
+                else if (sql.get_backend_name() == "oracle")
+                    backend_id_ = SOCI::backend_id::ORCL;
+                else if (sql.get_backend_name() == "mysql")
+                    backend_id_ = SOCI::backend_id::MYSQL;
+
+                if (backend_id_ == SOCI::backend_id::PG or backend_id_ == SOCI::backend_id::ORCL)
+                    type2value[ct::timedelta_t] = std::vector{std::string{}};
+            }
+            void insert(auto const &args, auto & reader) {
+                data_holder.resize(composer_.types().size());
+                indicators.resize(composer_.types().size(), std::vector<soci::indicator>{args.chunk_size, soci::i_ok});
+
+                sql_.begin();
+                insert_data(reader, composer_, args);
                 sql_.commit();
             }
         };
