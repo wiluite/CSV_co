@@ -31,6 +31,9 @@
 #include <local-sqlite3-dep.h>
 #include <dbms-backend-id.h>
 
+#include <ocilib.hpp>
+using namespace ocilib;
+
 #if !defined(_MSC_VER)
 #include <unistd.h>
 #else
@@ -350,6 +353,37 @@ namespace csvsql::detail {
         [[nodiscard]] auto const & blanks() const { return blanks_; }
     };
 
+    [[nodiscard]] std::string insert_expr(std::string const & insert_prefix_, auto const & args) {
+        constexpr const std::array<std::string_view, 1> sql_keywords {{"UNIQUE"}};
+        auto const t = create_table_composer::table();
+        std::string expr = "insert" + (insert_prefix_.empty() ? "": " " + insert_prefix_) + " into ";
+        auto const expr_prim_size = create_table_phrase(args).size();
+
+        auto pos = t.find('(', expr_prim_size);
+        expr += std::string(t.begin() + expr_prim_size, t.begin() + static_cast<std::ptrdiff_t>(pos) + 1);
+        std::string values;
+        unsigned counter = 0;
+        while (pos = t.find('\t', pos + 1), pos != std::string::npos) {
+            using diff_t = std::ptrdiff_t;
+            std::string next = {t.begin() + static_cast<diff_t>(pos) + 1, t.begin() + static_cast<diff_t>(t.find(' ', pos + 1))};
+            bool keyword = false;
+            for (auto e : sql_keywords) {
+                if (e == next) {
+                    keyword = true;
+                    break;
+                }
+            }
+            if (keyword)
+                continue;
+            expr += next + ",";
+            values += ":v" + std::to_string(counter++) + ',';
+        }
+        expr.back() = ')';
+        expr += " values (" + values;
+        expr.back() = ')';
+        return expr;
+    }
+
     namespace soci_client_ns {
     class table_creator {
     public:
@@ -369,37 +403,6 @@ namespace csvsql::detail {
     };
 
     class table_inserter {
-
-        [[nodiscard]] std::string insert_expr(auto const & args) const {
-            constexpr const std::array<std::string_view, 1> sql_keywords {{"UNIQUE"}};
-            auto const t = create_table_composer::table();
-            std::string expr = "insert" + (insert_prefix_.empty() ? "": " " + insert_prefix_) + " into ";
-            auto const expr_prim_size = create_table_phrase(args).size();
-
-            auto pos = t.find('(', expr_prim_size);
-            expr += std::string(t.begin() + expr_prim_size, t.begin() + static_cast<std::ptrdiff_t>(pos) + 1);
-            std::string values;
-            unsigned counter = 0;
-            while (pos = t.find('\t', pos + 1), pos != std::string::npos) {
-                using diff_t = std::ptrdiff_t;
-                std::string next = {t.begin() + static_cast<diff_t>(pos) + 1, t.begin() + static_cast<diff_t>(t.find(' ', pos + 1))};
-                bool keyword = false;
-                for (auto e : sql_keywords) {
-                    if (e == next) {
-                        keyword = true;
-                        break;
-                    }
-                }
-                if (keyword)
-                    continue;
-                expr += next + ",";
-                values += ":v" + std::to_string(counter++) + ',';
-            }
-            expr.back() = ')';
-            expr += " values (" + values;
-            expr.back() = ')';
-            return expr;
-        }
 
         template<template<class...> class F, class L> struct mp_transform_impl;
         template<template<class...> class F, class L>
@@ -556,7 +559,7 @@ namespace csvsql::detail {
             }
 
             auto prepare_statement_object(auto const & args) {
-                auto prep = sql_.prepare.operator<<(parent_.insert_expr(args));
+                auto prep = sql_.prepare.operator<<(insert_expr(parent_.insert_prefix_, args));
                 reset_value_index();
 
                 auto prepare_next_arg = [&](auto arg) -> db_types_ptr& {
@@ -754,7 +757,7 @@ namespace csvsql::detail {
             }
 
             auto prepare_statement_object(auto const & args) {
-                auto prep = sql_.prepare.operator<<(parent_.insert_expr(args));
+                auto prep = sql_.prepare.operator<<(insert_expr(parent_.insert_prefix_, args));
                 reset_value_index();
 
                 for(auto e : composer_.types()) {
@@ -867,6 +870,19 @@ namespace csvsql::detail {
     };
     }
 
+    namespace ocilib_client_ns {
+        class table_creator {
+        public:
+            explicit table_creator (auto const & args, Connection & con) {
+                if (!args.no_create) {
+                    std::string s = create_table_composer::table();
+                    Statement st(con);
+                    st.Execute(std::string{s.cbegin(), s.cend() - 2});
+                }
+            }
+        };
+    }
+
     void reset_environment() {
         create_table_composer::file_no = 0;
     }
@@ -885,19 +901,19 @@ namespace csvsql::detail {
     template <class ReaderType2, class Args2>
     struct soci_client : dbms_client {
         soci_client(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names)
-        : r_man(r_man), args_(args), table_names(table_names) {
+        : r_man(r_man), args(args), table_names(table_names) {
             if (args.db.empty())
-                this->args_.db = "sqlite3://db=:memory:";
-            session = std::make_unique<soci::session>(this->args_.db);
+                this->args.db = "sqlite3://db=:memory:";
+            session = std::make_unique<soci::session>(this->args.db);
         }
         void task() override {
             using namespace soci_client_ns;
             for (auto & reader : r_man.get_readers()) {
                 try {
-                    create_table_composer composer(reader, args_, table_names);
-                    table_creator{args_, *session};
-                    if (args_.insert or (args_.db == "sqlite3://db=:memory:" and !args_.query.empty()))
-                        table_inserter(args_, *session, composer).insert(args_, reader);
+                    create_table_composer composer(reader, args, table_names);
+                    table_creator{args, *session};
+                    if (args.insert or (args.db == "sqlite3://db=:memory:" and !args.query.empty()))
+                        table_inserter(args, *session, composer).insert(args, reader);
                 } catch(std::exception & e) {
                     if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
                         continue;
@@ -907,23 +923,52 @@ namespace csvsql::detail {
         }
         void querying() override {
             using namespace soci_client_ns;
-            query {args_, *session};
+            query {args, *session};
         }
         static std::shared_ptr<dbms_client> create(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names) {
             return std::make_shared<soci_client>(r_man, args, table_names);
         }
     private:
         readers_manager<ReaderType2> & r_man;
-        Args2 & args_;
+        Args2 & args;
         std::vector<std::string> const & table_names;
         std::unique_ptr<soci::session> session;
     };
     template <class ReaderType2, class Args2>
     struct ocilib_client : dbms_client {
-        ocilib_client(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names) : r_man(r_man), args(args) {
+        ocilib_client(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names)
+        : r_man(r_man), args(args), table_names(table_names) {
+
+            using namespace std::literals;
+            std::string_view sv = "oracle://service="sv;
+            assert(args.db.starts_with(sv));
+
+            char service[128];
+            char usr[128];
+            char pwd[128];
+
+            auto count = sscanf(args.db.c_str()+sv.size(), "%s user=%s password=%s", service, usr, pwd);
+            if (count != 3)
+                throw std::runtime_error("Error parsing " + args.db + " for ocilib!");
+            con = std::make_unique<Connection>(service, usr, pwd);
         }
         void task() override {
+            using namespace ocilib_client_ns;
+            for (auto & reader : r_man.get_readers()) {
+                try {
+                    create_table_composer composer(reader, args, table_names);
+                    table_creator{args, *con};
+                    if (args.insert) {
+                        //table_inserter(args, *session, composer).insert(args, reader);
+                    }
+                } catch(std::exception & e) {
+                    if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
+                        continue;
+                    throw;
+                }
+            }
         }
+
         void querying() override {
         }
         static std::shared_ptr<dbms_client> create(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names) {
@@ -932,6 +977,8 @@ namespace csvsql::detail {
     private:
         readers_manager<ReaderType2> & r_man;
         Args2 & args;
+        std::vector<std::string> const & table_names;
+        std::unique_ptr<Connection> con; //(otext("//localhost:1521/xepdb1"), otext("hr"), otext("hr"));
     };
 
     template <class ReaderType2, class Args2>

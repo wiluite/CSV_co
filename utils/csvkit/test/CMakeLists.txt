@@ -452,6 +452,7 @@ if (IO_CSVKIT_UTILS)
         ${MYSQL_INCLUDE_DIR}
         ${FIREBIRD_INCLUDE_DIR}
         ${ORACLE_INCLUDE_DIR}
+        ../external/ocilib/include
     )
     add_custom_command(
         TARGET csvsql_test POST_BUILD
@@ -525,12 +526,23 @@ if (IO_CSVKIT_UTILS)
                     COMMAND ${CMAKE_COMMAND} -E copy
                     ${CMAKE_BINARY_DIR}/bin/soci_core_4_1.dll
                     ${CMAKE_CURRENT_BINARY_DIR}/soci_core_4_1.dll)
+            add_custom_command(
+                    TARGET csvsql_test POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_CURRENT_BINARY_DIR}/../external/ocilib/ociliba.dll
+                    ${CMAKE_CURRENT_BINARY_DIR}/ociliba.dll)
+
         else()
             add_custom_command(
                     TARGET csvsql_test POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E copy
                     ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
                     ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
+            add_custom_command(
+                    TARGET csvsql_test POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_CURRENT_BINARY_DIR}/../external/ocilib/libociliba.dll
+                    ${CMAKE_CURRENT_BINARY_DIR}/libociliba.dll)
         endif()
     endif()
 
@@ -542,6 +554,7 @@ if (IO_CSVKIT_UTILS)
         ${MYSQL_INCLUDE_DIR}
         ${FIREBIRD_INCLUDE_DIR}
         ${ORACLE_INCLUDE_DIR}
+        ../external/ocilib/include
     )
     add_custom_command(
             TARGET sql2csv_test POST_BUILD

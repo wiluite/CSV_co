@@ -16,6 +16,8 @@ else()
     add_definitions(-Wno-old-style-cast)
     add_definitions(-Wno-narrowing)
     add_definitions(-Wno-unused-but-set-variable)
+#    add_definitions(-Wno-error=reorder)
+    add_definitions(-Wno-reorder)
 endif()
 
 find_package(Threads REQUIRED)
@@ -53,7 +55,7 @@ if (IO_CSVKIT_UTILS)
     add_executable(csvsql csvsql.cpp)
     target_include_directories(csvsql
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR}
+        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR} external/ocilib/include
     )
     target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core ociliba)
     if (UNIX)
@@ -64,19 +66,29 @@ if (IO_CSVKIT_UTILS)
                     COMMAND ${CMAKE_COMMAND} -E copy
                     ${CMAKE_BINARY_DIR}/bin/soci_core_4_1.dll
                     ${CMAKE_CURRENT_BINARY_DIR}/soci_core_4_1.dll)
+            add_custom_command(
+                    TARGET csvsql POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_CURRENT_BINARY_DIR}/external/ocilib/ociliba.dll
+                    ${CMAKE_CURRENT_BINARY_DIR}/ociliba.dll)
         else()
             add_custom_command(
                     TARGET csvsql POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E copy
                     ${CMAKE_BINARY_DIR}/bin/libsoci_core_4_1.dll
                     ${CMAKE_CURRENT_BINARY_DIR}/libsoci_core_4_1.dll)
+            add_custom_command(
+                    TARGET csvsql POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_CURRENT_BINARY_DIR}/external/ocilib/libociliba.dll
+                    ${CMAKE_CURRENT_BINARY_DIR}/libociliba.dll)
         endif()
     endif()
 
     add_executable(sql2csv sql2csv.cpp)
     target_include_directories(sql2csv
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR}
+        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR} external/ocilib/include
     )
     target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core ociliba)
     if (UNIX)

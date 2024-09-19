@@ -6,8 +6,8 @@ if (MSVC)
     add_definitions(/wd4273)
     add_definitions(-DOCI_IMPORT_RUNTIME -DOCI_API=__cdecl -DOCI_CHARSET_ANSI)
 else()
-    remove_definitions(-Wno-old-style-cast -fcoroutines)
-    add_definitions(-DOCI_IMPORT_RUNTIME -Wno-error -Wno-cast-function-type -Wno-attributes -DOCI_CHARSET_ANSI)
+    remove_definitions(-Wno-old-style-cast -fcoroutines -Wno-reorder)
+    add_definitions(-DOCI_IMPORT_RUNTIME -DOCI_CHARSET_ANSI -Wno-error -Wno-cast-function-type -Wno-attributes )
 endif()
 
 add_library(ociliba SHARED src/agent.c

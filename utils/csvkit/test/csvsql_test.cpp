@@ -614,6 +614,7 @@ int main() {
     };
 
 #if defined(SOCI_HAVE_SQLITE3)
+    //TODO : delete sample.sqlite from disk (from where is it?)
     "Sqlite3 date, datetime, timedelta"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
