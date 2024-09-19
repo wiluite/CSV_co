@@ -140,8 +140,8 @@ namespace csvsql::detail {
                 static void print_name_or_quoted_name(std::string const & name, char qch) {
                     if (std::all_of(name.cbegin(), name.cend(), [&](auto & ch) {
                         return ((std::isalpha(ch) and std::islower(ch))
-                                or  (std::isdigit(ch) and std::addressof(ch) != std::addressof(name.front()))
-                                or  ch == '_');
+                                or (std::isdigit(ch) and std::addressof(ch) != std::addressof(name.front()))
+                                or ch == '_');
                     }))
                         stream << name;
                     else
@@ -350,6 +350,7 @@ namespace csvsql::detail {
         [[nodiscard]] auto const & blanks() const { return blanks_; }
     };
 
+    namespace soci_client_ns {
     class table_creator {
     public:
         explicit table_creator (auto const & args, soci::session & sql) {
@@ -864,6 +865,7 @@ namespace csvsql::detail {
             }
         }
     };
+    }
 
     void reset_environment() {
         create_table_composer::file_no = 0;
@@ -872,6 +874,89 @@ namespace csvsql::detail {
 #if !defined(__unix__)
     static local_sqlite3_dependency lsd;
 #endif
+
+    struct dbms_client
+    {
+        virtual ~dbms_client() = default;
+        virtual void task() = 0;
+        virtual void querying() = 0;
+    };
+
+    template <class ReaderType2, class Args2>
+    struct soci_client : dbms_client {
+        soci_client(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names)
+        : r_man(r_man), args_(args), table_names(table_names) {
+            if (args.db.empty())
+                this->args_.db = "sqlite3://db=:memory:";
+            session = std::make_unique<soci::session>(this->args_.db);
+        }
+        void task() override {
+            using namespace soci_client_ns;
+            for (auto & reader : r_man.get_readers()) {
+                try {
+                    create_table_composer composer(reader, args_, table_names);
+                    table_creator{args_, *session};
+                    if (args_.insert or (args_.db == "sqlite3://db=:memory:" and !args_.query.empty()))
+                        table_inserter(args_, *session, composer).insert(args_, reader);
+                } catch(std::exception & e) {
+                    if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
+                        continue;
+                    throw;
+                }
+            }
+        }
+        void querying() override {
+            using namespace soci_client_ns;
+            query {args_, *session};
+        }
+        static std::shared_ptr<dbms_client> create(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names) {
+            return std::make_shared<soci_client>(r_man, args, table_names);
+        }
+    private:
+        readers_manager<ReaderType2> & r_man;
+        Args2 & args_;
+        std::vector<std::string> const & table_names;
+        std::unique_ptr<soci::session> session;
+    };
+    template <class ReaderType2, class Args2>
+    struct ocilib_client : dbms_client {
+        ocilib_client(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names) : r_man(r_man), args(args) {
+        }
+        void task() override {
+        }
+        void querying() override {
+        }
+        static std::shared_ptr<dbms_client> create(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names) {
+            return std::make_shared<ocilib_client>(r_man, args, table_names);
+        }
+    private:
+        readers_manager<ReaderType2> & r_man;
+        Args2 & args;
+    };
+
+    template <class ReaderType2, class Args2>
+    class dbms_client_factory
+    {
+    public:
+        using CreateCallback = std::function<std::shared_ptr<dbms_client>(readers_manager<ReaderType2> &, Args2 &, std::vector<std::string> const &)>;
+
+        static void register_client(const std::string &type, CreateCallback cb) {
+            clients[type] = cb;
+        }
+        static void unregister_client(const std::string &type) {
+            clients.erase(type);
+        }
+        static std::shared_ptr<dbms_client> create_client(const std::string &type, readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names) {
+            auto it = clients.find(type);
+            if (it != clients.end())
+                return (it->second)(r_man, args, table_names);
+            return nullptr;
+        }
+
+    private:
+        using CallbackMap = std::map<std::string, CreateCallback>;
+        static inline CallbackMap clients;
+    };
 
 } ///detail
 
@@ -922,9 +1007,8 @@ namespace csvsql {
             throw std::runtime_error(need_insert("--chunk-size"));
 
         // TODO: FixMe in the future.
-        if (args.create_if_not_exists and args.db.find("firebird") != std::string::npos) {
+        if (args.create_if_not_exists and args.db.find("firebird") != std::string::npos)
             throw std::runtime_error("Sorry, we do not support the --create-if-not-exists option for Firebird DBMS client.");
-        }
 
         reset_environment();
         readers_manager<ReaderType> r_man;
@@ -938,24 +1022,15 @@ namespace csvsql {
             return;
         }
 
-        if (args.db.empty())
-            args.db = "sqlite3://db=:memory:";
+        using args_type = std::decay_t<decltype(args)>;
+        using dbms_client_factory_type = dbms_client_factory<ReaderType, args_type>;
+        dbms_client_factory_type::register_client("soci", soci_client<ReaderType, args_type>::create);
+        dbms_client_factory_type::register_client("ocilib", ocilib_client<ReaderType, args_type>::create);
 
-        soci::session session(args.db);
-
-        for (auto & reader : r_man.get_readers()) {
-            try {
-                create_table_composer composer(reader, args, table_names);
-                table_creator{args, session};
-                if (args.insert or (args.db == "sqlite3://db=:memory:" and !args.query.empty()))
-                    table_inserter(args, session, composer).insert(args, reader);
-            } catch(std::exception & e) {
-                if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
-                    continue;
-                throw;
-            }
-        }
-        query q(args, session);
+        std::string which_to_create = args.db.find("oracle://service=") == std::string::npos ? "soci" : "ocilib";
+        auto client = dbms_client_factory_type::create_client(which_to_create, r_man, args, table_names);
+        client->task();
+        client->querying();
     }
 
 }

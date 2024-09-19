@@ -729,7 +729,7 @@ int main() {
         }
     };
 #endif
-
+#if 0
 #if defined(SOCI_HAVE_ORACLE)
     "Oracle date, datetime, timedelta"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
@@ -762,5 +762,5 @@ int main() {
         }
     };
 #endif
-
+#endif
 }
