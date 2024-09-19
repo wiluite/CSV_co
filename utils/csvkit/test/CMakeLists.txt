@@ -514,7 +514,7 @@ if (IO_CSVKIT_UTILS)
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/piped_stdin
         ${CMAKE_CURRENT_BINARY_DIR}/piped_stdin)
 
-    target_link_libraries(csvsql_test libcppp-reiconv.static simdutf soci_core -lpthread)
+    target_link_libraries(csvsql_test libcppp-reiconv.static simdutf soci_core -lpthread ociliba)
     add_test(csvsql_test csvsql_test)
 
     if (UNIX)
@@ -569,7 +569,7 @@ if (IO_CSVKIT_UTILS)
             ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/stdin_select
             ${CMAKE_CURRENT_BINARY_DIR}/stdin_select)
 
-    target_link_libraries(sql2csv_test libcppp-reiconv.static simdutf soci_core -lpthread)
+    target_link_libraries(sql2csv_test libcppp-reiconv.static simdutf soci_core -lpthread ociliba)
     add_test(sql2csv_test sql2csv_test)
 
     if (UNIX)

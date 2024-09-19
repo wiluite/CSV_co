@@ -21,6 +21,8 @@ endif()
 find_package(Threads REQUIRED)
 
 if (IO_CSVKIT_UTILS)
+    add_subdirectory(external/soci)
+    add_subdirectory(external/ocilib)
 
     if (SOCI_HAVE_SQLITE3)
         message("YOU WILL HAVE SQLITE3 BACKEND FOR YOUR I/O UTILS.")
@@ -53,7 +55,7 @@ if (IO_CSVKIT_UTILS)
         PRIVATE
         ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR}
     )
-    target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core)
+    target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core ociliba)
     if (UNIX)
     else()
         if (MSVC)
@@ -76,7 +78,7 @@ if (IO_CSVKIT_UTILS)
         PRIVATE
         ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR}
     )
-    target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core)
+    target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core ociliba)
     if (UNIX)
     else()
         if (MSVC)

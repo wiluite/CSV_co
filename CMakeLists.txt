@@ -138,9 +138,9 @@ else()
     endif()
 endif()
 
-if (IO_CSVKIT_UTILS)
-    add_subdirectory(utils/csvkit/external/soci)
-endif()
+#if (IO_CSVKIT_UTILS)
+#    add_subdirectory(utils/csvkit/external/soci)
+#endif()
 
 include_directories(external/multiprecision/include)
 
