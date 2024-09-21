@@ -627,6 +627,15 @@ int main() {
         std::string db_conn = get_db_conn("SOCI_DB_SQLITE3");
         if (!db_conn.empty()) {
             args.db = db_conn;
+            struct db_file_remover {
+                explicit db_file_remover(std::string name) : name(std::move(name)){}
+
+                ~db_file_remover() {
+                    std::remove(name.c_str());
+                }
+                std::string name;
+            } db_file_remover_ ({args.db.c_str() + args.db.find('=') + 1, args.db.c_str() + args.db.find(' ')});
+
             std::istringstream iss("a,b,c\n1971-01-01,1971-01-01T04:14:00,2 days 01:14:47.123\n");
             stdin_subst new_cin(iss);
             table_dropper td {db_conn, "stdin"};
@@ -662,7 +671,7 @@ int main() {
             stdin_subst new_cin(iss);
             table_dropper td {db_conn, "stdin"};
             CALL_TEST_AND_REDIRECT_TO_COUT(
-                    csvsql::sql<notrimming_reader_type>(args)
+                csvsql::sql<notrimming_reader_type>(args)
             )
 
 //          a,b,c
@@ -674,6 +683,7 @@ int main() {
     };
 #endif
 
+// TODO: Fixme.
 #if defined(SOCI_HAVE_POSTGRESQL) && !defined(_DEBUG)
     "PostgreSQL date, datetime, timedelta"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
@@ -692,7 +702,7 @@ int main() {
             table_dropper td {db_conn, "stdin"};
 
             CALL_TEST_AND_REDIRECT_TO_COUT(
-                    csvsql::sql<notrimming_reader_type>(args)
+                csvsql::sql<notrimming_reader_type>(args)
             )
 
 //          a,b,c

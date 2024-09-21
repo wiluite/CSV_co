@@ -631,7 +631,7 @@ namespace csvsql::detail {
 
                 std::function<void (soci::statement&, decltype(args) const &)> bulk_mode_fixer;
                 if (backend_id_ == SOCI::backend_id::MYSQL or backend_id_ == SOCI::backend_id::PG)
-                    bulk_mode_fixer = [&](soci::statement& stmt, decltype(args) & args) { stmt = prepare_statement_object(args);};
+                    bulk_mode_fixer = [&](soci::statement& stmt, decltype(args) & args) { stmt = prepare_statement_object(args, false);};
                 else
                     bulk_mode_fixer = [](soci::statement&, decltype(args) const &) {};
 
@@ -756,7 +756,7 @@ namespace csvsql::detail {
                 }
             }
 
-            auto prepare_statement_object(auto const & args) {
+            auto prepare_statement_object(auto const & args, bool resize = true) {
                 auto prep = sql_.prepare.operator<<(insert_expr(parent_.insert_prefix_, args));
                 reset_value_index();
 
@@ -765,9 +765,11 @@ namespace csvsql::detail {
                         prep = std::move(prep.operator,(soci::use(*arg, indicators[value_index])));
                     }, [&](auto arg) -> db_types_ptr & {
                         static db_types_ptr each_next;
-                        data_holder[value_index] = type2value[arg];
+                        if (resize)
+                            data_holder[value_index] = type2value[arg];
                         std::visit([&](auto &arg) {
-                            arg.resize(args.chunk_size);
+                            if (resize)
+                                arg.resize(args.chunk_size);
                             each_next = &arg;
                         }, data_holder[value_index]);
                         return each_next;
