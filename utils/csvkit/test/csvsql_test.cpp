@@ -59,8 +59,12 @@ struct table_dropper {
     table_dropper(std::string  db, char const * const table_name) : db(std::move(db)), table_name(table_name) {}
 
     ~table_dropper() {
-        soci::session sql (db);
-        sql << "DROP TABLE " << table_name;
+        try {
+            soci::session sql (db);
+            sql << "DROP TABLE " << table_name;
+        } catch (...) {
+            // there was no corresponding backend at all earlier.
+        }
     }
 private:
     std::string const db;
@@ -613,6 +617,7 @@ int main() {
         expect(cout_buffer.str() == "a,b\n1,1972-04-14\n3,1973-05-15\n5,1974-06-16\n7,\n9,1976-04-18\n");
     };
 
+try {
 #if defined(SOCI_HAVE_SQLITE3)
     //TODO : delete sample.sqlite from disk (from where is it?)
     "Sqlite3 date, datetime, timedelta"_test = [] {
@@ -740,6 +745,7 @@ int main() {
         }
     };
 #endif
+
 #if 0
 #if defined(SOCI_HAVE_ORACLE)
     "Oracle date, datetime, timedelta"_test = [] {
@@ -774,4 +780,7 @@ int main() {
     };
 #endif
 #endif
+} catch (std::exception const & e) {
+    std::cerr << e.what() << std::endl;
+}
 }
