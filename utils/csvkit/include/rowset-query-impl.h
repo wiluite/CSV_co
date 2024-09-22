@@ -18,19 +18,19 @@ namespace csvkit::cli::sql {
             printable_can_be_value = true;
             backend_id = SOCI::backend_id::PG;
         }
-        else if (sql.get_backend_name() == "oracle") {   //datetime and timedelta are strings
-            backend_id = SOCI::backend_id::ORCL;
-            printable_can_be_value = true;
-        }
         else if (sql.get_backend_name() == "firebird") { //datetime and timedelta are weird std::tm
             backend_id = SOCI::backend_id::FB;
             printable_can_be_weird = true;
         }
 
-
         std::map<unsigned, if_time> col2time;
         rowset<row> rs = (sql.prepare << q_s);
-
+#if 0
+        // --- NOTE!---We can't do even that.--- It is dangerous for further actions!
+        if (rs.begin() == rs.end())
+            return;
+        // ---
+#endif
         std::tm d{};
         char timeString_v2[std::size("yyyy-mm-dd")];
         char timeString_v11[std::size("yyyy-mm-dd hh:mm:ss.uuuuuu")];
@@ -65,25 +65,7 @@ namespace csvkit::cli::sql {
                 switch(props.get_db_type())
                 {
                     case db_string:
-                        if (backend_id == SOCI::backend_id::ORCL) {
-                            int days;
-                            int hours;
-                            int mins;
-                            int secs;
-                            int microsecs;
-                            auto cnt = sscanf(rr.get<std::string>(i).c_str(), "+%d %02d:%02d:%02d.%06d", &days, &hours, &mins, &secs, &microsecs);
-                            if (cnt == 5) {
-                                char buf [64];
-                                if (days)
-                                    snprintf(buf, 64, "\"%d %s, %02d:%02d:%02d.%06d\"", days, (days > 1 ? "days" : "day"), hours, mins, secs, microsecs);
-                                else
-                                    snprintf(buf, 64, "%02d:%02d:%02d.%06d", hours, mins, secs, microsecs);
-                                std::cout << buf;
-                            } else {
-                                std::cout << rr.get<std::string>(i);
-                            }
-                        } else
-                            std::cout << rr.get<std::string>(i);
+                        std::cout << rr.get<std::string>(i);
                         break;
                     case db_double:
                         ss << csv_mcv_prec(rr.get<double>(i));
