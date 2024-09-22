@@ -18,19 +18,19 @@ namespace csvkit::cli::sql {
             printable_can_be_value = true;
             backend_id = SOCI::backend_id::PG;
         }
-        else if (sql.get_backend_name() == "firebird") { //datetime and timedelta are weird std::tm
+        else if (sql.get_backend_name() == "firebird") { //datetime and timedelta are weird std::tm (fixed)
             backend_id = SOCI::backend_id::FB;
             printable_can_be_weird = true;
         }
 
         std::map<unsigned, if_time> col2time;
         rowset<row> rs = (sql.prepare << q_s);
-#if 0
+
         // --- NOTE!---We can't do even that.--- It is dangerous for further actions!
-        if (rs.begin() == rs.end())
-            return;
+        // if (rs.begin() == rs.end())
+        //     return;
         // ---
-#endif
+
         std::tm d{};
         char timeString_v2[std::size("yyyy-mm-dd")];
         char timeString_v11[std::size("yyyy-mm-dd hh:mm:ss.uuuuuu")];
@@ -53,13 +53,13 @@ namespace csvkit::cli::sql {
             }
 
             auto print_data = [&](std::size_t i) {
-                column_properties const & props = rr.get_properties(i);
                 if (rr.get_indicator(i) == soci::i_null) {
                     if (rr.size() == 1)
                         std::cout << R"("")";
                     return;
                 }
 
+                column_properties const & props = rr.get_properties(i);
                 num_stringstream ss("C");
 
                 switch(props.get_db_type())
@@ -90,9 +90,11 @@ namespace csvkit::cli::sql {
                                 col2time[i] = if_time::yes;
                         }
                         break;
+#if 0
                     case db_int64:
                         std::cout << rr.get<int64_t>(i); // oracle non-doubles (ints)
                         break;
+#endif
                     default:
                         break;
                 }
@@ -119,14 +121,97 @@ namespace csvkit::cli::sql {
 
                 if (args.linenumbers)
                     std::cout << "line_number" << ',';
-                column_properties const &prop = v.get_properties(0);
-                std::cout << prop.get_name();
-                for (auto i = 1u; i < v.size(); i++) {
-                    std::cout << ',';
-                    column_properties const &p = v.get_properties(i);
-                    std::cout << p.get_name();
-                }
+
+                std::cout << static_cast<column_properties const&>(v.get_properties(0)).get_name();
+                for (auto i = 1u; i < v.size(); i++)
+                    std::cout << ',' << static_cast<column_properties const&>(v.get_properties(i)).get_name();
                 std::cout << '\n';
+            }
+        }
+    }
+
+    void rowset_query(Connection & con, auto const & args, std::string const & q_s) {
+        Statement stmt(con);
+        stmt.Execute(q_s);
+        Resultset rs = stmt.GetResultset();
+        if (nullptr != rs) {
+            if (!args.no_header) {
+                if (args.linenumbers)
+                    std::cout << "line_number" << ',';
+                std::cout << rs.GetColumn(0).GetName();
+
+                for (auto i = 2u; i <= rs.GetColumnCount(); i++)
+                    rs.GetColumn(i).GetName();
+                std::cout << '\n';
+            }
+
+            auto print_data = [&](std::size_t i) {
+                if (rs.IsColumnNull(i)) {
+                    if (rs.GetColumnCount() == 1)
+                        std::cout << R"("")";
+                    else
+                        std::cout << R"()";
+                    return;
+                }
+
+                num_stringstream ss("C");
+
+                char timeString_v2[std::size("yyyy-mm-dd")];
+                char timeString_v11[std::size("yyyy-mm-dd hh:mm:ss.uuuuuu")];
+                std::tm tm_{};
+                Date date;
+                Timestamp ts(Timestamp::NoTimeZone);
+                Interval il(Interval::DaySecond);
+                switch(static_cast<int>(rs.GetColumn(i).GetType()))
+                {
+                    case DataTypeValues::TypeNumeric:
+                        ss << csv_mcv_prec(rs.Get<double>(i));
+                        std::cout << ss.str();
+                        break;
+                    case DataTypeValues::TypeString:
+                        std::cout << rs.Get<std::string>(i);
+                        break;
+                    case DataTypeValues::TypeLong:
+                        std::cout << rs.Get<int32_t>(i);
+                        break;
+                    case DataTypeValues::TypeDate:
+                        date = rs.Get<Date>(i);
+                        date.GetDate(tm_.tm_year, tm_.tm_mon, tm_.tm_mday);
+                        std::strftime(std::data(timeString_v2), std::size(timeString_v2),"%Y-%m-%d", &tm_);
+                        std::cout << timeString_v2;
+                        break;
+                    case DataTypeValues::TypeTimestamp:
+                        ts = rs.Get<Timestamp>(i);
+                        snprintf(timeString_v11, std::size(timeString_v11), "%d-%02d-%02d %02d:%02d:%02d.%06d",
+                            ts.GetYear() + 1900, ts.GetMonth() + 1, ts.GetDay(), ts.GetHours(), ts.GetMinutes()
+                            , ts.GetSeconds(), ts.GetMilliSeconds());
+                        std::cout << timeString_v11;
+                        break;
+                    case DataTypeValues::TypeInterval:
+                        il = rs.Get<Interval>(i);
+                        char buf [64];
+                        if (il.GetDay())
+                            snprintf(buf, 64, "\"%d %s, %02d:%02d:%02d.%06d\"", il.GetDay(),
+                                (il.GetDay() > 1 ? "days" : "day"), il.GetHours(), il.GetMinutes()
+                                , il.GetSeconds(), il.GetMilliSeconds() * 1000);
+                        else
+                            snprintf(buf, 64, "%02d:%02d:%02d.%06d", il.GetHours(), il.GetMinutes()
+                                 , il.GetSeconds(), il.GetMilliSeconds() * 1000);
+                        std::cout << buf;
+                        break;
+
+                    default:
+                        break;
+                }
+            };
+            if (args.linenumbers) {
+                static auto line = 1ul;
+                std::cout << line++ << ',';
+            }
+            print_data(1);
+            for (std::size_t i = 1; i != rs.GetColumnCount(); ++i) {
+                std::cout << ',';
+                print_data(i);
             }
         }
     }

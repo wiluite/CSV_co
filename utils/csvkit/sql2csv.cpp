@@ -18,7 +18,10 @@
 #include <soci/firebird/soci-firebird.h>
 #endif
 
-#include <iostream>
+#include <ocilib.hpp>
+
+using namespace ocilib;
+
 #include <cli.h>
 #include <rowset-query-impl.h>
 #if !defined(_MSC_VER)

@@ -22,12 +22,13 @@
 #if defined(SOCI_HAVE_ORACLE)
 #include <soci/oracle/soci-oracle.h>
 #endif
+#include <ocilib.hpp>
+
+using namespace ocilib;
+
 #include <cli.h>
 #include <rowset-query-impl.h>
 #include <local-sqlite3-dep.h>
-
-#include <ocilib.hpp>
-using namespace ocilib;
 
 #if !defined(_MSC_VER)
 #include <unistd.h>
@@ -439,6 +440,7 @@ namespace csvsql::detail {
         std::vector<std::string> const & table_names;
         std::unique_ptr<soci::session> session;
     };
+
     template <class ReaderType2, class Args2>
     struct ocilib_client : dbms_client {
         ocilib_client(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names)
@@ -455,8 +457,18 @@ namespace csvsql::detail {
             auto count = sscanf(args.db.c_str()+sv.size(), "%s user=%s password=%s", service, usr, pwd);
             if (count != 3)
                 throw std::runtime_error("Error parsing " + args.db + " for ocilib!");
-            con = std::make_unique<Connection>(service, usr, pwd);
-            con->SetAutoCommit(true);
+
+            try {
+                Environment::Initialize();
+                con = std::make_unique<Connection>(service, usr, pwd);
+                con->SetAutoCommit(true);
+            } catch (std::exception const &) {
+                Environment::Cleanup();
+                throw;
+            }
+        }
+        ~ocilib_client() override {
+            Environment::Cleanup();
         }
         void task() override {
             using namespace ocilib_client_ns;
@@ -464,9 +476,8 @@ namespace csvsql::detail {
                 try {
                     create_table_composer composer(reader, args, table_names);
                     table_creator{args, *con};
-                    if (args.insert) {
+                    if (args.insert)
                         table_inserter(args, *con, composer).insert(args, reader);
-                    }
                 } catch(std::exception & e) {
                     if (std::string(e.what()).find("Vain to do next actions") != std::string::npos)
                         continue;
