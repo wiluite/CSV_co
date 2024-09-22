@@ -28,6 +28,7 @@ find_package(Threads REQUIRED)
 if (IO_CSVKIT_UTILS)
     add_subdirectory(external/soci)
     add_subdirectory(external/ocilib)
+    add_definitions(-DOCI_IMPORT_RUNTIME -DOCI_API=__stdcall -DOCI_CHARSET_ANSI)
 
     if (SOCI_HAVE_SQLITE3)
         message("YOU WILL HAVE SQLITE3 BACKEND FOR YOUR I/O UTILS.")

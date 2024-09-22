@@ -93,8 +93,7 @@ namespace sql2csv::detail {
         }
     public:
         query(auto const & args, soci::session && sql) {
-            using namespace ::csvkit::cli::sql;
-            rowset_query(sql, args, query_impl(args));
+            csvkit::cli::sql::rowset_query(sql, args, query_impl(args));
         }
     };
 
