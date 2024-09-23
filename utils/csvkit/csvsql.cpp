@@ -462,6 +462,11 @@ namespace csvsql::detail {
 
     template <class ReaderType2, class Args2>
     struct ocilib_client : dbms_client {
+        struct env_init_cleanup {
+            env_init_cleanup() { Environment::Initialize(); }
+            ~env_init_cleanup() { Environment::Cleanup(); }
+        };
+
         ocilib_client(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names)
         : r_man(r_man), args(args), table_names(table_names) {
 
@@ -477,17 +482,8 @@ namespace csvsql::detail {
             if (count != 3)
                 throw std::runtime_error("Error parsing " + args.db + " for ocilib!");
 
-            try {
-                Environment::Initialize();
-                con = std::make_unique<Connection>(service, usr, pwd);
-                con->SetAutoCommit(true);
-            } catch (std::exception const &) {
-                Environment::Cleanup();
-                throw;
-            }
-        }
-        ~ocilib_client() override {
-            Environment::Cleanup();
+            con = std::make_unique<Connection>(service, usr, pwd);
+            con->SetAutoCommit(true);
         }
         void task() override {
             using namespace ocilib_client_ns;
@@ -516,6 +512,7 @@ namespace csvsql::detail {
         readers_manager<ReaderType2> & r_man;
         Args2 & args;
         std::vector<std::string> const & table_names;
+        env_init_cleanup e_i_c;
         std::unique_ptr<Connection> con;
     };
 

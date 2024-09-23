@@ -124,8 +124,12 @@ namespace sql2csv::detail {
 
     template <class Args2>
     struct ocilib_client : dbms_client {
-        ocilib_client(Args2 & args) : args(args) {
+        struct env_init_cleanup {
+            env_init_cleanup() { Environment::Initialize(); }
+            ~env_init_cleanup() { Environment::Cleanup(); }
+        };
 
+        ocilib_client(Args2 & args) : args(args) {
             using namespace std::literals;
             std::string_view sv = "oracle://service="sv;
             assert(args.db.starts_with(sv));
@@ -134,21 +138,12 @@ namespace sql2csv::detail {
             char usr[128];
             char pwd[128];
 
-            auto count = sscanf(args.db.c_str()+sv.size(), "%s user=%s password=%s", service, usr, pwd);
+            auto count = sscanf(args.db.c_str() + sv.size(), "%s user=%s password=%s", service, usr, pwd);
             if (count != 3)
                 throw std::runtime_error("Error parsing " + args.db + " for ocilib!");
 
-            try {
-                Environment::Initialize();
-                con = std::make_unique<Connection>(service, usr, pwd);
-                con->SetAutoCommit(true);
-            } catch (std::exception const &) {
-                Environment::Cleanup();
-                throw;
-            }
-        }
-        ~ocilib_client() override {
-            Environment::Cleanup();
+            con = std::make_unique<Connection>(service, usr, pwd);
+            con->SetAutoCommit(true);
         }
 
         void querying() override {
@@ -159,6 +154,7 @@ namespace sql2csv::detail {
         }
     private:
         Args2 & args;
+        env_init_cleanup e_i_c;
         std::unique_ptr<Connection> con;
     };
 
