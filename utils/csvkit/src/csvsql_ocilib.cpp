@@ -81,50 +81,36 @@ namespace ocilib_client_ns {
                 std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
                         [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
                         , [&](elem_type const & e) {
-                            if (!e.is_null())
-                                std::get<5>(data_holder[col]) = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
-                            else
-                                stmt.GetBind(col + 1).SetDataNull(true);
+                            std::get<5>(data_holder[col]) = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null())
-                                std::get<0>(data_holder[col]) = static_cast<double>(e.num());
-                            else
-                                stmt.GetBind(col + 1).SetDataNull(true);
+                            std::get<0>(data_holder[col]) = static_cast<double>(e.num());
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                fill_date_time(std::get<1>(e.datetime()), std::get<3>(data_holder[col]));
-                            } else {
-                                stmt.GetBind(col + 1).SetDataNull(true);
-                            }
+                            fill_date_time(std::get<1>(e.datetime()), std::get<3>(data_holder[col]));
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                fill_date(std::get<1>(e.date()), std::get<2>(data_holder[col]));
-                            } else
-                                stmt.GetBind(col + 1).SetDataNull(true);
+                            fill_date(std::get<1>(e.date()), std::get<2>(data_holder[col]));
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                Interval interval{};
-                                fill_interval(e.timedelta_seconds(), interval);
-                                std::get<4>(data_holder[col]) = interval;
-                            } else 
-                                stmt.GetBind(col + 1).SetDataNull(true);
+                            Interval interval{};
+                            fill_interval(e.timedelta_seconds(), interval);
+                            std::get<4>(data_holder[col]) = interval;
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null())
-                                std::get<1>(data_holder[col]) = e.str();
-                            else
-                                stmt.GetBind(col + 1).SetDataNull(true);
+                            std::get<1>(data_holder[col]) = e.str();
                         }
                 };
 
                 reader.run_rows([&] (auto & row_span) {
                     col = 0u;
                     for (auto & elem : row_span) {
-                        fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
+                        auto e {elem_type{elem}};
+                        if (e.is_null())
+                            stmt.GetBind(col + 1).SetDataNull(true);
+                        else
+                            fill_funcs[static_cast<std::size_t>(composer.types()[col])](e);
+                        //fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
                         col++;
                     }
                     stmt.ExecutePrepared();
