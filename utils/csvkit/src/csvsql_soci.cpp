@@ -432,24 +432,6 @@ namespace soci_client_ns {
     };
 
     class query {
-        static auto queries(auto const & args) {
-            std::stringstream queries;
-            if (std::filesystem::exists(std::filesystem::path{args.query})) {
-                std::filesystem::path path{args.query};
-                auto const length = std::filesystem::file_size(path);
-                if (length == 0)
-                    throw std::runtime_error("Query file '" + args.query +"' exists, but it is empty.");
-                std::ifstream f(args.query);
-                if (!(f.is_open()))
-                    throw std::runtime_error("Error opening the query file: '" + args.query + "'.");
-                std::string queries_s;
-                for (std::string line; std::getline(f, line, '\n');)
-                    queries_s += line;
-                queries << recode_source(std::move(queries_s), args);
-            } else
-                queries << args.query;
-            return sql_split(std::move(queries));
-        }
     public:
         query(auto const & args, soci::session & sql) {
             if (!args.query.empty()) {

@@ -68,41 +68,124 @@ namespace sql2csv::detail {
         return result_phrase;
     };
 
-    class query {
-        static auto query_impl(auto const & args) {
-            std::stringstream queries;
-            if (!(args.query.empty())) {
-                queries << args.query;
-            } else if (!args.query_file.empty()) {
-                if (std::filesystem::exists(std::filesystem::path{args.query_file})) {
-                    std::filesystem::path path{args.query_file};
-                    auto const length = std::filesystem::file_size(path);
-                    if (length == 0)
-                        throw std::runtime_error("Query file '" + args.query_file.string() +"' exists, but it is empty.");
-                    std::ifstream f(args.query_file);
-                    if (!(f.is_open()))
-                        throw std::runtime_error("Error opening the query file: '" + args.query_file.string() + "'.");
-                    std::string queries_s;
-                    for (std::string line; std::getline(f, line, '\n');)
-                        queries_s += line;
-                    queries << recode_source(std::move(queries_s), args);
-                } else
-                    throw std::runtime_error("No such file or directory: '" + args.query_file.string() + "'.");
-            } else {
-                assert(!query_stdin().empty());
-                queries << query_stdin();
-            }
-            return sql_split(std::move(queries));
+    static auto query_impl(auto const & args) {
+        std::stringstream queries;
+        if (!(args.query.empty())) {
+            queries << args.query;
+        } else if (!args.query_file.empty()) {
+            if (std::filesystem::exists(std::filesystem::path{args.query_file})) {
+                std::filesystem::path path{args.query_file};
+                auto const length = std::filesystem::file_size(path);
+                if (length == 0)
+                    throw std::runtime_error("Query file '" + args.query_file.string() +"' exists, but it is empty.");
+                std::ifstream f(args.query_file);
+                if (!(f.is_open()))
+                    throw std::runtime_error("Error opening the query file: '" + args.query_file.string() + "'.");
+                std::string queries_s;
+                for (std::string line; std::getline(f, line, '\n');)
+                    queries_s += line;
+                queries << recode_source(std::move(queries_s), args);
+            } else
+                throw std::runtime_error("No such file or directory: '" + args.query_file.string() + "'.");
+        } else {
+            assert(!query_stdin().empty());
+            queries << query_stdin();
         }
-    public:
-        query(auto const & args, soci::session && sql) {
-            csvkit::cli::sql::rowset_query(sql, args, query_impl(args));
-        }
-    };
+        return sql_split(std::move(queries));
+    }
 
 #if !defined(__unix__)
     static local_sqlite3_dependency lsd;
 #endif
+
+    struct dbms_client
+    {
+        virtual ~dbms_client() = default;
+        virtual void querying() = 0;
+    };
+
+    template <class Args2>
+    struct soci_client : dbms_client {
+        soci_client(Args2 & args) : args(args) {
+            if (args.db.empty())
+                this->args.db = "sqlite3://db=:memory:";
+            session = std::make_unique<soci::session>(this->args.db);
+        }
+        void querying() override {
+            csvkit::cli::sql::rowset_query(*session, args, query_impl(args));
+        }
+        static std::shared_ptr<dbms_client> create(Args2 & args) {
+            return std::make_shared<soci_client>(args);
+        }
+    private:
+        Args2 & args;
+        std::unique_ptr<soci::session> session;
+    };
+
+    template <class Args2>
+    struct ocilib_client : dbms_client {
+        ocilib_client(Args2 & args) : args(args) {
+
+            using namespace std::literals;
+            std::string_view sv = "oracle://service="sv;
+            assert(args.db.starts_with(sv));
+
+            char service[128];
+            char usr[128];
+            char pwd[128];
+
+            auto count = sscanf(args.db.c_str()+sv.size(), "%s user=%s password=%s", service, usr, pwd);
+            if (count != 3)
+                throw std::runtime_error("Error parsing " + args.db + " for ocilib!");
+
+            try {
+                Environment::Initialize();
+                con = std::make_unique<Connection>(service, usr, pwd);
+                con->SetAutoCommit(true);
+            } catch (std::exception const &) {
+                Environment::Cleanup();
+                throw;
+            }
+        }
+        ~ocilib_client() override {
+            Environment::Cleanup();
+        }
+
+        void querying() override {
+            csvkit::cli::sql::rowset_query(*con, args, query_impl(args));
+        }
+        static std::shared_ptr<dbms_client> create(Args2 & args) {
+            return std::make_shared<ocilib_client>(args);
+        }
+    private:
+        Args2 & args;
+        std::unique_ptr<Connection> con;
+    };
+
+    template <class Args2>
+    class dbms_client_factory
+    {
+    public:
+        using CreateCallback = std::function<std::shared_ptr<dbms_client>(Args2 &)>;
+
+        static void register_client(const std::string &type, CreateCallback cb) {
+            clients[type] = cb;
+        }
+        static void unregister_client(const std::string &type) {
+            clients.erase(type);
+        }
+        static std::shared_ptr<dbms_client> create_client(const std::string &type, Args2 & args) {
+            auto it = clients.find(type);
+            if (it != clients.end())
+                return (it->second)(args);
+            return nullptr;
+        }
+
+    private:
+        using CallbackMap = std::map<std::string, CreateCallback>;
+        static inline CallbackMap clients;
+    };
+
 
 } /// detail
 
@@ -121,10 +204,19 @@ namespace sql2csv {
             }
         }
 
-        if (args.db.empty())
-            args.db = "sqlite3://db=:memory:";
+        using args_type = std::decay_t<decltype(args)>;
+        using dbms_client_factory_type = dbms_client_factory<args_type>;
+        dbms_client_factory_type::register_client("soci", soci_client<args_type>::create);
+        dbms_client_factory_type::register_client("ocilib", ocilib_client<args_type>::create);
 
-        query{args, soci::session{args.db}};
+        std::string which_one_to_create = args.db.find("oracle://service=") == std::string::npos ? "soci" : "ocilib";
+        auto client = dbms_client_factory_type::create_client(which_one_to_create, args);
+        client->querying();
+
+//        if (args.db.empty())
+//            args.db = "sqlite3://db=:memory:";
+//
+//        query{args, soci::session{args.db}};
     }
 }
 

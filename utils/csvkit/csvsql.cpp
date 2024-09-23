@@ -386,6 +386,25 @@ namespace csvsql::detail {
         return expr;
     }
 
+    static auto queries(auto const & args) {
+        std::stringstream queries;
+        if (std::filesystem::exists(std::filesystem::path{args.query})) {
+            std::filesystem::path path{args.query};
+            auto const length = std::filesystem::file_size(path);
+            if (length == 0)
+                throw std::runtime_error("Query file '" + args.query +"' exists, but it is empty.");
+            std::ifstream f(args.query);
+            if (!(f.is_open()))
+                throw std::runtime_error("Error opening the query file: '" + args.query + "'.");
+            std::string queries_s;
+            for (std::string line; std::getline(f, line, '\n');)
+                queries_s += line;
+            queries << recode_source(std::move(queries_s), args);
+        } else
+            queries << args.query;
+        return sql_split(std::move(queries));
+    }
+
     #include "src/csvsql_soci.cpp"
     #include "src/csvsql_ocilib.cpp"
 
@@ -486,7 +505,10 @@ namespace csvsql::detail {
             }
         }
 
-        void querying() override {}
+        void querying() override {
+            using namespace ocilib_client_ns;
+            query {args, *con};
+        }
         static std::shared_ptr<dbms_client> create(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names) {
             return std::make_shared<ocilib_client>(r_man, args, table_names);
         }
@@ -590,8 +612,8 @@ namespace csvsql {
         dbms_client_factory_type::register_client("soci", soci_client<ReaderType, args_type>::create);
         dbms_client_factory_type::register_client("ocilib", ocilib_client<ReaderType, args_type>::create);
 
-        std::string which_to_create = args.db.find("oracle://service=") == std::string::npos ? "soci" : "ocilib";
-        auto client = dbms_client_factory_type::create_client(which_to_create, r_man, args, table_names);
+        std::string which_one_to_create = args.db.find("oracle://service=") == std::string::npos ? "soci" : "ocilib";
+        auto client = dbms_client_factory_type::create_client(which_one_to_create, r_man, args, table_names);
         client->task();
         client->querying();
     }

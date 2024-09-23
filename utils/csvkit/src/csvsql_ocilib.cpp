@@ -193,7 +193,6 @@ namespace ocilib_client_ns {
     public:
         table_inserter(auto const &args, Connection & con, create_table_composer & composer)
                 : con(con), composer_(composer), after_insert_(args.after_insert), insert_prefix_(args.prefix) {
-
         }
         void insert(auto const &args, auto & reader) {
             if (args.chunk_size <= 1)
@@ -204,5 +203,20 @@ namespace ocilib_client_ns {
         }
 
     };
+    class query {
+    public:
+        query(auto const & args, Connection & con) {
+            if (!args.query.empty()) {
+                auto q_array = queries(args);
+                std::for_each(q_array.begin(), q_array.end() - 1, [&](auto & elem) {
+                    Statement stmt(con);
+                    stmt.Execute(elem);
+                });
+
+                csvkit::cli::sql::rowset_query(con, args, q_array.back());
+            }
+        }
+    };
+
 
 }
