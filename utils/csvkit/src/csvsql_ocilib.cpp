@@ -84,40 +84,40 @@ namespace ocilib_client_ns {
                             if (!e.is_null())
                                 std::get<5>(data_holder[col]) = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
                             else
-                                stmt.GetBind(col).SetDataNull(true);
+                                stmt.GetBind(col + 1).SetDataNull(true);
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null())
                                 std::get<0>(data_holder[col]) = static_cast<double>(e.num());
                             else
-                                stmt.GetBind(col).SetDataNull(true);
+                                stmt.GetBind(col + 1).SetDataNull(true);
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {
                                 fill_date_time(std::get<1>(e.datetime()), std::get<3>(data_holder[col]));
                             } else {
-                                stmt.GetBind(col).SetDataNull(true);
+                                stmt.GetBind(col + 1).SetDataNull(true);
                             }
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {
                                 fill_date(std::get<1>(e.date()), std::get<2>(data_holder[col]));
                             } else
-                                stmt.GetBind(col).SetDataNull(true);
+                                stmt.GetBind(col + 1).SetDataNull(true);
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {
                                 Interval interval{};
                                 fill_interval(e.timedelta_seconds(), interval);
-                                data_holder[col] = interval; 
+                                std::get<4>(data_holder[col]) = interval;
                             } else 
-                                stmt.GetBind(col).SetDataNull(true);                            
+                                stmt.GetBind(col + 1).SetDataNull(true);
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null())
-                                data_holder[col] = e.str();
+                                std::get<1>(data_holder[col]) = e.str();
                             else
-                                stmt.GetBind(col).SetDataNull(true);
+                                stmt.GetBind(col + 1).SetDataNull(true);
                         }
                 };
 
