@@ -65,7 +65,8 @@ namespace ocilib_client_ns {
 
             using ct = column_type;
             std::unordered_map<ct, db_types> type2value = {{ct::bool_t, generic_bool{}}, {ct::text_t, std::string{}}
-                , {ct::number_t, double{}}, {ct::datetime_t, Timestamp{Timestamp::NoTimeZone}}, {ct::date_t, Date{}}, {ct::timedelta_t, Interval{Interval::DaySecond}}
+                , {ct::number_t, double{}}, {ct::datetime_t, Timestamp{Timestamp::NoTimeZone}}
+                , {ct::date_t, Date{"1970-01-01", "YYYY-MM-DD"}}, {ct::timedelta_t, Interval{Interval::DaySecond}}
             };
 
             table_inserter & parent_;
@@ -102,9 +103,7 @@ namespace ocilib_client_ns {
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {
-                                Date date{};
-                                fill_date(std::get<1>(e.date()), date);
-                                data_holder[col] = date;
+                                fill_date(std::get<1>(e.date()), std::get<2>(data_holder[col]));
                             } else
                                 stmt.GetBind(col).SetDataNull(true);
                         }
@@ -132,7 +131,7 @@ namespace ocilib_client_ns {
                     }
                     stmt.ExecutePrepared();
                 });
-
+                con.Commit();
             }
 
             void prepare_statement_object(auto const & args, Statement & st) {

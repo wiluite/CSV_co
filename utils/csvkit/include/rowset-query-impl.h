@@ -138,10 +138,10 @@ namespace csvkit::cli::sql {
             if (!args.no_header) {
                 if (args.linenumbers)
                     std::cout << "line_number" << ',';
-                std::cout << rs.GetColumn(0).GetName();
+                std::cout << rs.GetColumn(1).GetName();
 
                 for (auto i = 2u; i <= rs.GetColumnCount(); i++)
-                    rs.GetColumn(i).GetName();
+                    std::cout << ',' << rs.GetColumn(i).GetName();
                 std::cout << '\n';
             }
 
@@ -196,7 +196,7 @@ namespace csvkit::cli::sql {
                                 , il.GetSeconds(), il.GetMilliSeconds() * 1000);
                         else
                             snprintf(buf, 64, "%02d:%02d:%02d.%06d", il.GetHours(), il.GetMinutes()
-                                 , il.GetSeconds(), il.GetMilliSeconds() * 1000);
+                                , il.GetSeconds(), il.GetMilliSeconds() * 1000);
                         std::cout << buf;
                         break;
 
@@ -204,14 +204,17 @@ namespace csvkit::cli::sql {
                         break;
                 }
             };
-            if (args.linenumbers) {
-                static auto line = 1ul;
-                std::cout << line++ << ',';
-            }
-            print_data(1);
-            for (std::size_t i = 1; i != rs.GetColumnCount(); ++i) {
-                std::cout << ',';
-                print_data(i);
+            while (rs++) {
+                if (args.linenumbers) {
+                    static auto line = 1ul;
+                    std::cout << line++ << ',';
+                }
+                print_data(1);
+                for (auto i = 2u; i <= rs.GetColumnCount(); ++i) {
+                    std::cout << ',';
+                    print_data(i);
+                }
+                std::cout << '\n';
             }
         }
     }

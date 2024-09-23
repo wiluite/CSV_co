@@ -746,6 +746,27 @@ try {
     };
 #endif
 
+#if defined(SOCI_HAVE_ORACLE)
+    "Oracle date, datetime, timedelta"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = {"_"};
+                insert = true;
+                query = "SELECT * FROM stdin";
+            }
+        } args;
+        std::string db_conn = get_db_conn("SOCI_DB_ORACLE");
+        if (!db_conn.empty()) {
+            args.db = db_conn;
+            std::istringstream iss("a,b\nstring1,1071-01-01\nstring2,1072-02-01\nstring3,1073-03-01\n");
+            stdin_subst new_cin(iss);
+            table_dropper td {db_conn, "stdin"};
+            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
+            std::cerr << cout_buffer.str() << std::endl;
+        }
+    };
+#endif
+
 #if 0
 #if defined(SOCI_HAVE_ORACLE)
     "Oracle date, datetime, timedelta"_test = [] {
@@ -780,6 +801,7 @@ try {
     };
 #endif
 #endif
+
 } catch (std::exception const & e) {
     std::cerr << e.what() << std::endl;
 }

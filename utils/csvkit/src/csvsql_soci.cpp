@@ -72,7 +72,7 @@ namespace soci_client_ns {
                         [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {
-                                data_holder[col] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
+                                std::get<3>(data_holder[col]) = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
                                 indicators[col] = soci::i_ok;
                             } else {
                                 indicators[col] = soci::i_null;
@@ -80,7 +80,7 @@ namespace soci_client_ns {
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {
-                                data_holder[col] = static_cast<double>(e.num());
+                                std::get<0>(data_holder[col]) = static_cast<double>(e.num());
                                 indicators[col] = soci::i_ok;
                             } else {
                                 indicators[col] = soci::i_null;
@@ -95,7 +95,7 @@ namespace soci_client_ns {
                                 std::tm tm_{};
                                 fill_date(tm_, day_point);
                                 fill_time(tm_, hh_mm_ss{tp - day_point});
-                                data_holder[col] = tm_;
+                                std::get<2>(data_holder[col]) = tm_;
                                 indicators[col] = soci::i_ok;
                             } else {
                                 indicators[col] = soci::i_null;
@@ -109,7 +109,7 @@ namespace soci_client_ns {
                                 auto day_point = floor<days>(tp);
                                 std::tm tm_{};
                                 fill_date(tm_, day_point);
-                                data_holder[col] = tm_;
+                                std::get<2>(data_holder[col]) = tm_;
                                 indicators[col] = soci::i_ok;
                             } else {
                                 indicators[col] = soci::i_null;
@@ -131,13 +131,13 @@ namespace soci_client_ns {
                                         //TODO: fix it
                                         t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
                                         snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
-                                        data_holder[col] = buf;
+                                        std::get<1>(data_holder[col]) = buf;
                                         break;
                                     default:
                                         fill_date(t, day_point);
                                         fill_time(t, hh_mm_ss{tp - day_point});
                                         t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                                        data_holder[col] = t;
+                                        std::get<2>(data_holder[col]) = t;
                                         break;
                                 }
                                 indicators[col] = soci::i_ok;
@@ -147,7 +147,7 @@ namespace soci_client_ns {
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {
-                                data_holder[col] = e.str();
+                                std::get<1>(data_holder[col]) = e.str();
                                 indicators[col] = soci::i_ok;
                             } else {
                                 indicators[col] = soci::i_null;
