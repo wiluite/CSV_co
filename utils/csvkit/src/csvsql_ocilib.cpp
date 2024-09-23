@@ -110,7 +110,6 @@ namespace ocilib_client_ns {
                             stmt.GetBind(col + 1).SetDataNull(true);
                         else
                             fill_funcs[static_cast<std::size_t>(composer.types()[col])](e);
-                        //fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
                         col++;
                     }
                     stmt.ExecutePrepared();
@@ -151,7 +150,7 @@ namespace ocilib_client_ns {
                         } else {
                             static_assert(std::is_same_v<std::decay_t<decltype(*arg)>, Interval>); 
                             st.Bind(name, *arg, BindInfo::In);
-                        } 
+                        }
                     }, prepare_next_arg(e));
                     value_index++;
                 }
