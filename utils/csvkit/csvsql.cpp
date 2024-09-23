@@ -460,6 +460,22 @@ namespace csvsql::detail {
         std::unique_ptr<soci::session> session;
     };
 
+    struct OracleConnection : Connection {
+        explicit OracleConnection(std::string const & args_db) : Connection() {
+            using namespace std::literals;
+            std::string_view sv = "oracle://service="sv;
+            assert(args_db.starts_with(sv));
+
+            char service[128];
+            char usr[128];
+            char pwd[128];
+            auto count = sscanf(args_db.c_str() + sv.size(), "%s user=%s password=%s", service, usr, pwd);
+            if (count != 3)
+                throw std::runtime_error("Error parsing " + args_db + " for ocilib!");
+            Connection::Open(service, usr, pwd);
+            Connection::SetAutoCommit(true);
+        }
+    };
     template <class ReaderType2, class Args2>
     struct ocilib_client : dbms_client {
         struct env_init_cleanup {
@@ -469,21 +485,7 @@ namespace csvsql::detail {
 
         ocilib_client(readers_manager<ReaderType2> & r_man, Args2 & args, std::vector<std::string> const & table_names)
         : r_man(r_man), args(args), table_names(table_names) {
-
-            using namespace std::literals;
-            std::string_view sv = "oracle://service="sv;
-            assert(args.db.starts_with(sv));
-
-            char service[128];
-            char usr[128];
-            char pwd[128];
-
-            auto count = sscanf(args.db.c_str()+sv.size(), "%s user=%s password=%s", service, usr, pwd);
-            if (count != 3)
-                throw std::runtime_error("Error parsing " + args.db + " for ocilib!");
-
-            con = std::make_unique<Connection>(service, usr, pwd);
-            con->SetAutoCommit(true);
+            con = std::make_unique<OracleConnection>(args.db);
         }
         void task() override {
             using namespace ocilib_client_ns;

@@ -62,7 +62,7 @@ enum class dbms_client{
 
 template<dbms_client client = dbms_client::SOCI>
 struct table_dropper {
-    table_dropper(std::string  db, char const * const table_name) : db(std::move(db)), table_name(table_name) {}
+    table_dropper(std::string db, char const * const table_name) : db(std::move(db)), table_name(table_name) {}
 
     ~table_dropper() {
         try {
@@ -74,12 +74,12 @@ struct table_dropper {
                     env_init_cleanup() { Environment::Initialize(); }
                     ~env_init_cleanup() { Environment::Cleanup(); }
                 } eic;
-                Connection con;
+                csvsql::detail::OracleConnection con(db);
                 Statement stmt(con);
                 stmt.Execute("DROP TABLE " + table_name);
             }
         } catch (...) {
-            // there was no corresponding backend at all earlier.
+            // there was no corresponding backend at all earlier. Or, no Oracle runtime found (oci.dll etc.) (in case of ocilib)
         }
     }
 private:
@@ -774,9 +774,9 @@ try {
         std::string db_conn = get_db_conn("SOCI_DB_ORACLE");
         if (!db_conn.empty()) {
             args.db = db_conn;
-            std::istringstream iss("a,b,c\nstring1,1071-01-01,1071-01-01 14:09:53\nstring2,1072-02-01,1072-02-01 14:09:53\nstring3,1073-03-01,\n");
+            std::istringstream iss("a,b,c,d\nstring1,1071-01-01,,\nstring2,1072-02-01,,\nstring3,1073-03-01,1072-02-01 14:09:53,25 h 3.534sec\n");
             stdin_subst new_cin(iss);
-            table_dropper<dbms_client::OCILIB> td {db_conn, "stdin"};
+            table_dropper<dbms_client::OCILIB> td {db_conn, "stdin"}
             CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
             std::cerr << cout_buffer.str() << std::endl;
         }

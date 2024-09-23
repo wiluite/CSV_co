@@ -193,10 +193,10 @@ namespace csvkit::cli::sql {
                         if (il.GetDay())
                             snprintf(buf, 64, "\"%d %s, %02d:%02d:%02d.%06d\"", il.GetDay(),
                                 (il.GetDay() > 1 ? "days" : "day"), il.GetHours(), il.GetMinutes()
-                                , il.GetSeconds(), il.GetMilliSeconds() * 1000);
+                                , il.GetSeconds(), il.GetMilliSeconds());
                         else
                             snprintf(buf, 64, "%02d:%02d:%02d.%06d", il.GetHours(), il.GetMinutes()
-                                , il.GetSeconds(), il.GetMilliSeconds() * 1000);
+                                , il.GetSeconds(), il.GetMilliSeconds());
                         std::cout << buf;
                         break;
 

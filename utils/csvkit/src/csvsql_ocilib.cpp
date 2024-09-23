@@ -45,15 +45,17 @@ namespace ocilib_client_ns {
                 , static_cast<int>(static_cast<unsigned>(ymd.day())));
         };
         static inline auto fill_interval = [](long double secs, Interval & interval) {
-            using namespace date;
-            date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-            auto day_point = floor<days>(tp);
-            year_month_day ymd = day_point;
-            hh_mm_ss tod {tp - day_point};
-            double int_part;
-            interval.SetDaySecond(static_cast<int>(static_cast<unsigned>(ymd.day())), static_cast<int>(tod.hours().count())
-                , static_cast<int>(tod.minutes().count()), static_cast<int>(tod.seconds().count())
-                , static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000));
+            std::chrono::duration<long double, std::ratio<1>> src (secs);
+            int days_ = static_cast<decltype(days_)>(floor<std::chrono::days>(src).count());
+            src -= floor<std::chrono::days>(src);
+            int clock_hours_ = static_cast<decltype(clock_hours_)>(floor<std::chrono::hours>(src).count());
+            src -= floor<std::chrono::hours>(src);
+            int clock_minutes_ = static_cast<decltype(clock_minutes_)>(floor<std::chrono::minutes>(src).count());
+            src -= floor<std::chrono::minutes>(src);
+            int clock_seconds_ = static_cast<decltype(clock_seconds_)>(floor<std::chrono::seconds>(src).count());
+            src -= floor<std::chrono::seconds>(src);
+            auto rest_ = src;
+            interval.SetDaySecond(days_, clock_hours_, clock_minutes_, clock_seconds_, static_cast<int>(round<std::chrono::milliseconds>(rest_).count()));
         };
 
         class simple_inserter {
@@ -93,9 +95,7 @@ namespace ocilib_client_ns {
                             fill_date(std::get<1>(e.date()), std::get<2>(data_holder[col]));
                         }
                         , [&](elem_type const & e) {
-                            Interval interval{};
-                            fill_interval(e.timedelta_seconds(), interval);
-                            std::get<4>(data_holder[col]) = interval;
+                            fill_interval(e.timedelta_seconds(), std::get<4>(data_holder[col]));
                         }
                         , [&](elem_type const & e) {
                             std::get<1>(data_holder[col]) = e.str();
@@ -108,8 +108,10 @@ namespace ocilib_client_ns {
                         auto e {elem_type{elem}};
                         if (e.is_null())
                             stmt.GetBind(col + 1).SetDataNull(true);
-                        else
+                        else {
                             fill_funcs[static_cast<std::size_t>(composer.types()[col])](e);
+                            stmt.GetBind(col + 1).SetDataNull(false);
+                        }
                         col++;
                     }
                     stmt.ExecutePrepared();
