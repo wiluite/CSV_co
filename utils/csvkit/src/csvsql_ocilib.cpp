@@ -135,24 +135,10 @@ namespace ocilib_client_ns {
                 for(auto e : composer_.types()) {
                     std::visit([&](auto & arg) {
                         std::string name = ":v" + std::to_string(value_index);
-                        if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, generic_bool>) {
-                            st.Bind(name, *arg, BindInfo::In);
-                        } 
-                        else if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, std::string>) {
+                        if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, std::string>)
                             st.Bind(name, *arg, 200, BindInfo::In);
-                        }  
-                        else if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, double>) {
+                        else
                             st.Bind(name, *arg, BindInfo::In);
-                        }
-                        else if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, Timestamp>) {
-                            st.Bind(name, *arg, BindInfo::In);
-                        }
-                        else if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, Date>) {
-                            st.Bind(name, *arg, BindInfo::In);
-                        } else {
-                            static_assert(std::is_same_v<std::decay_t<decltype(*arg)>, Interval>); 
-                            st.Bind(name, *arg, BindInfo::In);
-                        }
                     }, prepare_next_arg(e));
                     value_index++;
                 }
@@ -185,8 +171,8 @@ namespace ocilib_client_ns {
                 //batch_bulk_inserter(*this, con, composer_).insert(args, reader);
             }
         }
-
     };
+
     class query {
     public:
         query(auto const & args, Connection & con) {

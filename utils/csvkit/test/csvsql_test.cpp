@@ -776,7 +776,7 @@ try {
             args.db = db_conn;
             std::istringstream iss("a,b,c,d\nstring1,1071-01-01,,\nstring2,1072-02-01,,\nstring3,1073-03-01,1072-02-01 14:09:53,25 h 3.534sec\n");
             stdin_subst new_cin(iss);
-            table_dropper<dbms_client::OCILIB> td {db_conn, "stdin"}
+            table_dropper<dbms_client::OCILIB> td {db_conn, "stdin"};
             CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
             std::cerr << cout_buffer.str() << std::endl;
         }
