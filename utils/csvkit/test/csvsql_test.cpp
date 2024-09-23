@@ -758,7 +758,7 @@ try {
         std::string db_conn = get_db_conn("SOCI_DB_ORACLE");
         if (!db_conn.empty()) {
             args.db = db_conn;
-            std::istringstream iss("a,b\nstring1,1071-01-01\nstring2,1072-02-01\nstring3,1073-03-01\n");
+            std::istringstream iss("a,b,c\nstring1,1071-01-01,1071-01-01 14:09:53\nstring2,1072-02-01,1072-02-01 14:09:53\nstring3,1073-03-01,\n");
             stdin_subst new_cin(iss);
             table_dropper td {db_conn, "stdin"};
             CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )

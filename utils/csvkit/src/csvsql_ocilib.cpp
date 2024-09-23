@@ -34,15 +34,14 @@ namespace ocilib_client_ns {
             auto day_point = floor<days>(tp);
             year_month_day ymd = day_point;
             hh_mm_ss tod {tp - day_point};
-
-            tstamp.SetDateTime(int(ymd.year()) - 1900, static_cast<int>(static_cast<unsigned>(ymd.month())) - 1
+            tstamp.SetDateTime(int(ymd.year()), static_cast<int>(static_cast<unsigned>(ymd.month()))
                 , static_cast<int>(static_cast<unsigned>(ymd.day())), static_cast<int>(tod.hours().count())
                 , static_cast<int>(tod.minutes().count()), static_cast<int>(tod.seconds().count()), 0);
         };
         static inline auto fill_date = [](date::sys_time<std::chrono::seconds> tp, Date & date) {
             using namespace date;
             year_month_day ymd = floor<days>(tp);
-            date.SetDate(int(ymd.year()) - 1900, static_cast<int>(static_cast<unsigned>(ymd.month())) - 1
+            date.SetDate(int(ymd.year()), static_cast<int>(static_cast<unsigned>(ymd.month()))
                 , static_cast<int>(static_cast<unsigned>(ymd.day())));
         };
         static inline auto fill_interval = [](long double secs, Interval & interval) {
@@ -83,23 +82,22 @@ namespace ocilib_client_ns {
                         [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
                         , [&](elem_type const & e) {
                             if (!e.is_null())
-                                data_holder[col] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
+                                std::get<5>(data_holder[col]) = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
                             else
                                 stmt.GetBind(col).SetDataNull(true);
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null())
-                                data_holder[col] = static_cast<double>(e.num());
+                                std::get<0>(data_holder[col]) = static_cast<double>(e.num());
                             else
                                 stmt.GetBind(col).SetDataNull(true);
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {
-                                Timestamp tstamp(Timestamp::NoTimeZone);
-                                fill_date_time(std::get<1>(e.datetime()), tstamp);
-                                data_holder[col] = tstamp;
-                            } else
+                                fill_date_time(std::get<1>(e.datetime()), std::get<3>(data_holder[col]));
+                            } else {
                                 stmt.GetBind(col).SetDataNull(true);
+                            }
                         }
                         , [&](elem_type const & e) {
                             if (!e.is_null()) {

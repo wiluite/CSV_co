@@ -176,14 +176,14 @@ namespace csvkit::cli::sql {
                         break;
                     case DataTypeValues::TypeDate:
                         date = rs.Get<Date>(i);
-                        date.GetDate(tm_.tm_year, tm_.tm_mon, tm_.tm_mday);
-                        std::strftime(std::data(timeString_v2), std::size(timeString_v2),"%Y-%m-%d", &tm_);
+                        snprintf(std::data(timeString_v2), std::size(timeString_v2), "%04d-%02d-%02d", date.GetYear()
+                            , date.GetMonth(), date.GetDay());
                         std::cout << timeString_v2;
                         break;
                     case DataTypeValues::TypeTimestamp:
                         ts = rs.Get<Timestamp>(i);
                         snprintf(timeString_v11, std::size(timeString_v11), "%d-%02d-%02d %02d:%02d:%02d.%06d",
-                            ts.GetYear() + 1900, ts.GetMonth() + 1, ts.GetDay(), ts.GetHours(), ts.GetMinutes()
+                            ts.GetYear(), ts.GetMonth(), ts.GetDay(), ts.GetHours(), ts.GetMinutes()
                             , ts.GetSeconds(), ts.GetMilliSeconds());
                         std::cout << timeString_v11;
                         break;
