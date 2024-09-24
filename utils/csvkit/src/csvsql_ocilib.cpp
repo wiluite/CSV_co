@@ -153,6 +153,50 @@ namespace ocilib_client_ns {
             }
         };
 
+        class batch_bulk_inserter {
+            using db_types=std::variant<std::vector<double>, std::vector<std::string>, std::vector<Date>, std::vector<Timestamp>, std::vector<Interval>, std::vector<generic_bool>>;
+            using db_types_ptr = mp_transform<std::add_pointer_t, db_types>;
+
+            std::vector<db_types> data_holder;
+
+            using ct = column_type;
+            std::unordered_map<ct, db_types> type2value = {{ct::bool_t, std::vector<generic_bool>{}}, {ct::text_t, std::vector<std::string>{}}
+                    , {ct::number_t, std::vector<double>{}}, {ct::datetime_t, std::vector<Timestamp>{Timestamp::NoTimeZone}}
+                    , {ct::date_t, std::vector<Date>{"1970-01-01", "YYYY-MM-DD"}}, {ct::timedelta_t, std::vector<Interval>{Interval::DaySecond}}
+            };
+            void insert_data(auto & reader, create_table_composer & composer, auto const & args) {
+                using reader_type = std::decay_t<decltype(reader)>;
+                using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
+                using func_type = std::function<void(elem_type const&)>;
+
+                auto col = 0u;
+                auto offset = 0u;
+                std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
+                        [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
+                        , [&](elem_type const & e) {
+                            std::get<5>(data_holder[col])[offset] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
+                        }
+                        , [&](elem_type const & e) {
+                            std::get<0>(data_holder[col])[offset] = static_cast<double>(e.num());
+                        }
+                        , [&](elem_type const & e) {
+                            fill_date_time(std::get<1>(e.datetime()), std::get<3>(data_holder[col])[offset]);
+                        }
+                        , [&](elem_type const & e) {
+                            fill_date(std::get<1>(e.date()), std::get<2>(data_holder[col])[offset]);
+                        }
+                        , [&](elem_type const & e) {
+                            fill_interval(e.timedelta_seconds(), std::get<4>(data_holder[col])[offset]);
+                        }
+                        , [&](elem_type const & e) {
+                            std::get<1>(data_holder[col])[offset] = e.str();
+                        }
+                };
+
+            }
+
+        };
+
         Connection & con;
         create_table_composer & composer_;
         std::string const & after_insert_;
