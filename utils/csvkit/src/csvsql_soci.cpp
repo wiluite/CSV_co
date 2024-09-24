@@ -71,94 +71,70 @@ namespace soci_client_ns {
                 std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
                         [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                std::get<3>(data_holder[col]) = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
-                                indicators[col] = soci::i_ok;
-                            } else {
-                                indicators[col] = soci::i_null;
-                            }
+                            std::get<3>(data_holder[col]) = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                std::get<0>(data_holder[col]) = static_cast<double>(e.num());
-                                indicators[col] = soci::i_ok;
-                            } else {
-                                indicators[col] = soci::i_null;
-                            }
+                            std::get<0>(data_holder[col]) = static_cast<double>(e.num());
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                using namespace date;
+                            using namespace date;
 
-                                date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
-                                auto day_point = floor<days>(tp);
-                                std::tm tm_{};
-                                fill_date(tm_, day_point);
-                                fill_time(tm_, hh_mm_ss{tp - day_point});
-                                std::get<2>(data_holder[col]) = tm_;
-                                indicators[col] = soci::i_ok;
-                            } else {
-                                indicators[col] = soci::i_null;
-                            }
+                            date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
+                            auto day_point = floor<days>(tp);
+                            std::tm tm_{};
+                            fill_date(tm_, day_point);
+                            fill_time(tm_, hh_mm_ss{tp - day_point});
+                            std::get<2>(data_holder[col]) = tm_;
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                using namespace date;
+                            using namespace date;
 
-                                date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
-                                auto day_point = floor<days>(tp);
-                                std::tm tm_{};
-                                fill_date(tm_, day_point);
-                                std::get<2>(data_holder[col]) = tm_;
-                                indicators[col] = soci::i_ok;
-                            } else {
-                                indicators[col] = soci::i_null;
-                            }
+                            date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
+                            auto day_point = floor<days>(tp);
+                            std::tm tm_{};
+                            fill_date(tm_, day_point);
+                            std::get<2>(data_holder[col]) = tm_;
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                using namespace date;
+                            using namespace date;
 
-                                long double secs = e.timedelta_seconds();
-                                date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-                                auto day_point = floor<date::days>(tp);
-                                std::tm t{};
-                                switch (backend_id_) {
-                                    double int_part;
-                                    char buf[80];
-                                    case SOCI::backend_id::PG:
-                                        fill_time(t, hh_mm_ss{tp - day_point});
-                                        //TODO: fix it
-                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                                        snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
-                                        std::get<1>(data_holder[col]) = buf;
-                                        break;
-                                    default:
-                                        fill_date(t, day_point);
-                                        fill_time(t, hh_mm_ss{tp - day_point});
-                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                                        std::get<2>(data_holder[col]) = t;
-                                        break;
-                                }
-                                indicators[col] = soci::i_ok;
-                            } else {
-                                indicators[col] = soci::i_null;
+                            long double secs = e.timedelta_seconds();
+                            date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
+                            auto day_point = floor<date::days>(tp);
+                            std::tm t{};
+                            switch (backend_id_) {
+                                double int_part;
+                                char buf[80];
+                                case SOCI::backend_id::PG:
+                                    fill_time(t, hh_mm_ss{tp - day_point});
+                                    //TODO: fix it
+                                    t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                    snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
+                                    std::get<1>(data_holder[col]) = buf;
+                                    break;
+                                default:
+                                    fill_date(t, day_point);
+                                    fill_time(t, hh_mm_ss{tp - day_point});
+                                    t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                    std::get<2>(data_holder[col]) = t;
+                                    break;
                             }
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                std::get<1>(data_holder[col]) = e.str();
-                                indicators[col] = soci::i_ok;
-                            } else {
-                                indicators[col] = soci::i_null;
-                            }
+                            std::get<1>(data_holder[col]) = e.str();
                         }
                 };
 
                 reader.run_rows([&] (auto & row_span) {
                     col = 0u;
                     for (auto & elem : row_span) {
-                        fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
+                        auto e {elem_type{elem}};
+                        if (e.is_null())
+                            indicators[col] = soci::i_null;
+                        else {
+                            fill_funcs[static_cast<std::size_t>(composer.types()[col])](e);
+                            indicators[col] = soci::i_ok;
+                        }
                         col++;
                     }
                     stmt.execute(true);
@@ -244,88 +220,58 @@ namespace soci_client_ns {
                 std::array<func_type, static_cast<std::size_t>(column_type::sz)> fill_funcs {
                         [](elem_type const &) { assert(false && "this is unknown data type, logic error."); }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                (std::get<3>(data_holder[col]))[offset] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
-                                indicators[col][offset] = soci::i_ok;
-                            } else {
-                                indicators[col][offset] = soci::i_null;
-                            }
+                            std::get<3>(data_holder[col])[offset] = static_cast<generic_bool>(e.is_boolean(), e.unsafe_bool());
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                (std::get<0>(data_holder[col]))[offset] = static_cast<double>(e.num());
-                                indicators[col][offset] = soci::i_ok;
-                            } else {
-                                indicators[col][offset] = soci::i_null;
-                            }
+                            std::get<0>(data_holder[col])[offset] = static_cast<double>(e.num());
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                using namespace date;
+                            using namespace date;
 
-                                date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
-                                auto day_point = floor<days>(tp);
-                                std::tm tm_{};
-                                fill_date(tm_, day_point);
-                                fill_time(tm_, hh_mm_ss{tp - day_point});
-                                (std::get<2>(data_holder[col]))[offset] = tm_;
-                                indicators[col][offset] = soci::i_ok;
-                            } else {
-                                indicators[col][offset] = soci::i_null;
+                            date::sys_time<std::chrono::seconds> tp = std::get<1>(e.datetime());
+                            auto day_point = floor<days>(tp);
+                            std::tm tm_{};
+                            fill_date(tm_, day_point);
+                            fill_time(tm_, hh_mm_ss{tp - day_point});
+                            std::get<2>(data_holder[col])[offset] = tm_;
+                        }
+                        , [&](elem_type const & e) {
+                            using namespace date;
+
+                            date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
+                            auto day_point = floor<days>(tp);
+                            std::tm tm_{};
+                            fill_date(tm_, day_point);
+                            std::get<2>(data_holder[col])[offset] = tm_;
+                        }
+                        , [&](elem_type const & e) {
+                            using namespace date;
+
+                            long double secs = e.timedelta_seconds();
+                            date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
+                            auto day_point = floor<date::days>(tp);
+                            std::tm t{};
+
+                            switch (backend_id_) {
+                                double int_part;
+                                char buf[80];
+                                case SOCI::backend_id::PG:
+                                    fill_time(t, hh_mm_ss{tp - day_point});
+                                    //TODO: fix it
+                                    t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                    snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
+                                    std::get<1>(data_holder[col])[offset] = buf;
+                                    break;
+                                default:
+                                    fill_date(t, day_point);
+                                    fill_time(t, hh_mm_ss{tp - day_point});
+                                    t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
+                                    std::get<2>(data_holder[col])[offset] = t;
+                                    break;
                             }
                         }
                         , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                using namespace date;
-
-                                date::sys_time<std::chrono::seconds> tp = std::get<1>(e.date());
-                                auto day_point = floor<days>(tp);
-                                std::tm tm_{};
-                                fill_date(tm_, day_point);
-                                (std::get<2>(data_holder[col]))[offset] = tm_;
-                                indicators[col][offset] = soci::i_ok;
-                            } else {
-                                indicators[col][offset] = soci::i_null;
-                            }
-                        }
-                        , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                using namespace date;
-
-                                long double secs = e.timedelta_seconds();
-                                date::sys_time<std::chrono::seconds> tp(std::chrono::seconds(static_cast<int>(secs)));
-                                auto day_point = floor<date::days>(tp);
-                                std::tm t{};
-
-                                switch (backend_id_) {
-                                    double int_part;
-                                    char buf[80];
-                                    case SOCI::backend_id::PG:
-                                        fill_time(t, hh_mm_ss{tp - day_point});
-                                        //TODO: fix it
-                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                                        snprintf(buf, 80, "%d:%02d:%02d.%06d", day_point.time_since_epoch().count() * 24 + t.tm_hour, t.tm_min, t.tm_sec, t.tm_isdst);
-                                        (std::get<1>(data_holder[col]))[offset] = buf;
-                                        break;
-                                    default:
-                                        fill_date(t, day_point);
-                                        fill_time(t, hh_mm_ss{tp - day_point});
-                                        t.tm_isdst = static_cast<int>(std::modf(static_cast<double>(secs), &int_part) * 1000000);
-                                        (std::get<2>(data_holder[col]))[offset] = t;
-                                        break;
-                                }
-                                indicators[col][offset] = soci::i_ok;
-                            } else {
-                                indicators[col][offset] = soci::i_null;
-                            }
-                        }
-                        , [&](elem_type const & e) {
-                            if (!e.is_null()) {
-                                (std::get<1>(data_holder[col]))[offset] = e.str();
-                                indicators[col][offset] = soci::i_ok;
-                            } else {
-                                indicators[col][offset] = soci::i_null;
-                            }
+                            std::get<1>(data_holder[col])[offset] = e.str();
                         }
                 };
 
@@ -333,7 +279,13 @@ namespace soci_client_ns {
                 reader.run_rows([&] (auto & row_span) {
                     col = 0u;
                     for (auto & elem : row_span) {
-                        fill_funcs[static_cast<std::size_t>(composer.types()[col])](elem_type{elem});
+                        auto e {elem_type{elem}};
+                        if (e.is_null())
+                            indicators[col][offset] = soci::i_null;
+                        else {
+                            fill_funcs[static_cast<std::size_t>(composer.types()[col])](e);
+                            indicators[col][offset] = soci::i_ok;
+                        }
                         col++;
                     }
                     if (++offset == args.chunk_size) {

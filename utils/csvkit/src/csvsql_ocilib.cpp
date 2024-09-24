@@ -116,7 +116,6 @@ namespace ocilib_client_ns {
                     }
                     stmt.ExecutePrepared();
                 });
-                con.Commit();
             }
 
             void prepare_statement_object(auto const & args, Statement & st) {
@@ -152,7 +151,6 @@ namespace ocilib_client_ns {
                 prepare_statement_object(args, stmt);
                 insert_data(reader, composer_, stmt);
             }
-
         };
 
         Connection & con;
@@ -163,6 +161,14 @@ namespace ocilib_client_ns {
     public:
         table_inserter(auto const &args, Connection & con, create_table_composer & composer)
                 : con(con), composer_(composer), after_insert_(args.after_insert), insert_prefix_(args.prefix) {
+        }
+        ~table_inserter() {
+            if (!after_insert_.empty()) {
+                auto const statements = sql_split(std::stringstream(after_insert_));
+                Statement stmt(con);
+                for (auto & elem : statements)
+                    stmt.Execute(elem);
+            }
         }
         void insert(auto const &args, auto & reader) {
             if (args.chunk_size <= 1)
@@ -178,8 +184,8 @@ namespace ocilib_client_ns {
         query(auto const & args, Connection & con) {
             if (!args.query.empty()) {
                 auto q_array = queries(args);
+                Statement stmt(con);
                 std::for_each(q_array.begin(), q_array.end() - 1, [&](auto & elem) {
-                    Statement stmt(con);
                     stmt.Execute(elem);
                 });
 
