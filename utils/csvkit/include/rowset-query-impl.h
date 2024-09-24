@@ -190,13 +190,15 @@ namespace csvkit::cli::sql {
                     case DataTypeValues::TypeInterval:
                         il = rs.Get<Interval>(i);
                         char buf [64];
+                        #define GetNanoSeconds GetMilliSeconds
                         if (il.GetDay())
                             snprintf(buf, 64, "\"%d %s, %02d:%02d:%02d.%06d\"", il.GetDay(),
                                 (il.GetDay() > 1 ? "days" : "day"), il.GetHours(), il.GetMinutes()
-                                , il.GetSeconds(), il.GetMilliSeconds());
+                                , il.GetSeconds(), il.GetNanoSeconds()/1000);
                         else
                             snprintf(buf, 64, "%02d:%02d:%02d.%06d", il.GetHours(), il.GetMinutes()
-                                , il.GetSeconds(), il.GetMilliSeconds());
+                                , il.GetSeconds(), il.GetNanoSeconds()/1000);
+                        #undef GetNanoSeconds
                         std::cout << buf;
                         break;
 

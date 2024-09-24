@@ -55,7 +55,7 @@ namespace ocilib_client_ns {
             int clock_seconds_ = static_cast<decltype(clock_seconds_)>(floor<std::chrono::seconds>(src).count());
             src -= floor<std::chrono::seconds>(src);
             auto rest_ = src;
-            interval.SetDaySecond(days_, clock_hours_, clock_minutes_, clock_seconds_, static_cast<int>(round<std::chrono::milliseconds>(rest_).count()));
+            interval.SetDaySecond(days_, clock_hours_, clock_minutes_, clock_seconds_, static_cast<int>(round<std::chrono::nanoseconds>(rest_).count()));
         };
 
         class simple_inserter {
