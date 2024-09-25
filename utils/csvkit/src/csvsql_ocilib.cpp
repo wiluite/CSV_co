@@ -107,10 +107,10 @@ namespace ocilib_client_ns {
                     for (auto & elem : row_span) {
                         auto e {elem_type{elem}};
                         if (e.is_null())
-                            stmt.GetBind(col + 1).SetDataNull(true);
+                            stmt.GetBind(col + 1).SetDataNull(true, 1);
                         else {
                             fill_funcs[static_cast<std::size_t>(composer.types()[col])](e);
-                            stmt.GetBind(col + 1).SetDataNull(false);
+                            stmt.GetBind(col + 1).SetDataNull(false, 1);
                         }
                         col++;
                     }
@@ -161,10 +161,15 @@ namespace ocilib_client_ns {
 
             using ct = column_type;
             std::unordered_map<ct, db_types> type2value = {{ct::bool_t, std::vector<generic_bool>{}}, {ct::text_t, std::vector<std::string>{}}
-                    , {ct::number_t, std::vector<double>{}}, {ct::datetime_t, std::vector<Timestamp>{Timestamp::NoTimeZone}}
-                    , {ct::date_t, std::vector<Date>{"1970-01-01", "YYYY-MM-DD"}}, {ct::timedelta_t, std::vector<Interval>{Interval::DaySecond}}
+                    , {ct::number_t, std::vector<double>{}}, {ct::datetime_t, std::vector<Timestamp>{}}
+                    , {ct::date_t, std::vector<Date>{}}, {ct::timedelta_t, std::vector<Interval>{}}
             };
-            void insert_data(auto & reader, create_table_composer & composer, auto const & args) {
+
+            table_inserter & parent_;
+            Connection & con;
+            create_table_composer & composer_;
+
+            void insert_data(auto & reader, create_table_composer & composer, auto const & args, Statement & stmt) {
                 using reader_type = std::decay_t<decltype(reader)>;
                 using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
                 using func_type = std::function<void(elem_type const&)>;
@@ -192,7 +197,91 @@ namespace ocilib_client_ns {
                             std::get<1>(data_holder[col])[offset] = e.str();
                         }
                 };
+                reader.run_rows([&] (auto & row_span) {
+                    col = 0u;
+                    for (auto & elem : row_span) {
+                        auto e {elem_type{elem}};
+                        if (e.is_null())
+                            stmt.GetBind(col + 1).SetDataNull(true, offset + 1);
+                        else {
+                            fill_funcs[static_cast<std::size_t>(composer.types()[col])](e);
+                            stmt.GetBind(col + 1).SetDataNull(false, offset + 1);
+                        }
+                        col++;
+                    }
+                    if (++offset == args.chunk_size) {
+                        stmt.ExecutePrepared();
+                        offset = 0;
+                    }
+                });
+                if (offset) {
+                    for (auto & vec : data_holder)
+                        std::visit([&](auto & arg) {
+                            arg.resize(offset);
+                        }, vec);
+                    stmt.SetBindArraySize(offset);
+                    stmt.ExecutePrepared();
+                }
+            }
 
+            void prepare_statement_object(auto const & args, Statement & st) {
+                st.Prepare(insert_expr(parent_.insert_prefix_, args));
+                st.SetBindArraySize(args.chunk_size);
+                reset_value_index();
+
+                auto prepare_next_arg = [&](auto arg) -> db_types_ptr& {
+                    static db_types_ptr each_next;
+                    data_holder[value_index] = type2value[arg];
+                    std::visit([&](auto & arg) {
+                        if constexpr(std::is_same_v<std::decay_t<decltype(arg)>, std::vector<Date>>)
+                            // Note: it seems arg.resize(args.chunk_size, Date::SysDate());
+                            // is not necessary for elems to be considered "bound" in this array to bind it later.
+                            // We need something like:
+                            for (auto i = 0u; i < args.chunk_size; i++)
+                                arg.push_back(Date::SysDate());
+                        else
+                        if constexpr(std::is_same_v<std::decay_t<decltype(arg)>, std::vector<Timestamp>>)
+                            // see above
+                            for (auto i = 0u; i < args.chunk_size; i++)
+                                arg.push_back(Timestamp{Timestamp::NoTimeZone});
+                        else
+                        if constexpr(std::is_same_v<std::decay_t<decltype(arg)>, std::vector<Interval>>)
+                            // see above
+                            for (auto i = 0u; i < args.chunk_size; i++)
+                                arg.push_back(Interval{Interval::DaySecond});
+                        else
+                            arg.resize(args.chunk_size);
+                        each_next = addressof(arg);
+                    }, data_holder[value_index]);
+                    return each_next;
+                };
+
+                for(auto e : composer_.types()) {
+                    std::visit([&](auto & arg) {
+                        std::string name = ":v" + std::to_string(value_index);
+                        if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, std::vector<std::string>>)
+                            st.Bind(name, *arg, 200, BindInfo::In);
+                        else
+                        if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, std::vector<Timestamp>>)
+                            st.Bind(name, *arg, Timestamp::NoTimeZone, BindInfo::In);
+                        else
+                        if constexpr(std::is_same_v<std::decay_t<decltype(*arg)>, std::vector<Interval>>)
+                            st.Bind(name, *arg, Interval::DaySecond, BindInfo::In);
+                        else
+                            st.Bind(name, *arg, BindInfo::In);
+                    }, prepare_next_arg(e));
+                    value_index++;
+                }
+            }
+
+        public:
+            batch_bulk_inserter (table_inserter & parent,  Connection & con, create_table_composer & composer)
+                    : parent_(parent), con(con), composer_(composer) {}
+            void insert(auto const &args, auto & reader) {
+                data_holder.resize(composer_.types().size());
+                Statement stmt(con);
+                prepare_statement_object(args, stmt);
+                insert_data(reader, composer_, args, stmt);
             }
 
         };
@@ -218,7 +307,7 @@ namespace ocilib_client_ns {
             if (args.chunk_size <= 1)
                 simple_inserter(*this, con, composer_).insert(args, reader);
             else {
-                //batch_bulk_inserter(*this, con, composer_).insert(args, reader);
+                batch_bulk_inserter(*this, con, composer_).insert(args, reader);
             }
         }
     };

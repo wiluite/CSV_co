@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.24)
 project(ocilib C CXX)
 
 include_directories(include)
+add_definitions(-DOCI_IMPORT_RUNTIME -DOCI_CHARSET_ANSI)
 if (MSVC)
     add_definitions(/wd4273)
-    add_definitions(-DOCI_IMPORT_RUNTIME -DOCI_API=__stdcall -DOCI_CHARSET_ANSI)
 else()
     remove_definitions(-Wno-old-style-cast -fcoroutines -Wno-reorder)
-    add_definitions(-DOCI_IMPORT_RUNTIME -DOCI_CHARSET_ANSI -Wno-error -Wno-cast-function-type -Wno-attributes )
+    add_definitions(-Wno-error -Wno-cast-function-type -Wno-attributes )
 endif()
 
 add_library(ociliba SHARED src/agent.c

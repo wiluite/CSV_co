@@ -129,6 +129,36 @@ int main() {
         unsigned chunk_size {0};
     };
 
+//    "Oracle all types and null values, bulk insert"_test = [] {
+//        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+//            Args() {
+//                files = {"_"};
+//                insert = true;
+//                query = "SELECT * FROM stdin";
+//                chunk_size = 2;
+//                datetime_fmt = R"(%m/%d/%Y %H:%M:%S)";
+//            }
+//        } args;
+//        std::string db_conn = get_db_conn("SOCI_DB_ORACLE");
+//        if (!db_conn.empty()) {
+//            args.db = db_conn;
+//            std::istringstream iss("a,b,c,d,e\n04/14/1955 08:08:08,,,,\n,1072-01-01,,,\n,,3.14,,\n,,,str 1,\n1075-01-01T09:09:09,,,,\n,,,,1h 1.5sec\n"); //works
+//
+//            stdin_subst new_cin(iss);
+//            table_dropper<dbms_client::OCILIB> td {db_conn, "stdin"};
+//            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
+//
+////          A,B,C,D,E
+////          1955-04-14 08:08:08.000000,          ,    ,     ,
+////                                    ,1072-01-01,    ,     ,
+////                                    ,          ,3.14,     ,
+////                                    ,          ,    ,str 1,
+////          1075-01-01 09:09:09.000000,          ,    ,     ,
+////                                    ,          ,    ,     ,01:00:01.500000
+//            expect(cout_buffer.str() == "A,B,C,D,E\n1955-04-14 08:08:08.000000,,,,\n,1072-01-01,,,\n,,3.14,,\n,,,str 1,\n1075-01-01 09:09:09.000000,,,,\n,,,,01:00:01.500000\n");
+//        }
+//    };
+
     "create table"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
@@ -786,7 +816,6 @@ try {
             expect(cout_buffer.str() == "A,B,C,D,E\nstr 1,1071-01-01,,,3.142\nstr 2,1072-02-01,,,\nstr 3,1073-03-01,1072-02-01 14:09:53.000000,\"1 day, 01:00:03.534000\",\n");
         }
     };
-
     "Oracle all types and null values, bulk insert"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
@@ -794,24 +823,30 @@ try {
                 insert = true;
                 query = "SELECT * FROM stdin";
                 chunk_size = 2;
+                datetime_fmt = R"(%m/%d/%Y %H:%M:%S)";
             }
         } args;
         std::string db_conn = get_db_conn("SOCI_DB_ORACLE");
         if (!db_conn.empty()) {
             args.db = db_conn;
-            std::istringstream iss("a,b,c,d,e\nstr 1,1071-01-01,,,3.1415\nstr 2,1072-02-01,,,\nstr 3,1073-03-01,1072-02-01 14:09:53,3.534sec,\n");
+            std::istringstream iss("a,b,c,d,e\n04/14/1955 08:08:08,,,,\n,1072-01-01,,,\n,,3.14,,\n,,,str 1,\n1075-01-01T09:09:09,,,,\n,,,,1h 1.5sec\n"); 
+
             stdin_subst new_cin(iss);
             table_dropper<dbms_client::OCILIB> td {db_conn, "stdin"};
-            //CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args) )
+            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<skipinitspace_reader_type>(args) )
 
 //          A,B,C,D,E
-//          str 1,1071-01-01,,,3.142
-//          str 2,1072-02-01,,,
-//          str 3,1073-03-01,1072-02-01 14:09:53.000000,00:00:03.534000",
-            //expect(cout_buffer.str() == "A,B,C,D,E\nstr 1,1071-01-01,,,3.142\nstr 2,1072-02-01,,,\nstr 3,1073-03-01,1072-02-01 14:09:53.000000,00:00:03.534000,\n");
+//          1955-04-14 08:08:08.000000,          ,    ,     ,
+//                                    ,1072-01-01,    ,     ,
+//                                    ,          ,3.14,     ,
+//                                    ,          ,    ,str 1,
+//          1075-01-01 09:09:09.000000,          ,    ,     ,
+//                                    ,          ,    ,     ,01:00:01.500000
+            expect(cout_buffer.str() == "A,B,C,D,E\n1955-04-14 08:08:08.000000,,,,\n,1072-01-01,,,\n,,3.14,,\n,,,str 1,\n1075-01-01 09:09:09.000000,,,,\n,,,,01:00:01.500000\n");
         }
     };
 #endif
+
 } catch (std::exception const & e) {
     std::cerr << e.what() << std::endl;
 }
