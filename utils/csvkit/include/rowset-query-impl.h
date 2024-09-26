@@ -62,7 +62,8 @@ namespace csvkit::cli::sql {
                 column_properties const & props = rr.get_properties(i);
                 num_stringstream ss("C");
 
-                switch(props.get_db_type())
+                auto db_type = props.get_db_type();
+                switch(db_type)
                 {
                     case db_string:
                         std::cout << rr.get<std::string>(i);
@@ -71,10 +72,11 @@ namespace csvkit::cli::sql {
                         ss << csv_mcv_prec(rr.get<double>(i));
                         std::cout << ss.str();
                         break;
-                    case db_int32:
-                        std::cout << rr.get<int32_t>(i);
+                    case db_int32: // (bool: SELECT on Sqlite3)
+                        std::cout << std::boolalpha << static_cast<bool>(rr.get<int32_t>(i));
                         break;
                     case db_date:
+                        assert(rr.get_indicator(i) == soci::i_ok);
                         d = rr.get<std::tm>(i);
                         if (col2time[i] == if_time::no and d.tm_hour == 0 and d.tm_min == 0 and d.tm_sec == 0) {
                             std::strftime(std::data(timeString_v2), std::size(timeString_v2),"%Y-%m-%d", &d);
@@ -90,11 +92,9 @@ namespace csvkit::cli::sql {
                                 col2time[i] = if_time::yes;
                         }
                         break;
-#if 0
-                    case db_int64:
-                        std::cout << rr.get<int64_t>(i); // oracle non-doubles (ints)
+                    case db_int8: // (bool: SELECT on PGSQL, MYSQL)
+                        std::cout << std::boolalpha << static_cast<bool>(static_cast<int>(rr.get<int8_t>(i)));
                         break;
-#endif
                     default:
                         break;
                 }

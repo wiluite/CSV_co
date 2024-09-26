@@ -21,6 +21,7 @@ else()
     if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
         add_definitions(-Wa,-mbig-obj)
     endif()
+    add_definitions(-Wno-format)
 endif()
 
 find_package(Threads REQUIRED)
