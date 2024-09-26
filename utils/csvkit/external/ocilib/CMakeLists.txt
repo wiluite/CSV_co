@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.16.2)
 project(ocilib C CXX)
 
 include_directories(include)

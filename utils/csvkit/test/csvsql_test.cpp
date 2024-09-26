@@ -711,8 +711,6 @@ try {
         }
     };
 
-#define CSV_CO_MARIADB
-#ifdef CSV_CO_MARIADB // MariaDB is not supported;
     "MariaDB broken datetime_t/TIMESTAMP, simple insert"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
@@ -729,10 +727,14 @@ try {
             stdin_subst new_cin(iss);
             table_dropper td{db_conn, "stdin"};
             CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args))
-            expect(cout_buffer.str() != "a,1981-01-01 04:14:00.000000\n,\"\"\n");
+#ifdef IO_CSVKIT_MARIADB // MariaDB is not supported;
+            expect(cout_buffer.str() != "a\n1981-01-01 04:14:00.000000\n\"\"\n");
+#else
+            expect(cout_buffer.str() == "a\n1981-01-01 04:14:00.000000\n\"\"\n");
+#endif
         }
     };
-#endif
+
 
 #endif
 
