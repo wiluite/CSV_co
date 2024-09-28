@@ -738,8 +738,7 @@ try {
 
 #endif
 
-// TODO: Fixme.
-#if defined(SOCI_HAVE_POSTGRESQL) && !defined(_DEBUG)
+#if defined(SOCI_HAVE_POSTGRESQL)
     "PostgreSQL date, datetime, timedelta, bulk insert"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {

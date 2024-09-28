@@ -76,6 +76,7 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
         else
         {
             // allocate and fill the buffer with text-formatted client data
+
             switch (type_)
             {
             case x_char:
@@ -83,6 +84,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<char> * pv
                         = static_cast<std::vector<char> *>(data_);
                     std::vector<char> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     buf = new char[2];
                     buf[0] = v[i];
@@ -94,6 +97,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<std::string> * pv
                         = static_cast<std::vector<std::string> *>(data_);
                     std::vector<std::string> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     buf = new char[v[i].size() + 1];
                     std::strcpy(buf, v[i].c_str());
@@ -104,6 +109,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<int8_t> * pv
                         = static_cast<std::vector<int8_t> *>(data_);
                     std::vector<int8_t> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize
                         = std::numeric_limits<int8_t>::digits10 + 3;
@@ -116,6 +123,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<uint8_t> * pv
                         = static_cast<std::vector<uint8_t> *>(data_);
                     std::vector<uint8_t> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize
                         = std::numeric_limits<uint8_t>::digits10 + 3;
@@ -128,6 +137,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<int16_t> * pv
                         = static_cast<std::vector<int16_t> *>(data_);
                     std::vector<int16_t> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize
                         = std::numeric_limits<int16_t>::digits10 + 3;
@@ -140,6 +151,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<uint16_t> * pv
                         = static_cast<std::vector<uint16_t> *>(data_);
                     std::vector<uint16_t> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize
                         = std::numeric_limits<uint16_t>::digits10 + 3;
@@ -152,6 +165,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<int32_t> * pv
                         = static_cast<std::vector<int32_t> *>(data_);
                     std::vector<int32_t> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize
                         = std::numeric_limits<int32_t>::digits10 + 3;
@@ -164,6 +179,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<uint32_t> * pv
                         = static_cast<std::vector<uint32_t> *>(data_);
                     std::vector<uint32_t> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize
                         = std::numeric_limits<uint32_t>::digits10 + 3;
@@ -176,6 +193,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<int64_t>* pv
                         = static_cast<std::vector<int64_t>*>(data_);
                     std::vector<int64_t>& v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize
                         = std::numeric_limits<int64_t>::digits10 + 3;
@@ -189,6 +208,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<uint64_t>* pv
                         = static_cast<std::vector<uint64_t>*>(data_);
                     std::vector<uint64_t>& v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize
                         = std::numeric_limits<uint64_t>::digits10 + 2;
@@ -202,6 +223,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<double> * pv
                         = static_cast<std::vector<double> *>(data_);
                     std::vector<double> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::string const s = double_to_cstring(v[i]);
 
@@ -214,6 +237,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<std::tm> * pv
                         = static_cast<std::vector<std::tm> *>(data_);
                     std::vector<std::tm> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     std::size_t const bufSize = 80;
                     buf = new char[bufSize];
@@ -228,6 +253,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<xml_type> * pv
                         = static_cast<std::vector<xml_type> *>(data_);
                     std::vector<xml_type> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     buf = new char[v[i].value.size() + 1];
                     std::strcpy(buf, v[i].value.c_str());
@@ -238,6 +265,8 @@ void postgresql_vector_use_type_backend::pre_use(indicator const * ind)
                     std::vector<long_string> * pv
                         = static_cast<std::vector<long_string> *>(data_);
                     std::vector<long_string> & v = *pv;
+                    if (i >= v.size())
+                        continue;
 
                     buf = new char[v[i].value.size() + 1];
                     std::strcpy(buf, v[i].value.c_str());
