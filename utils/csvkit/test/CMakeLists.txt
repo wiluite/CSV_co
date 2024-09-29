@@ -453,6 +453,7 @@ if (IO_CSVKIT_UTILS)
         ${CMAKE_BINARY_DIR}/../external/soci/include
         ${SQLITE3_INCLUDE_DIR}
         ${POSTGRESQL_INCLUDE_DIR}
+        ${MARIADB_INCLUDE_DIR}
         ${MYSQL_INCLUDE_DIR}
         ${FIREBIRD_INCLUDE_DIR}
         ${ORACLE_INCLUDE_DIR}
@@ -555,6 +556,7 @@ if (IO_CSVKIT_UTILS)
         ${CMAKE_BINARY_DIR}/../external/soci/include
         ${SQLITE3_INCLUDE_DIR}
         ${POSTGRESQL_INCLUDE_DIR}
+        ${MARIADB_INCLUDE_DIR}
         ${MYSQL_INCLUDE_DIR}
         ${FIREBIRD_INCLUDE_DIR}
         ${ORACLE_INCLUDE_DIR}

@@ -18,6 +18,10 @@
 #include <soci/firebird/soci-firebird.h>
 #endif
 
+#if defined(SOCI_HAVE_MARIADB)
+#include <soci/mariadb/soci-mariadb.h>
+#endif
+
 #include <ocilib.hpp>
 
 using namespace ocilib;

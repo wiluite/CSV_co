@@ -27,7 +27,7 @@
 #
 ### Global Configuration Section
 #
-set(_SOCI_ALL_PLUGINS    mysql odbc postgresql sqlite3)
+set(_SOCI_ALL_PLUGINS    mariadb mysql odbc postgresql sqlite3)
 set(_SOCI_REQUIRED_VARS  Soci_INCLUDE_DIR Soci_LIBRARY)
 
 #

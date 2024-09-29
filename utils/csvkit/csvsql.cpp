@@ -19,10 +19,12 @@
 #include <soci/firebird/soci-firebird.h>
 #endif
 
-#if defined(SOCI_HAVE_ORACLE)
-#include <soci/oracle/soci-oracle.h>
-#endif
 #include <ocilib.hpp>
+
+#if defined(SOCI_HAVE_MARIADB)
+#include <soci/mariadb/soci-mariadb.h>
+#endif
+
 
 using namespace ocilib;
 

@@ -49,6 +49,12 @@ if (IO_CSVKIT_UTILS)
     else()
         set(MYSQL_INCLUDE_DIR "")
     endif()
+    if (SOCI_HAVE_MARIADB)
+        message("YOU WILL HAVE MARIADB BACKEND FOR YOUR I/O UTILS.")
+    else()
+        set(MARIADB_INCLUDE_DIR "")
+    endif()
+
     if (SOCI_HAVE_FIREBIRD)
         message("YOU WILL HAVE FIREBIRD BACKEND FOR YOUR I/O UTILS.")
     else()
@@ -63,7 +69,7 @@ if (IO_CSVKIT_UTILS)
     add_executable(csvsql csvsql.cpp)
     target_include_directories(csvsql
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR} external/ocilib/include
+        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MARIADB_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR} external/ocilib/include
     )
     target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core ociliba)
     if (UNIX)
@@ -96,7 +102,7 @@ if (IO_CSVKIT_UTILS)
     add_executable(sql2csv sql2csv.cpp)
     target_include_directories(sql2csv
         PRIVATE
-        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR} external/ocilib/include
+        ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MARIADB_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR} external/ocilib/include
     )
     target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core ociliba)
     if (UNIX)
