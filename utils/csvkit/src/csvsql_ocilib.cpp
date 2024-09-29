@@ -98,7 +98,7 @@ namespace ocilib_client_ns {
                             fill_interval(e.timedelta_seconds(), std::get<4>(data_holder[col]));
                         }
                         , [&](elem_type const & e) {
-                            std::get<1>(data_holder[col]) = e.str();
+                            std::get<1>(data_holder[col]) = clarify_text(e);
                         }
                 };
 
@@ -194,7 +194,7 @@ namespace ocilib_client_ns {
                             fill_interval(e.timedelta_seconds(), std::get<4>(data_holder[col])[offset]);
                         }
                         , [&](elem_type const & e) {
-                            std::get<1>(data_holder[col])[offset] = e.str();
+                            std::get<1>(data_holder[col])[offset] = clarify_text(e);
                         }
                 };
                 reader.run_rows([&] (auto & row_span) {

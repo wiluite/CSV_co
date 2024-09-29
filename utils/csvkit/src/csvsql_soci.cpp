@@ -121,7 +121,7 @@ namespace soci_client_ns {
                             }
                         }
                         , [&](elem_type const & e) {
-                            std::get<1>(data_holder[col]) = e.str();
+                            std::get<1>(data_holder[col]) = clarify_text(e);
                         }
                 };
 
@@ -271,7 +271,7 @@ namespace soci_client_ns {
                             }
                         }
                         , [&](elem_type const & e) {
-                            std::get<1>(data_holder[col])[offset] = e.str();
+                            std::get<1>(data_holder[col])[offset] = clarify_text(e);
                         }
                 };
 

@@ -633,6 +633,20 @@ int main() {
         expect(cout_buffer.str() == "a,b\n1,1972-04-14\n3,1973-05-15\n5,1974-06-16\n7,\n9,1976-04-18\n");
     };
 
+    "comma containing string cells"_test = [] {
+        struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
+            Args() {
+                files = {"_"};
+                insert = true;
+                query = "SELECT * FROM stdin";
+            }
+        } args;
+        std::istringstream iss("a,b\n1,\"normal string\"\n2,\"complex, string\"\n");
+        stdin_subst new_cin(iss);
+        CALL_TEST_AND_REDIRECT_TO_COUT (csvsql::sql<notrimming_reader_type>(args))
+        expect(cout_buffer.str() == "a,b\n1,normal string\n2,\"complex, string\"\n");
+    };
+
 try {
 #if defined(SOCI_HAVE_SQLITE3)
     "Sqlite3 date, datetime, timedelta"_test = [] {

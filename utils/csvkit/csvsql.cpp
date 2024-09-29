@@ -388,6 +388,11 @@ namespace csvsql::detail {
         return sql_split(std::move(queries));
     }
 
+    // quote or unquote a cell while storing it in DB.
+    std::string clarify_text(auto const & e) {
+        return (e.raw_string_view().find(',') == std::string_view::npos) ? std::string(e.str()) : e;
+    }
+
     #include "src/csvsql_soci.cpp"
     #include "src/csvsql_ocilib.cpp"
 
