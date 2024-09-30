@@ -61,7 +61,7 @@ namespace csvcut {
                 });
                 oss << deq.back() << '\n';
             };
-           
+
             struct say_ln {
                 explicit say_ln(std::decay_t<decltype(args)> const & args, std::ostringstream & oss) {
                     if (args.linenumbers)
@@ -70,7 +70,6 @@ namespace csvcut {
             };           
             
             if (args.no_header) {
-                //TODO: increase speed
                 check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
                 std::deque<std::string> deq;
 
@@ -80,7 +79,10 @@ namespace csvcut {
                 static say_ln ln (args, oss);
                 print_container(deq, args);
             }
-
+            //TODO: increase speed
+            // 1. Get rid of Premature transformation of row_span to vector of string when no field size check (-z) is required.
+            // 2. Get rid of any deq : On-the-fly printing (how).
+            // 3. Option to turn of the mandatory integrity check (quick check).
             reader.run_rows([&] (auto & row_span) {
 
                 if (!args.no_header)
@@ -102,7 +104,7 @@ namespace csvcut {
                 deq.clear();
             });
 
-            std::cout << oss.str(); 
+            std::cout << oss.str();
 
         } catch (ColumnIdentifierError const& e) {
             std::cout << e.what() << '\n';
