@@ -29,7 +29,6 @@ else(WIN32)
       $ENV{MYSQL_INCLUDE_DIR}
       $ENV{MYSQL_DIR}/include
       PATH_SUFFIXES
-      mariadb
       mysql
    )
 endif(WIN32)
@@ -51,7 +50,6 @@ if(WIN32)
       set(build_dist Release)
    endif(CMAKE_BUILD_TYPE_TOLOWER MATCHES "debug")
 
-#   find_library(MYSQL_LIBRARIES NAMES mysqlclient
    set(MYSQL_LIB_PATHS
       $ENV{MYSQL_DIR}/lib/${binary_dist}
       $ENV{MYSQL_DIR}/libmysql/${build_dist}
@@ -69,14 +67,12 @@ if(WIN32)
       ${MYSQL_LIB_PATHS}
    )
 else(WIN32)
-#   find_library(MYSQL_LIBRARIES NAMES mysqlclient
    set(MYSQL_LIB_PATHS
       $ENV{MYSQL_DIR}/lib
       PATH_SUFFIXES
-      mariadb
       mysql
    )
-   find_library(MYSQL_LIBRARIES NAMES mariadbclient mysqlclient
+   find_library(MYSQL_LIBRARIES NAMES mysqlclient
       PATHS
       ${MYSQL_LIB_PATHS}
    )

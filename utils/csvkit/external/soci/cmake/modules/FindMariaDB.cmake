@@ -1,5 +1,6 @@
 include(CheckCXXSourceCompiles)
 
+if(WIN32)
    find_path(MARIADB_INCLUDE_DIR mysql.h
       PATHS
       "C:/Program Files/MariaDB 11.5/include/mysql"
@@ -12,7 +13,25 @@ include(CheckCXXSourceCompiles)
    find_library(MARIADB_LIBRARIES NAMES libmariadb
       PATHS
       ${MARIADB_LIB_PATHS}
+      NO_DEFAULT_PATH
    )
+else(WIN32)
+   find_path(MARIADB_INCLUDE_DIR mysql.h
+      PATHS
+      /usr/include
+      /usr/local/include
+      PATH_SUFFIXES
+      mariadb
+   )
+   find_library(MARIADB_LIBRARIES NAMES mariadbclient
+      PATHS
+#      /usr/lib/
+#      /usr/local/lib
+#      /usr/lib/${binary_dist}
+#      /usr/local/${binary_dist}
+      $ENV{MARIADB_DIR}/lib
+   )
+endif(WIN32)
 
 if(MARIADB_LIBRARIES)
    get_filename_component(MARIADB_LIB_DIR ${MARIADB_LIBRARIES} PATH)
