@@ -709,7 +709,7 @@ try {
         if (!db_conn.empty()) {
             args.db = db_conn;
             std::istringstream iss(
-                    "a,b,c,d,e\n,1971-01-01T04:14:00,2 days 01:14:47.123,3.1415,T\n1972-01-01,1980-01-01T04:15:00,,,F\nN/A,1986-01-01T04:14:00,3 days 01:14:47.123,,\n");
+                    "a,b,c,d,e\n,1984-01-01T04:14:00,2 days 01:14:47.123,3.1415,T\n1972-01-01,1980-01-01T04:15:00,,,F\nN/A,N/A,3 days 01:14:47.123,,\n");
             stdin_subst new_cin(iss);
             table_dropper td{db_conn, "stdin"};
             CALL_TEST_AND_REDIRECT_TO_COUT(
@@ -717,39 +717,44 @@ try {
             )
 
 //          a,b,c,d,e
-//          ,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000,3.142,true
+//          ,1984-01-01 04:14:00.000000,1970-01-03 01:14:47.000000,3.142,true
 //          1972-01-01,1980-01-01 04:15:00,,,false
-//          ,1986-01-01 04:14:00.000000,1970-01-04 01:14:47.000000,,
+//          ,,1970-01-04 01:14:47.000000,,
             expect(cout_buffer.str() ==
-                   "a,b,c,d,e\n,1971-01-01 04:14:00.000000,1970-01-03 01:14:47.000000,3.142,true\n1972-01-01,1980-01-01 04:15:00.000000,,,false\n,1986-01-01 04:14:00.000000,1970-01-04 01:14:47.000000,,\n");
+                   "a,b,c,d,e\n,1984-01-01 04:14:00.000000,1970-01-03 01:14:47.000000,3.142,true\n1972-01-01,1980-01-01 04:15:00.000000,,,false\n,,1970-01-04 01:14:47.000000,,\n");
         }
     };
+#endif
 
-    "MariaDB broken datetime_t/TIMESTAMP, simple insert"_test = [] {
+#if defined(SOCI_HAVE_MARIADB)
+    "MariaDB all types, bulk insert"_test = [] {
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args() {
                 files = {"_"};
                 insert = true;
                 query = "SELECT * FROM stdin";
-                chunk_size = 1;
+                chunk_size = 2;
             }
         } args;
-        std::string db_conn = get_db_conn("SOCI_DB_MYSQL");
+        std::string db_conn = get_db_conn("SOCI_DB_MARIADB");
         if (!db_conn.empty()) {
             args.db = db_conn;
-            std::istringstream iss("a\n1981-01-01T04:14:00\nN/A\n");
+            std::istringstream iss(
+                    "a,b,c,d,e,f\n,1984-01-01T04:14:00,2 days 01:14:47.123,3.1415,T,str 1\n1972-01-01,1980-01-01T04:15:00,,,F,str 2\nN/A,N/A,3 days 01:14:47.123,,,\n");
             stdin_subst new_cin(iss);
             table_dropper td{db_conn, "stdin"};
-            CALL_TEST_AND_REDIRECT_TO_COUT( csvsql::sql<notrimming_reader_type>(args))
-#ifdef IO_CSVKIT_MARIADB // MariaDB is not supported;
-            expect(cout_buffer.str() != "a\n1981-01-01 04:14:00.000000\n\"\"\n");
-#else
-            expect(cout_buffer.str() == "a\n1981-01-01 04:14:00.000000\n\"\"\n");
-#endif
+            CALL_TEST_AND_REDIRECT_TO_COUT(
+                    csvsql::sql<notrimming_reader_type>(args)
+            )
+
+//          a,b,c,d,e,f
+//          ,1984-01-01 04:14:00.000000,1970-01-03 01:14:47.000000,3.142,true,str 1
+//          1972-01-01,1980-01-01 04:15:00,,,false,str 2
+//          ,,1970-01-04 01:14:47.000000,,,
+            expect(cout_buffer.str() ==
+                   "a,b,c,d,e,f\n,1984-01-01 04:14:00.000000,1970-01-03 01:14:47.000000,3.142,true,str 1\n1972-01-01,1980-01-01 04:15:00.000000,,,false,str 2\n,,1970-01-04 01:14:47.000000,,,\n");
         }
     };
-
-
 #endif
 
 #if defined(SOCI_HAVE_POSTGRESQL)

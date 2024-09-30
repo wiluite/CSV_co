@@ -160,6 +160,18 @@ namespace csvsql::detail {
                 void print(text_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "VARCHAR(", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
             };
 
+            struct mariadb_printer : generic_printer, varchar_precision {
+                void print_name(std::string const & name) override {
+                    print_name_or_quoted_name(name, '`');
+                }
+                void print(datetime_column_tag, bool blanks, unsigned) override { to_stream(stream, "TIMESTAMP", (blanks ? " NULL DEFAULT NULL" : " NOT NULL")); }
+                void print(bool_column_tag) override { to_stream(stream, "BOOL"); }
+                void print(bool_column_tag, bool blanks, unsigned) override { to_stream(stream, "BOOL", (blanks ? "" : " NOT NULL")); }
+                void print(number_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "DECIMAL(38, ", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
+                void print(text_column_tag) override { throw std::runtime_error("VARCHAR requires a length on dialect mysql/mariadb"); }
+                void print(text_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "VARCHAR(", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
+            };
+
             struct postgresql_printer : generic_printer {
                 void print(datetime_column_tag) override { to_stream(stream, "TIMESTAMP WITHOUT TIME ZONE"); }
                 void print(datetime_column_tag, bool blanks, unsigned) override { to_stream(stream, "TIMESTAMP WITHOUT TIME ZONE"); }
@@ -206,6 +218,7 @@ namespace csvsql::detail {
                 , {"firebird", std::make_shared<firebird_printer>()}
                 , {"oracle", std::make_shared<oracle_printer>()}
                 , {"generic", std::make_shared<generic_printer>()}
+                , {"mariadb", std::make_shared<mariadb_printer>()}
             };
 
             static inline std::unordered_map<column_type
@@ -301,7 +314,7 @@ namespace csvsql::detail {
                  return "generic";
             if (!args.dialect.empty())
                  return args.dialect;
-            std::vector<std::string> dialects {"mysql", "postgresql", "sqlite", "firebird", "oracle"};
+            std::vector<std::string> dialects {"mysql", "postgresql", "sqlite", "firebird", "oracle", "mariadb"};
             for (auto elem : dialects) {
                 if (args.db.find(elem) != std::string::npos)
                     return elem;
@@ -551,7 +564,7 @@ namespace csvsql {
             }();
 
         if (!args.dialect.empty()) {
-            std::vector<std::string_view> svv{"mysql", "postgresql", "sqlite", "firebird"};
+            std::vector<std::string_view> svv{"mysql", "postgresql", "sqlite", "firebird", "oracle"};
             if (!std::any_of(svv.cbegin(), svv.cend(), [&](auto elem){ return elem == args.dialect;}))
                 throw std::runtime_error("csvsql: error: argument -i/--dialect: invalid choice: '" + args.dialect + "' (choose from 'mysql', 'postgresql', 'sqlite', 'firebird', 'oracle').");
             if (!args.db.empty() or !args.query.empty())

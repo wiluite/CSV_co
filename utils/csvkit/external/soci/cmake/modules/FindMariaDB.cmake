@@ -25,10 +25,6 @@ else(WIN32)
    )
    find_library(MARIADB_LIBRARIES NAMES mariadbclient
       PATHS
-#      /usr/lib/
-#      /usr/local/lib
-#      /usr/lib/${binary_dist}
-#      /usr/local/${binary_dist}
       $ENV{MARIADB_DIR}/lib
    )
 endif(WIN32)

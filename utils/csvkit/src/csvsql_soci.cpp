@@ -337,7 +337,8 @@ namespace soci_client_ns {
                     backend_id_ = SOCI::backend_id::PG;
                     type2value[ct::timedelta_t] = std::vector{std::string{}};
                 }
-                else if (sql.get_backend_name() == "mysql")
+                else
+                if (sql.get_backend_name() == "mysql" or sql.get_backend_name() == "mariadb")
                     backend_id_ = SOCI::backend_id::MYSQL;
             }
             void insert(auto const &args, auto & reader) {
