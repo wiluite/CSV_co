@@ -1,3 +1,5 @@
+# Quick Help is right underneath.
+
 FROM ubuntu:22.04
 LABEL Description="Build environment"
 
@@ -48,3 +50,13 @@ RUN cd Firebird-5.0.0.1306-0-linux-x64 && y masterkey | ./install.sh && \
 
 # Finalize.
 ENTRYPOINT service postgresql start && service mysql start && service firebird start && bash
+
+# QUICK HELP
+
+# Go to the CSV_co directory, then:
+# docker build -t foo/CSV_co_ubuntu_22_04 -f Dockerfile .
+# docker run -it --rm --name=CSV_co_ubuntu_22_04 --mount type=bind,source=${PWD},target=/src  foo/CSV_co_ubuntu_22_04
+
+# Inside the docker container, build and test:
+# cd src && mkdir build && cd build && cmake .. && make -j 4 all
+# cd utils/csvkit/test && ctest -j 8
