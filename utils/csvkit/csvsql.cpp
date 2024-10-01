@@ -160,16 +160,7 @@ namespace csvsql::detail {
                 void print(text_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "VARCHAR(", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
             };
 
-            struct mariadb_printer : generic_printer, varchar_precision {
-                void print_name(std::string const & name) override {
-                    print_name_or_quoted_name(name, '`');
-                }
-                void print(datetime_column_tag, bool blanks, unsigned) override { to_stream(stream, "TIMESTAMP", (blanks ? " NULL DEFAULT NULL" : " NOT NULL")); }
-                void print(bool_column_tag) override { to_stream(stream, "BOOL"); }
-                void print(bool_column_tag, bool blanks, unsigned) override { to_stream(stream, "BOOL", (blanks ? "" : " NOT NULL")); }
-                void print(number_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "DECIMAL(38, ", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
-                void print(text_column_tag) override { throw std::runtime_error("VARCHAR requires a length on dialect mysql/mariadb"); }
-                void print(text_column_tag, bool blanks, unsigned prec) override { to_stream(stream, "VARCHAR(", static_cast<int>(prec), ')', (blanks ? "" : " NOT NULL")); }
+            struct mariadb_printer : mysql_printer {
             };
 
             struct postgresql_printer : generic_printer {
