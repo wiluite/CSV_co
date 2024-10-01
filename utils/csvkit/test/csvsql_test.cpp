@@ -127,6 +127,7 @@ int main() {
         bool overwrite{false};
         std::string schema{false};
         unsigned chunk_size{0};
+        bool check_integrity = {true};
     };
 
     "create table"_test = [] {

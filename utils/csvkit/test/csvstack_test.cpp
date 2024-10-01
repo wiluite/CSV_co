@@ -32,6 +32,7 @@ int main() {
         std::string groups;
         std::string group_name;
         bool filenames {false};
+        bool check_integrity = {true};
     };
 
     "skip lines"_test = [] {

@@ -8,6 +8,7 @@
 namespace csvkit::test_facilities {
     struct single_file_arg {
         std::filesystem::path file;
+        bool check_integrity = {true};
     };
     struct common_args {
         bool no_header {false};
@@ -26,15 +27,6 @@ namespace csvkit::test_facilities {
         std::string datetime_fmt {R"(%m/%d/%Y %I:%M %p)"};
         bool no_inference {false};
         bool date_lib_parser {true};
-    };
-    struct csvlook_specific_args {
-        mutable unsigned max_columns {max_unsigned_limit};
-        unsigned max_column_width {max_unsigned_limit};
-        unsigned long max_rows {max_size_t_limit};
-        unsigned max_precision {3u};
-        bool no_number_ellipsis {false};
-        std::string glob_locale {"C"};
-        mutable unsigned precision_locally{};
     };
     struct spread_args {
         bool names {false}; // Display column names and indices from the input CSV and exit.

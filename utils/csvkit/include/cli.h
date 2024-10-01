@@ -149,15 +149,20 @@ namespace csvkit::cli {
     /// Common arguments for single-file utilities
     struct ARGS_positional_1 : ARGS {
         std::filesystem::path & file = arg("The CSV file to operate on. If omitted, will accept input as piped data via STDIN.").set_default("cin");
+        bool &check_integrity = flag("Q,quick-check", "Quickly check the CSV source for matrix shape").set_default(true);
     };
 
     /// Common arguments for multiple-file utilities
     struct ARGS_positional_files : ARGS {
         std::vector<std::string> & files = arg("The CSV files to operate on.").multi_argument().set_default(std::vector<std::string>{});
+        bool &check_integrity = flag("Q,quick-check", "Quickly check the CSV sources for matrix shape").set_default(true);
     };
 
     /// Quickly checks a CSV source for matrix shape
     void quick_check(auto && r, auto const & args) {
+        if (!args.check_integrity)
+            return;
+
         auto cols = 0u;
         auto row = 1ul;
 

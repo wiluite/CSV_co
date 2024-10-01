@@ -187,6 +187,7 @@ int main() {
             bool overwrite {false};
             std::string schema {false};
             unsigned chunk_size {0};
+            bool check_integrity = {true};
         };
         struct Args : tf::common_args, tf::type_aware_args, csvsql_specific_args {
             Args(db_file const & dbfile, char const * const csv_file) {

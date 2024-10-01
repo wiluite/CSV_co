@@ -4,7 +4,6 @@
 /// \brief  Small csv kit's core functionality tests.
 
 //TODO: Add tests for oll of cli.h
-//TODO: Move all csvkit tests to csvkit directory
 #define BOOST_UT_DISABLE_MODULE
 #include "ut.hpp"
 #include <cli.h>
@@ -78,6 +77,7 @@ int main() {
 
         struct Args {
             std::size_t skip_lines = 0;
+            bool check_integrity {true};
         } args;
 
         expect(nothrow([&] { quick_check(reader<> ("a,b,c\n1,2,3"), args); }));
