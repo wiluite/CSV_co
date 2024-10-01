@@ -48,22 +48,22 @@ namespace csvcut {
         try {
             auto ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes(args.not_columns));
             std::ostringstream oss;
-            auto print_container = [&] (auto const & deq, auto const & args) {
+            auto print_container2 = [&] (auto & row_span, auto const & args) {
                 if (args.linenumbers) {
                     static auto line = 0ul;
                     if (line)
                         oss << line << delim;
                     line++;
                 }
-                std::deque<std::string>::difference_type const sz = deq.size() - 1;
-                std::for_each(deq.cbegin(), deq.cbegin() + sz, [&] (auto & e) {
-                    oss << e << delim;
-                });
-                oss << deq.back() << '\n';
+                oss << optional_quote(row_span[ids.front()]);
+                for (auto it = ids.cbegin() + 1; it != ids.cend(); ++it) {
+                    oss << delim << optional_quote(row_span[*it]);
+                }
+                oss <<'\n';
             };
 
             struct say_ln {
-                explicit say_ln(std::decay_t<decltype(args)> const & args, std::ostringstream & oss) {
+                explicit say_ln(std::decay_t<decltype(args)> const & args, std::ostream & oss) {
                     if (args.linenumbers)
                         oss << "line_number" << delim;
                 }
@@ -71,39 +71,30 @@ namespace csvcut {
             
             if (args.no_header) {
                 check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
-                std::deque<std::string> deq;
-
-                for (auto e : ids)
-                    deq.emplace_back(optional_quote(header[e]));
-
                 static say_ln ln (args, oss);
-                print_container(deq, args);
+                print_container2(header, args);
             }
             //TODO: increase speed
             // 1. Get rid of Premature transformation of row_span to vector of string when no field size check (-z) is required.
-            // 2. Get rid of any deq : On-the-fly printing (how).
-            // 3. Option to turn of the mandatory integrity check (quick check).
             reader.run_rows([&] (auto & row_span) {
 
                 if (!args.no_header)
                     static say_ln ln (args, oss);
 
                 check_max_size<establish_new_checker>(reader, args, header_to_strings<quoted>(row_span), init_row{1});
-                static std::deque<std::string> deq;
 
-                bool empty = true;
-                for (auto e : ids) {
-                    auto & el = row_span[e];
-                    deq.emplace_back(optional_quote(el));
-                    empty = empty && args.x_ && el.operator unquoted_cell_string().empty();
+                if (!args.x_ ) {
+                    print_container2(row_span, args);
                 }
+                else {
+                    bool empty = true;
+                    for (auto e : ids)
+                        empty = empty && row_span[e].operator unquoted_cell_string().empty();
 
-                if ((args.x_ && !empty) || !args.x_)
-                    print_container(deq, args);
-
-                deq.clear();
+                    if (!empty)
+                        print_container2(row_span, args);
+                }
             });
-
             std::cout << oss.str();
 
         } catch (ColumnIdentifierError const& e) {
