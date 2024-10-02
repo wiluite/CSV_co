@@ -77,7 +77,7 @@ namespace csvjson {
         skip_lines(reader, args);
         static auto const header = obtain_header_and_<skip_header>(reader, args);
         using header_type = decltype(header);
-        check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
+        check_max_size(reader, args, header, init_row{1});
 
         using elem_type = typename std::decay_t<decltype(reader)>::template typed_span<unquoted>;
         unsigned key_idx {};

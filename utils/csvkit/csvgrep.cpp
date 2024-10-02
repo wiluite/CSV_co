@@ -67,7 +67,7 @@ namespace csvgrep {
         skip_lines(reader, args);
 
         auto const header = obtain_header_and_<skip_header>(reader, args);
-        check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
+        check_max_size(reader, args, header, init_row{1});
 
         if (args.names) {
             print_header(std::cout, header, args);
@@ -128,7 +128,7 @@ namespace csvgrep {
             auto search_and_output = [&] (auto hit_func) {
                 std::size_t row = 1; 
                 reader.run_rows([&](auto & row_span) {
-                    check_max_size<establish_new_checker>(reader, args, header_to_strings<unquoted>(row_span), ir); 
+                    check_max_size<establish_new_checker>(reader, args, row_span, ir);
                     auto const chk_result = func(row_span, hit_func);
                     if ((chk_result and !args.invert) or (!chk_result and args.invert))
                         p.write<cell_string>(row_span, args, row);

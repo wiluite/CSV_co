@@ -642,19 +642,42 @@ namespace csvkit::cli {
                 string_check_impl = [&] (std::string const & s) {
                     check_tmpl(s);
                 };
+
+                row_span_check_impl = [&] (typename Reader::row_span & collection) {
+                    auto v = header_to_strings<csv_co::unquoted>(collection);
+                    for(auto e: v)
+                        check_tmpl(e);
+                };
+
+                vec_span_check_impl = [&] (std::vector<typename Reader::cell_span> const & collection) {
+                    auto v = header_to_strings<csv_co::unquoted>(collection);
+                    for(auto e: v)
+                        check_tmpl(e);
+                };
+
             } else {
                 cell_span_check_impl = [] (typename Reader::template typed_span<csv_co::unquoted> const &) {};
                 string_check_impl = [] (std::string const & s) {};
+                row_span_check_impl = [] (typename Reader::row_span &) {};
+                vec_span_check_impl = [] (std::vector<typename Reader::cell_span> const &) {};
             }
         }
 
-        // works for numeric-locale-embedded cells only.
+        // works for numeric-locale-imbued cells only.
         inline void check(typename Reader::cell_span const & cell_span) {
             cell_span_check_impl(typename Reader::template typed_span<csv_co::unquoted>{cell_span});
         }
         // works for any strings from cells that may be numeric-locale-free.
         void check(std::string const & s) {
             string_check_impl(s);
+        }
+        // works for any strings from cells that may be numeric-locale-free.
+        void check(typename Reader::row_span & row_span) {
+            row_span_check_impl(row_span);
+        }
+        // works for any strings from cells that may be numeric-locale-free.
+        void check(std::vector<typename Reader::cell_span> const & vec) {
+            vec_span_check_impl(vec);
         }
 
     private:
@@ -670,6 +693,8 @@ namespace csvkit::cli {
 
         std::function<void (typename Reader::template typed_span<csv_co::unquoted> const &)> cell_span_check_impl;
         std::function<void (std::string const & )> string_check_impl;
+        std::function<void (typename Reader::row_span &)> row_span_check_impl;
+        std::function<void (std::vector<typename Reader::cell_span> const &)> vec_span_check_impl;
         ARGS const & args_;
         unsigned columns_;
 
@@ -688,14 +713,33 @@ namespace csvkit::cli {
 
     constexpr bool establish_checker = false;
     constexpr bool establish_new_checker = true;
-    /// Function that checks maximum field size
-    template <bool Reestablish = establish_checker, typename Reader, typename Args, typename Collection>
-    inline void check_max_size(Reader & reader, Args const & args, Collection const & collection, init_row ir) {
+
+    /// Function that checks maximum field size not exceeding the given.
+    template <bool Reestablish = establish_checker, typename Reader, typename Args>
+    inline void check_max_size(Reader & reader, Args const & args, typename Reader::template typed_span<csv_co::unquoted> & collection, init_row ir) {
         static max_field_size_checker checker(reader, args, collection.size(), ir);
         for (auto & e: collection)
             checker.check(e);
     }
-
+    /// Override. Function that checks maximum field size
+    template <bool Reestablish = establish_checker, typename Reader, typename Args>
+    inline void check_max_size(Reader & reader, Args const & args, typename Reader::template typed_span<csv_co::quoted> & collection, init_row ir) {
+        static max_field_size_checker checker(reader, args, collection.size(), ir);
+        for (auto & e: collection)
+            checker.check(e);
+    }
+    /// Override. Function that checks maximum field size
+    template <bool Reestablish = establish_checker, typename Reader, typename Args>
+    inline void check_max_size(Reader & reader, Args const & args, typename Reader::row_span & rspan, init_row ir) {
+        static max_field_size_checker checker(reader, args, rspan.size(), ir);
+        checker.check(rspan);
+    }
+    /// Override. Function that checks maximum field size
+    template <bool Reestablish = establish_checker, typename Reader, typename Args>
+    inline void check_max_size(Reader & reader, Args const & args, std::vector<typename Reader::cell_span> const & vec, init_row ir) {
+        static max_field_size_checker checker(reader, args, vec.size(), ir);
+        checker.check(vec);
+    }
     /// Override. Function that checks maximum field size
     template<typename Collection, typename Reader, typename Args>
     void check_max_size(Collection const & collection, max_field_size_checker<Reader, Args> & checker) {

@@ -35,7 +35,7 @@ namespace csvcut {
         auto const header = obtain_header_and_<no_skip_header>(reader, args);
 
         if (args.names) {
-            check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
+            check_max_size(reader, args, header, init_row{1});
             print_header(std::cout, header, args);
             return;
         }
@@ -48,7 +48,7 @@ namespace csvcut {
         try {
             auto ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes(args.not_columns));
             std::ostringstream oss;
-            auto print_container2 = [&] (auto & row_span, auto const & args) {
+            auto print_container = [&] (auto & row_span, auto const & args) {
                 if (args.linenumbers) {
                     static auto line = 0ul;
                     if (line)
@@ -70,29 +70,27 @@ namespace csvcut {
             };           
             
             if (args.no_header) {
-                check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
+                check_max_size(reader, args, header, init_row{1});
                 static say_ln ln (args, oss);
-                print_container2(header, args);
+                print_container(header, args);
             }
-            //TODO: increase speed
-            // 1. Get rid of Premature transformation of row_span to vector of string when no field size check (-z) is required.
-            reader.run_rows([&] (auto & row_span) {
 
+            reader.run_rows([&] (auto & row_span) {
+                static_assert(std::is_same_v<typename std::decay_t<decltype(reader)>::row_span, std::decay_t<decltype(row_span)>>);
                 if (!args.no_header)
                     static say_ln ln (args, oss);
 
-                check_max_size<establish_new_checker>(reader, args, header_to_strings<quoted>(row_span), init_row{1});
+                check_max_size<establish_new_checker>(reader, args, row_span, init_row{1});
 
-                if (!args.x_ ) {
-                    print_container2(row_span, args);
-                }
+                if (!args.x_ )
+                    print_container(row_span, args);
                 else {
                     bool empty = true;
                     for (auto e : ids)
                         empty = empty && row_span[e].operator unquoted_cell_string().empty();
 
                     if (!empty)
-                        print_container2(row_span, args);
+                        print_container(row_span, args);
                 }
             });
             std::cout << oss.str();

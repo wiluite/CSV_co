@@ -118,7 +118,7 @@ namespace csvstack::detail {
                 r.skip_rows(0);
                 skip_lines(r, args);
                 auto const header = obtain_header_and_<skip_header>(r, args);
-                check_max_size(r, args, header_to_strings<csv_co::unquoted>(header), init_row{1});
+                check_max_size(r, args, header, init_row{1});
                 rows += r.rows();
                 header_fields.insert(header.begin(), header.end());
                 std::vector<std::string> string_header(header.size());
@@ -137,6 +137,7 @@ namespace csvstack::detail {
             std::size_t row_idx = 0;
             max_field_size_checker size_checker(r, args, r.cols(), init_row{args.no_header ? 1u : 2u});
             r.run_rows([&](auto & row_span) {
+                // TODO: get rid of premature conversion of row span to vector of strings
                 check_max_size(header_to_strings<csv_co::unquoted>(row_span), size_checker);
                 if (!args.groups.empty() or args.filenames)
                     table[row_idx][0] = args.filenames ? args.files[0] : group_names[0];
@@ -163,6 +164,7 @@ namespace csvstack::detail {
 
                 max_field_size_checker size_checker(r, args, cols, init_row{args.no_header ? 1u : 2u});
                 r.run_rows([&](auto & row_span) {
+                    // TODO: get rid of premature conversion of row span to vector of strings
                     check_max_size(header_to_strings<csv_co::unquoted>(row_span), size_checker);
                     if (!args.groups.empty() or args.filenames)
                         table[row_idx][0] = args.filenames ? args.files[group_idx] : group_names[group_idx];

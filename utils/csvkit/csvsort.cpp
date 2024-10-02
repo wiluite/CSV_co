@@ -204,7 +204,7 @@ namespace csvsort {
             auto const ir = init_row{args.no_header ? 1u : 2u};
 
             reader.run_rows([&] (auto & row_span) {
-                check_max_size<establish_new_checker>(reader, args, header_to_strings<unquoted>(row_span), ir);
+                check_max_size<establish_new_checker>(reader, args, row_span, ir);
                 unsigned i = 0;
                 for (auto & elem : row_span)                                        
                     impl_ref[row][i++] = elem;
@@ -239,7 +239,7 @@ namespace csvsort {
         quick_check(reader, args);
 
         auto  header = obtain_header_and_<skip_header>(reader, args);
-        check_max_size(reader, args, header_to_strings<unquoted>(header), init_row{1});
+        check_max_size(reader, args, header, init_row{1});
  
         if (args.names) {
             print_header(std::cout, header, args);
