@@ -130,6 +130,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
+add_custom_command(
+        TARGET csvcut_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/null_byte.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/null_byte.csv)
 
 target_link_libraries(csvcut_test libcppp-reiconv.static)
 add_test(csvcut_test csvcut_test)

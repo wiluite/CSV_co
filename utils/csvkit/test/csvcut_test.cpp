@@ -124,7 +124,7 @@ int main() {
         expect(cout_buffer.str() == "b\n2\n");
     };
 
-    "exclude and exclude"_test = [] {
+    "include and exclude"_test = [] {
         struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
             Args() { file = "dummy.csv"; columns = "1,3"; not_columns = "3"; } 
             bool x_ {false};
@@ -164,6 +164,22 @@ int main() {
         CALL_TEST_AND_REDIRECT_TO_COUT
 
         expect(cout_buffer.str() == "  1: a\n  2: b\n  3: c\n");
+    };
+
+    "null byte"_test = [] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+            Args() { file = "null_byte.csv"; not_columns = ""; }
+            bool x_ {false};
+        } args;
+
+        notrimming_reader_type r (args.file);
+        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+        expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT
+            std::array<unsigned char,12> awaitable {{'\x61','\x2c','\x62','\x2c','\x63','\x0A','\x00','\x2c','\x32','\x2c','\x33','\x0a'}};
+            std::string c = cout_buffer.str();
+            expect(c.size() == awaitable.size());
+            expect(std::equal(c.cbegin(), c.cend(), awaitable.cbegin()));
+        }));
     };
 
 

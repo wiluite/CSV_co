@@ -158,10 +158,10 @@ namespace csvkit::cli::encoding {
             switch (errno) {
                 case EILSEQ: 
                     throw std::runtime_error("iconv_converter: Invalid multibyte sequence" + inval_tracer::print()); 
-                
+
                 case EINVAL: 
                     throw std::runtime_error("iconv_converter: Incomplete multibyte sequence");
-                
+
                 default: 
                     throw std::runtime_error("iconv_converter: unknown error");
             }
@@ -179,7 +179,7 @@ namespace csvkit::cli::encoding {
     auto recode_source_from(auto & source, std::string from) {
 
         std::transform(from.begin(), from.end(), from.begin(), ::toupper);
-        
+
         if (from == "UTF-16LE" or from == "UTF-16-LE") {
             //TODO: validate
             recode(utf8_length_from_utf16le, convert_utf16le_to_utf8, 2, char16_t, source)
@@ -191,7 +191,7 @@ namespace csvkit::cli::encoding {
 
             if (!lookup_encoding(from))
                 throw std::runtime_error("LookupError: unknown encoding: " + from);
-            
+
             return iconv_converter(from).convert(source);
         }
     }
