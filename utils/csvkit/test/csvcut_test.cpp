@@ -46,7 +46,7 @@ int main() {
 
     "simple"_test = [] {
         struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
-            Args() { file = "dummy.csv"; columns = "1,3"; }
+            Args() { file = "dummy.csv"; columns = "1, 3 "; }
             bool x_ {false};
         } args;
 
@@ -112,7 +112,7 @@ int main() {
 
     "exclude"_test = [] {
         struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
-            Args() { file = "dummy.csv"; not_columns = "1,3"; } //TODO: does not work with spaces between commas and numbers
+            Args() { file = "dummy.csv"; not_columns = " 1 ,3"; }
             bool x_ {false};
         } args;
 

@@ -1002,30 +1002,36 @@ namespace csvkit::cli {
         if (ids().empty() && excl().empty())
             return iota_range(column_names);
         std::vector<unsigned> columns;
-        std::unordered_set<unsigned> not_columns;
+        static char constexpr chars[] = " ";
         if (!ids().empty()) {
             for (auto c = strtok(ids().data(),","); c != nullptr; c = strtok(nullptr, ",")) {
+                std::string column {c};
+                csv_co::string_functions::trim_string<chars>(column);
                 try {
-                    columns.emplace_back(match_column_identifier(column_names, c, column_offset));
+                    columns.emplace_back(match_column_identifier(column_names, column.c_str(), column_offset));
                 } catch (ColumnIdentifierError const &) {
-                    column_identifier_error_handler(c, column_names, columns, column_offset);
+                    column_identifier_error_handler(column.c_str(), column_names, columns, column_offset);
                 }
             }
         } else
             columns = iota_range(column_names);
+
+        std::unordered_set<unsigned> not_columns;
         if (!excl().empty()) {
             for (auto c = strtok(excl().data(),","); c != nullptr; c = strtok(nullptr, ",")) {
+                std::string column {c};
+                csv_co::string_functions::trim_string<chars>(column);
                 try {
-                    not_columns.insert(match_column_identifier(column_names, c, column_offset));
+                    not_columns.insert(match_column_identifier(column_names, column.c_str(), column_offset));
                 } catch (ColumnIdentifierError const &) {
-                    column_identifier_error_handler(c, column_names, not_columns, column_offset);
+                    column_identifier_error_handler(column.c_str(), column_names, not_columns, column_offset);
                 }
             }
         }
 
         std::vector<unsigned> result;
         std::for_each(columns.begin(), columns.end(), [&](auto & elem) {
-            if (!not_columns.contains(elem)) 
+            if (!not_columns.contains(elem))
                 result.emplace_back(elem);
         });
 
@@ -1040,7 +1046,6 @@ namespace csvkit::cli {
         return (ids == atom);
     }
 
-    //TODO: FIXME (Column names are space-dependant)
     unsigned match_column_identifier (auto const & column_names, char const * c, auto column_offset) {
         auto const digital = python_isdigit(c);
         if (!digital) {
