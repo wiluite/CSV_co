@@ -469,7 +469,6 @@ namespace csvkit::cli {
             tune_ostream<custom_boolean_and_no_groping_sep_facet>(os, args.decimal_format.c_str());
     }
 
-    
     namespace trim_policy {
 
         /// Trimming policy class used for cr-trailing strings   
@@ -513,14 +512,14 @@ namespace csvkit::cli {
                 return s;
             }
         };
-        
+
         static char constexpr init_space_chars[] = " \t\r";
         using init_space_trim = trimming_init_space<init_space_chars, crchar>;
     }
 
     using notrimming_reader_type = csv_co::reader<csvkit::cli::trim_policy::crtrim>;
     using skipinitspace_reader_type = csv_co::reader<csvkit::cli::trim_policy::init_space_trim>;
-    
+
     /// Recodes a csv source text endcoding to UTF-8, if needed 
     void recode_source(auto & reader, auto const & args) {
         if (args.encoding == "UTF-8")  {
@@ -994,7 +993,7 @@ namespace csvkit::cli {
         if (option == typify_option::typify_with_precisions)
             return std::tuple{task_vec, blanks, precisions};
         else
-            return std::tuple{task_vec, blanks};    
+            return std::tuple{task_vec, blanks};
     }
 
     auto parse_column_identifiers(auto && ids, auto && column_names, auto && column_offset, auto && excl)->std::vector<unsigned> {

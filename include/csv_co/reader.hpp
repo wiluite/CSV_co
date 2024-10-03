@@ -72,7 +72,6 @@ namespace csv_co {
 
     template<class T>
     concept TrimPolicyConcept = requires(T, cell_string s, unquoted_cell_string u) {
-        { T::trim(s) } -> std::convertible_to<void>;
         { T::ret_trim(s) } -> std::convertible_to<cell_string>;
         { T::ret_trim(u) } -> std::convertible_to<unquoted_cell_string>;
     };
@@ -152,8 +151,6 @@ namespace csv_co {
     namespace trim_policy {
         struct no_trimming {
         public:
-            // Probably get rid of the first method all other the there at all
-            inline static void trim(cell_string const &) {}
             inline static cell_string ret_trim(cell_string const & cs) {
                 return cs;
             }
@@ -165,9 +162,6 @@ namespace csv_co {
         template<char const *list>
         struct trimming {
         public:
-            inline static void trim(cell_string &s) {
-                string_functions::trim_string<list>(s);
-            }
             inline static cell_string ret_trim(cell_string s) {
                 string_functions::trim_string<list>(s);
                 return s;
@@ -269,7 +263,7 @@ namespace csv_co {
     template<class T>
     struct empty_t {};
 
-    /// CSV reader class  
+    /// CSV reader class
     template<TrimPolicyConcept TrimPolicy = trim_policy::no_trimming, QuoteConcept Quote = double_quotes, DelimiterConcept Delimiter = comma_delimiter, LineBreakConcept LineBreak = non_mac_ln_brk, MaxFieldSizePolicyConcept MaxFieldSize = MFS::no_trace, EmptyRowsPolicyConcept EmptyRows = ER::std_4180>
     class reader final : public std::conditional_t<!std::is_same_v<MaxFieldSize, MFS::no_trace>, MaxFieldSize, empty_t<void>>, protected std::conditional_t<!std::is_same_v<EmptyRows, ER::std_4180>, EmptyRows, empty_t<int>> {
 
@@ -328,7 +322,7 @@ namespace csv_co {
 
             coro_iterator() = default;
 
-            /* implicit */ 
+            /* implicit */
             coro_iterator(coro_handle hco) : mCoroHdl{hco} {
                 resume();
             }
@@ -496,7 +490,7 @@ namespace csv_co {
             typename cell_string::const_pointer e = nullptr;
 
             friend class reader;
-        
+
             [[nodiscard]] auto string() const {
                 using namespace string_functions;
                 // A mangled result string
@@ -510,7 +504,7 @@ namespace csv_co {
 
         public:
             using reader_type = reader;
-            
+
             cell_span() = default;
             /// Constructs cell span from pointers
             cell_span(cell_string::const_pointer b, cell_string::const_pointer e) noexcept: b(b), e(e) {}
@@ -1295,7 +1289,7 @@ namespace csv_co {
                     throw exception (mmap_error.message(), " : ", str );
             } else
                 src = EzGz::IGzFile<>(str ).readAll();
-        }      
+        }
 
         /// Constructs reader from string source
         explicit reader (std::string csv_src) : src {std::move(csv_src)} {
@@ -1497,7 +1491,7 @@ namespace csv_co {
                 if constexpr(std::is_arithmetic_v<std::decay_t<T>>) 
                     msg += std::to_string(v); 
                 else 
-                    msg += v;               
+                    msg += v;
             }
         };
 
@@ -1658,7 +1652,7 @@ namespace csv_co {
 
             /// Returns std::tuple<bool, date::sys_seconds> representaion for dates
             auto date(std::string const & extra_date_fmt="") const;
-            
+
             /// Returns std::tuple<bool, std::string> representaion for timedeltas
             auto timedelta_tuple() const;
 
