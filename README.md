@@ -14,6 +14,8 @@
 *    [Benchmarks](#benchmarks)
 *    [Small csv kit](#small-csv-kit)
 *    [Statistics performance](#statistics-performance)
+*    [Sorting performance](#sorting-performance)
+*    [SQL performance](#sql-performance)
 *    [Build All](#build-all)
 
 
@@ -477,6 +479,12 @@ effective it is to sort a group of columns where there is one numeric type (the 
 results will be incorrect). We only need about 7 seconds versus 21 at the xsv. The csvkit is more than a minute behind us.
 
 ![image info](./img/sort_worldcitiespop.png)
+
+### SQL performance
+C++ is said to outperform Python in general, non-specialized areas by about 3 times. In this case, it is so. And even
+better. In light of the impossibility of parallelizing the filling of the database table using language tools.
+
+![image info](./img/csvsql_worldcitiespop.png)
 
 ### Build All
 
