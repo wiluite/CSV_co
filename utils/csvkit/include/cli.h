@@ -15,6 +15,14 @@
 #include <numeric>
 #include "encoding.h"
 
+#if !defined(_MSC_VER)
+  #include <unistd.h>
+#else
+  #include <io.h>
+  #define STDIN_FILENO 0
+  #define isatty _isatty
+#endif
+
 // TODO: Urgent
 // 1. implement -z option in typify() for utils that use typify()
 namespace csvkit::cli {
@@ -148,7 +156,7 @@ namespace csvkit::cli {
 
     /// Common arguments for single-file utilities
     struct ARGS_positional_1 : ARGS {
-        std::filesystem::path & file = arg("The CSV file to operate on. If omitted, will accept input as piped data via STDIN.").set_default("cin");
+        std::filesystem::path & file = arg("The CSV file to operate on. If omitted, will accept input as piped data via STDIN.").set_default("");
         bool &check_integrity = flag("Q,quick-check", "Quickly check the CSV source for matrix shape").set_default(true);
     };
 
@@ -559,28 +567,29 @@ namespace csvkit::cli {
 
 #define basic_reader_configurator_and_runner(std_cin_reader, function)                               \
     try {                                                                                            \
+        if (args.file.empty() and isatty(STDIN_FILENO))                                              \
+            throw std::runtime_error("Error: You must provide an input file or piped data.");        \
+        if (!args.file.empty() and !isatty(STDIN_FILENO))                                            \
+            throw std::runtime_error("Error: You have both: the input file and piped data.");        \
+        if (args.file.empty())                                                                       \
+            args.file = "_";                                                                         \
         std::variant<std::monostate                                                                  \
                    , std::reference_wrapper<notrimming_reader_type>                                  \
                    , std::reference_wrapper<skipinitspace_reader_type>> variants;                    \
                                                                                                      \
         if (!args.skip_init_space) {                                                                 \
-            if (!(args.file == "cin")) {                                                             \
+            if (!(args.file == "_")) {                                                               \
                 runner_impl(notrimming_reader_type, std::filesystem::path{args.file}, function)      \
             } else {                                                                                 \
                 runner_impl(notrimming_reader_type, std_cin_reader(args), function)                  \
             }                                                                                        \
         } else {                                                                                     \
-            if (!(args.file == "cin")) {                                                             \
+            if (!(args.file == "_")) {                                                               \
                 runner_impl(skipinitspace_reader_type, std::filesystem::path{args.file}, function)   \
             } else {                                                                                 \
                 runner_impl(skipinitspace_reader_type, std_cin_reader(args), function)               \
             }                                                                                        \
         }                                                                                            \
-    } catch (notrimming_reader_type::exception const & e) {                                          \
-        std::cout << e.what() << std::endl;                                                          \
-    }                                                                                                \
-    catch (skipinitspace_reader_type::exception const & e) {                                         \
-        std::cout << e.what() << std::endl;                                                          \
     }                                                                                                \
     catch (std::exception const & e) {                                                               \
         std::cout << e.what() << std::endl;                                                          \

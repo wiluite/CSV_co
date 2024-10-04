@@ -9,13 +9,6 @@ using namespace ocilib;
 
 #include <cli.h>
 #include <rowset-query-impl.h>
-#if !defined(_MSC_VER)
-  #include <unistd.h>
-#else
-  #include <io.h>
-  #define STDIN_FILENO 0
-  #define isatty _isatty
-#endif
 #include <local-sqlite3-dep.h>
 
 using namespace ::csvkit::cli;
@@ -193,11 +186,6 @@ namespace sql2csv {
         std::string which_one_to_create = args.db.find("oracle://service=") == std::string::npos ? "soci" : "ocilib";
         auto client = dbms_client_factory_type::create_client(which_one_to_create, args);
         client->querying();
-
-//        if (args.db.empty())
-//            args.db = "sqlite3://db=:memory:";
-//
-//        query{args, soci::session{args.db}};
     }
 }
 

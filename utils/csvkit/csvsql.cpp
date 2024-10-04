@@ -12,14 +12,6 @@ using namespace ocilib;
 #include <rowset-query-impl.h>
 #include <local-sqlite3-dep.h>
 
-#if !defined(_MSC_VER)
-#include <unistd.h>
-#else
-#include <io.h>
-#define STDIN_FILENO 0
-#define isatty _isatty
-#endif
-
 // TODO:
 //  2. get rid of blanks calculations in typify() for csvsql  (--no-constraints mode)
 
