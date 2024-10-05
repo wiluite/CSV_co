@@ -346,7 +346,18 @@ namespace csvsql::detail {
         unsigned counter = 0;
         while (pos = t.find('\t', pos + 1), pos != std::string::npos) {
             using diff_t = std::ptrdiff_t;
-            std::string next = {t.begin() + static_cast<diff_t>(pos) + 1, t.begin() + static_cast<diff_t>(t.find(' ', pos + 1))};
+            auto find_bs = [&t](auto from_pos) {
+                bool return_flag = true;
+                for(;;) {
+                    auto const next_char = *(t.begin() + from_pos);
+                    if (next_char == '"')
+                        return_flag = !return_flag;
+                    if (next_char == ' ' and return_flag)
+                        return from_pos;
+                    from_pos++;
+                }
+            };
+            std::string next = {t.begin() + static_cast<diff_t>(pos) + 1, t.begin() + static_cast<diff_t>(find_bs(pos + 1))};
             bool keyword = false;
             for (auto e : sql_keywords) {
                 if (e == next) {
