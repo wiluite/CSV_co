@@ -84,7 +84,7 @@ namespace sql2csv::detail {
 
     template <class Args2>
     struct soci_client : dbms_client {
-        soci_client(Args2 & args) : args(args) {
+        explicit soci_client(Args2 & args) : args(args) {
             if (args.db.empty())
                 this->args.db = "sqlite3://db=:memory:";
             session = std::make_unique<soci::session>(this->args.db);
@@ -107,7 +107,7 @@ namespace sql2csv::detail {
             ~env_init_cleanup() { Environment::Cleanup(); }
         };
 
-        ocilib_client(Args2 & args) : args(args) {
+        explicit ocilib_client(Args2 & args) : args(args) {
             using namespace std::literals;
             std::string_view sv = "oracle://service="sv;
             assert(args.db.starts_with(sv));
@@ -165,7 +165,7 @@ namespace sql2csv::detail {
 
 namespace sql2csv {
     template<typename ReaderType>
-    void sql_to_csv(auto &args) {
+    void sql2csv(auto &args) {
         using namespace detail;
         if (args.query.empty() and args.query_file.empty() and isatty(STDIN_FILENO))
             throw std::runtime_error("sql2csv: error: You must provide an input file or piped data.");
@@ -200,7 +200,7 @@ int main(int argc, char * argv[]) {
     OutputCodePage65001 ocp65001;
 
     try {
-        sql2csv::sql_to_csv<notrimming_reader_type>(args);
+        sql2csv::sql2csv<notrimming_reader_type>(args);
     }
     catch (soci::soci_error const & e) {
         std::cout << e.get_error_message() << std::endl;

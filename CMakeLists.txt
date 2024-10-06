@@ -26,7 +26,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-if (IO_CSVKIT_UTILS) # Some C stuff (before any added C++ definitions)
+if (IO_CSVKIT_UTILS AND NOT _SANITY_CHECK) # Some C stuff (before any added C++ definitions)
 configure_file(CMakeLists.txt.soci.obligate.dependency1.in external_deps/CMakeLists.txt)
 file(COPY ${CMAKE_SOURCE_DIR}/utils/csvkit/external/local_sqlite3/src DESTINATION "${CMAKE_BINARY_DIR}/external_deps")
 execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" . WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/external_deps" )
@@ -138,10 +138,6 @@ else()
         add_definitions(-fcoroutines) # required for GCC-10
     endif()
 endif()
-
-#if (IO_CSVKIT_UTILS)
-#    add_subdirectory(utils/csvkit/external/soci)
-#endif()
 
 include_directories(external/multiprecision/include)
 

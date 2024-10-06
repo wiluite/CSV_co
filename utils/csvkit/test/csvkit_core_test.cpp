@@ -347,7 +347,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
         expect(nothrow([&]() { mfsc2.check(std::string{"aФ2345678Ю"}); }));
         a.maxfieldsize = 9;
         max_field_size_checker mfsc3(reader, a, 1, init_row{1});
-        expect(throws([&]() { mfsc3.check(std::string{"aФ2345678Ю"}); }));
+        expect(throws<std::exception>([&]() { mfsc3.check(std::string{"aФ2345678Ю"}); }));
         try {
             mfsc3.check(std::string{"\"aФ2345678Ю\""});
         } catch (std::exception const &e) {

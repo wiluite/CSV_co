@@ -156,7 +156,7 @@ namespace csvkit::cli {
 
     /// Common arguments for single-file utilities
     struct ARGS_positional_1 : ARGS {
-        std::filesystem::path & file = arg("The CSV file to operate on. If omitted, will accept input as piped data via STDIN.").set_default("");
+        std::filesystem::path & file = arg("The CSV file to operate on. If omitted, will accept input as piped data via STDIN.").set_default(std::string{""});
         bool &check_integrity = flag("Q,quick-check", "Quickly check the CSV source for matrix shape").set_default(true);
     };
 

@@ -39,7 +39,9 @@ namespace csvsql::detail {
         bool &no_create = flag("no-create", "Skip creating the table. Requires --insert.");
         bool &create_if_not_exists = flag("create-if-not-exists", "Create the table if it does not exist, otherwise keep going. Requires --insert.");
         bool &overwrite = flag("overwrite", "Drop the table if it already exists. Requires --insert. Cannot be used with --no-create.");
+#if 0
         std::string & db_schema = kwarg("db-schema","Optional name of database schema to create table(s) in.").set_default(std::string(""));
+#endif
         bool &no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
         unsigned & chunk_size = kwarg("chunk-size","Chunk size for batch insert into the table. Requires --insert.").set_default(0);
         bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);

@@ -483,6 +483,8 @@ results will be incorrect). We only need about 7 seconds versus 21 at the xsv. T
 ### SQL performance
 C++ is said to outperform Python in general, non-specialized areas by about 3 times. In this case, it is so. And even
 better. In light of the impossibility of parallelizing the filling of the database table using language tools.
+Here it turned out 4 times faster, because the csvkit spends a significant part of the time determining column types,
+unlike our tool.
 
 ![image info](./img/csvsql_worldcitiespop.png)
 

@@ -447,11 +447,15 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
-
 target_link_libraries(csvgrep_test libcppp-reiconv.static simdutf -lpthread)
 add_test(csvgrep_test csvgrep_test)
 
-if (IO_CSVKIT_UTILS)
+add_executable(in2csv_test in2csv_test.cpp)
+target_link_libraries(in2csv_test libcppp-reiconv.static simdutf -lpthread)
+add_test(in2csv_test in2csv_test)
+
+
+if (IO_CSVKIT_UTILS AND NOT _SANITY_CHECK)
 
     add_executable(csvsql_test csvsql_test.cpp)
     target_include_directories(csvsql_test PRIVATE

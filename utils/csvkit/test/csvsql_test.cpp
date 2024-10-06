@@ -34,7 +34,7 @@ public:
     }
     SQL2CSV& call() {
         expect(nothrow([&]{
-            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql_to_csv<notrimming_reader_type>(sql2csvargs))
+            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(sql2csvargs))
             output = cout_buffer.str();
         }));
         return *this;
