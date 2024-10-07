@@ -37,12 +37,6 @@ int main() {
             Args() = default;
         } args;
 
-        args.format = "unknown";
-        expect(throws<in2csv::detail::invalid_input_format>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
-        args.format = "";
-        args.schema = "schema.csv";
-        expect(throws<in2csv::detail::schema_file_not_found>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
-        args.schema.clear();
         // Neither file name specified nor piping data is coming.
         expect(throws<in2csv::detail::empty_file_and_no_piping_now>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
         {
@@ -50,15 +44,27 @@ int main() {
             stdin_redir sr("stdin_select");
             expect(throws<in2csv::detail::no_format_specified_on_piping>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
         }
-        {
-            args.file = "blah-bla";
-            expect(throws<in2csv::detail::no_schema_when_no_extension>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
-        }
-        {
-            args.file = "blah-bla.unknown";
-            expect(throws<in2csv::detail::unable_to_automatically_determine_format>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
-        }
+        args.file = "blah-blah";
+        expect(throws<in2csv::detail::no_schema_when_no_extension>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
 
+        args.file = "blah-blah.unknown";
+        expect(throws<in2csv::detail::unable_to_automatically_determine_format>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
+
+        args.format = "dbf"; // file blah-blah.unknown not found
+        expect(throws<in2csv::detail::file_not_found>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
+
+        args.format = "unknown";
+        expect(throws<in2csv::detail::invalid_input_format>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
+
+        args.format = "fixed";
+        args.schema = "schema.csv";
+        expect(throws<in2csv::detail::schema_file_not_found>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
+
+        args.schema = "foo2.csv";
+        expect(throws<in2csv::detail::file_not_found>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
+
+        args.file = "stdin_select"; // all is fine (format, schema and file) - no exception
+        expect(nothrow([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
     };
 
 }

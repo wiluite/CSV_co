@@ -40,6 +40,10 @@ namespace in2csv::detail {
     struct schema_file_not_found : std::runtime_error {
         explicit schema_file_not_found(std::string const & f) : std::runtime_error(std::string("File not found error: No such file or directory: ") + '\'' + f +'\'') {}
     };
+    struct file_not_found : schema_file_not_found {
+        using schema_file_not_found::schema_file_not_found;
+    };
+
     struct converter_client
     {
         virtual ~converter_client() = default;
@@ -102,20 +106,8 @@ namespace in2csv {
         using namespace detail;
         namespace fs = std::filesystem;
 
-        std::array<std::string, 8> extensions {"csv", "dbf", "fixed", "geojson", "json", "ndjson", "xls", "xlsx" };
-
-        if (!args.format.empty()) {
-            if (std::find(extensions.cbegin(), extensions.cend(), args.format) == extensions.cend())
-                throw invalid_input_format(args.format);
-        }
-
-        if (args.format.empty() and !args.schema.empty()) {
-            if (!(std::filesystem::exists(fs::path{args.schema})))
-                throw schema_file_not_found(args.schema);
-        }
-
         // no file, no piped data
-        if (args.file.empty() and isatty(STDIN_FILENO))
+        if (args.file.empty() and isatty(STDIN_FILENO) and args.format.empty())
             throw empty_file_and_no_piping_now();
 
         // piped data, but no format specified
@@ -123,15 +115,35 @@ namespace in2csv {
             assert(!isatty(STDIN_FILENO));
             throw no_format_specified_on_piping();
         }
-        auto extension = fs::path(args.file).extension().string();
-        // there is a file with no extension(i.e. fixed-wide format) and no schema file provided
-        if (extension.empty() and args.schema.empty())
-            throw no_schema_when_no_extension();
 
-        extension = extension.empty() ? "fixed" : extension;
-        if (!args.file.empty() and args.format.empty()) {
-            if (std::find(extensions.cbegin(), extensions.cend(), extension) == extensions.cend())
+        std::string format;
+
+        std::array<std::string, 8> formats {"csv", "dbf", "fixed", "geojson", "json", "ndjson", "xls", "xlsx" };
+
+        if (!args.format.empty()) {
+            if (std::find(formats.cbegin(), formats.cend(), args.format) == formats.cend())
+                throw invalid_input_format(args.format);
+            format = args.format;
+        } else
+        if (!args.file.empty()) {
+            auto extension = fs::path(args.file).extension().string();
+            extension = extension.empty() ? "fixed" : extension;
+            if (std::find(formats.cbegin(), formats.cend(), extension) == formats.cend())
                 throw unable_to_automatically_determine_format();
+            format = extension;
+        }
+        assert (!format.empty());
+
+        if (format == "fixed") {
+            if (args.schema.empty())
+                throw no_schema_when_no_extension();
+            if (!std::filesystem::exists(fs::path{args.schema}))
+                throw schema_file_not_found(args.schema);
+        }
+
+        if (!args.file.empty()) {
+            if (!std::filesystem::exists(fs::path{args.file}))
+                throw file_not_found(args.file.string());
         }
 
         using args_type = std::decay_t<decltype(args)>;
@@ -139,7 +151,7 @@ namespace in2csv {
         dbms_client_factory_type::register_client("fixed", fixed_client<args_type>::create);
         dbms_client_factory_type::register_client("xlsx", xlsx_client<args_type>::create);
 
-        auto client = dbms_client_factory_type::create_client(args.format.empty() ? extension : args.format, args);
+        auto client = dbms_client_factory_type::create_client(format, args);
         client->convert();
     }
 }
