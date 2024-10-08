@@ -26,7 +26,8 @@ endif()
 
 find_package(Threads REQUIRED)
 
-if (IO_CSVKIT_UTILS AND NOT _SANITY_CHECK)
+if (IO_CSVKIT_UTILS)
+if (NOT _SANITY_CHECK)
     add_subdirectory(external/soci)
     add_subdirectory(external/ocilib)
     add_definitions(-DOCI_IMPORT_RUNTIME -DOCI_CHARSET_ANSI)
@@ -124,6 +125,12 @@ if (IO_CSVKIT_UTILS AND NOT _SANITY_CHECK)
 
 endif()
 
+add_subdirectory(external/libxls)
+add_executable(in2csv in2csv.cpp)
+target_link_libraries(in2csv libcppp-reiconv.static simdutf xlsreader)
+
+endif()
+
 add_subdirectory(test)
 add_executable(csvclean csvclean.cpp)
 target_link_libraries(csvclean libcppp-reiconv.static simdutf)
@@ -152,5 +159,3 @@ target_link_libraries(csvstack libcppp-reiconv.static simdutf)
 add_executable(csvgrep csvgrep.cpp)
 target_link_libraries(csvgrep libcppp-reiconv.static simdutf)
 
-add_executable(in2csv in2csv.cpp)
-target_link_libraries(in2csv libcppp-reiconv.static simdutf)

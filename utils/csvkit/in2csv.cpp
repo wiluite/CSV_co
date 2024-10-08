@@ -2,6 +2,8 @@
 // Created by wiluite on 10/6/24.
 //
 #include <cli.h>
+#include "external/libxls/include/xls.h"
+
 
 using namespace ::csvkit::cli;
 
