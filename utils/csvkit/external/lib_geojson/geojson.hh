@@ -58,12 +58,18 @@ public:
 //feature_t
 ///////////////////////////////////////////////////////////////////////////////////////
 
+struct prop {
+  std::string name;
+  JsonValue value;
+};
+
 class feature_t
 {
 public:
   feature_t()
   {};
   std::string m_name;
+  std::vector<prop> props;
   std::vector<geometry_t> m_geometry;
 };
 

@@ -136,6 +136,7 @@ int geojson_t::parse_feature(JsonValue value)
       //dump_value(obj->value);
       for (JsonNode *prp = obj->value.toNode(); prp != nullptr; prp = prp->next)
       {
+        feature.props.emplace_back(prop{prp->key, prp->value});
         //dump_value(prp->value);
         if (std::string(prp->key).compare("NAME") == 0 || std::string(prp->key).compare("name") == 0)
         {
