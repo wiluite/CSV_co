@@ -1,10 +1,23 @@
 #include <iostream>
 #include <stdio.h>
 #include "geojson.hh"
+#include <algorithm>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //main
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<std::string> build_header(geojson_t & geojson) {
+    std::vector<std::string> header{{"id"}};
+    for (auto & el : geojson.m_feature) {
+        for (auto & prop : el.props) {
+            if (std::find(header.begin(), header.end(), prop.name) == header.end())
+                header.push_back(prop.name);
+        }
+    }
+    header.insert(header.end(), {"geojson", "type", "longitude", "latitude"});
+    return header;
+}
 
 int main(int argc, char *argv[])
 {
@@ -21,6 +34,11 @@ int main(int argc, char *argv[])
   }
 
   std::cout << std::endl;
+  auto h = build_header(geojson);
+  for (auto e : h) {
+    std::cout << e << std::endl;
+  }
+  return 0;
 
   ///////////////////////////////////////////////////////////////////////////////////////
   //render geojson
