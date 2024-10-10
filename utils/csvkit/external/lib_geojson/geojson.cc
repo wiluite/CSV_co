@@ -5,11 +5,6 @@
 #include <assert.h>
 #include "geojson.hh"
 
-const int SHIFT_WIDTH = 4;
-bool DATA_NEWLINE = false;
-bool OBJECT_NEWLINE = false;
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //geojson_t::convert
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,10 +133,10 @@ int geojson_t::parse_feature(JsonValue value)
     else if (std::string(obj->key).compare("properties") == 0)
     {
       assert(obj->value.getTag() == JSON_OBJECT);
-      //parse properties
+      //dump_value(obj->value);
       for (JsonNode *prp = obj->value.toNode(); prp != nullptr; prp = prp->next)
       {
-        //get name
+        //dump_value(prp->value);
         if (std::string(prp->key).compare("NAME") == 0 || std::string(prp->key).compare("name") == 0)
         {
           assert(prp->value.getTag() == JSON_STRING);
@@ -288,9 +283,9 @@ int geojson_t::parse_coordinates(JsonValue value, const std::string &type, featu
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //geojson_t::dump_value
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-
 int geojson_t::dump_value(JsonValue o, int indent)
 {
+  const int SHIFT_WIDTH = 0;
   switch (o.getTag())
   {
   case JSON_NUMBER:
@@ -306,20 +301,12 @@ int geojson_t::dump_value(JsonValue o, int indent)
       break;
     }
     fprintf(stdout, "[");
-    if (DATA_NEWLINE) fprintf(stdout, "\n");
     for (auto i : o)
     {
-      if (DATA_NEWLINE) fprintf(stdout, "%*s", indent + SHIFT_WIDTH, "");
       dump_value(i->value, indent + SHIFT_WIDTH);
-      if (DATA_NEWLINE)
-        fprintf(stdout, i->next ? ",\n" : "\n");
-      else
-        fprintf(stdout, i->next ? "," : "");
+      fprintf(stdout, i->next ? "," : "");
     }
-    if (DATA_NEWLINE)
-      fprintf(stdout, "%*s]", indent, "");
-    else
-      fprintf(stdout, "]");
+    fprintf(stdout, "]");
     break;
   case JSON_OBJECT:
     if (!o.toNode())
@@ -327,14 +314,13 @@ int geojson_t::dump_value(JsonValue o, int indent)
       fprintf(stdout, "{}");
       break;
     }
-    fprintf(stdout, "{\n");
+    fprintf(stdout, "{");
     for (auto i : o)
     {
-      fprintf(stdout, "%*s", indent + SHIFT_WIDTH, "");
       dump_string(i->key);
       fprintf(stdout, ": ");
       dump_value(i->value, indent + SHIFT_WIDTH);
-      fprintf(stdout, i->next ? ",\n" : "\n");
+      fprintf(stdout, i->next ? "," : "");
     }
     fprintf(stdout, "%*s}", indent, "");
     break;
@@ -390,6 +376,3 @@ void geojson_t::dump_string(const char *s)
   }
   fprintf(stdout, "%s\"", s);
 }
-
-
-
