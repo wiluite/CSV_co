@@ -2,21 +2,55 @@
 #include <stdio.h>
 #include "geojson.hh"
 #include <algorithm>
+#include <iomanip>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //main
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::vector<std::string> build_header(geojson_t & geojson) {
-    std::vector<std::string> header{{"id"}};
+    std::vector<std::string> header;
+    header.push_back("id");
     for (auto & el : geojson.m_feature) {
-        for (auto & prop : el.props) {
-            if (std::find(header.begin(), header.end(), prop.name) == header.end())
+        for (auto prop : el.props) {
+            if (std::find(header.begin(), header.end(), prop.name) == header.end()) {
                 header.push_back(prop.name);
+            }
         }
     }
     header.insert(header.end(), {"geojson", "type", "longitude", "latitude"});
     return header;
+}
+
+std::string json_value_2_csv(std::string const& s) {
+    bool paired_quote = true;
+    bool has_comma = false;
+    unsigned quotes = 0;
+    for (auto ch : s) {
+        if (ch == '"') {
+            paired_quote = !paired_quote;
+            quotes++;
+        }
+        else
+        if (ch == ',') {
+            if (paired_quote) {
+              std::ostringstream oss;
+              oss << std::quoted(s, '"', '"');
+              return oss.str();
+            } else {
+              if (!has_comma)
+                  has_comma = true;
+            }
+        }
+    }
+    if (quotes == 2 and !has_comma and s.front() == '"' and s.back() == '"')
+        return {s.cbegin() + 1, s.cend() - 1};
+    if (quotes == 0 and !has_comma)
+        return s;
+    std::ostringstream oss;
+    oss << std::quoted(s, '"', '"');
+    assert(oss.str() != s);
+    return oss.str();
 }
 
 int main(int argc, char *argv[])
@@ -33,65 +67,42 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  std::cout << std::endl;
-  auto h = build_header(geojson);
-  for (auto e : h) {
-    std::cout << e << std::endl;
+  auto header = build_header(geojson);
+  auto h_count = header.size();
+  for (auto & e : header) {
+      std::cout << e;
+      if (--h_count)
+          std::cout << ',';
   }
-  return 0;
-
-  ///////////////////////////////////////////////////////////////////////////////////////
-  //render geojson
-  ///////////////////////////////////////////////////////////////////////////////////////
-
-  size_t size_features = geojson.m_feature.size();
-  for (size_t idx_fet = 0; idx_fet < size_features; idx_fet++)
-  {
-    feature_t feature = geojson.m_feature.at(idx_fet);
-
-    size_t size_geometry = feature.m_geometry.size();
-    for (size_t idx_geo = 0; idx_geo < size_geometry; idx_geo++)
-    {
-      geometry_t geometry = feature.m_geometry.at(idx_geo);
-      size_t size_pol = geometry.m_polygons.size();
-
-      for (size_t idx_pol = 0; idx_pol < size_pol; idx_pol++)
-      {
-        polygon_t polygon = geometry.m_polygons[idx_pol];
-        size_t size_crd = polygon.m_coord.size();
-
-        if (size_crd == 0)
-        {
-          continue;
-        }
-
-        std::vector<double> lat;
-        std::vector<double> lon;
-
-        for (size_t idx_crd = 0; idx_crd < size_crd; idx_crd++)
-        {
-          lat.push_back(polygon.m_coord[idx_crd].y);
-          lon.push_back(polygon.m_coord[idx_crd].x);
-        }
-
-        ///////////////////////////////////////////////////////////////////////////////////////
-        //render each polygon as a vector of vertices 
-        ///////////////////////////////////////////////////////////////////////////////////////
-
-        if (geometry.m_type.compare("Point") == 0)
-        {
-
-        }
-        else if (geometry.m_type.compare("Polygon") == 0 ||
-          geometry.m_type.compare("MultiPolygon") == 0)
-        {
-
-        }
-
-      }  //idx_pol
-    } //idx_geo
-  } //idx_fet
-
+  std::cout << '\n';
+  auto geojson_it = std::find(std::cbegin(header), std::cend(header), "geojson");
+  assert(geojson_it != header.cend());
+  for (auto & feature : geojson.m_feature) {
+      //print properties
+      auto h_count = header.size();
+      std::for_each(header.cbegin(), geojson_it, [&](auto & field) {
+          for (auto & prop : feature.props) {
+             if (field == prop.name) {
+                 std::cout << json_value_2_csv(prop.value);
+                 break;
+             }
+          }
+          std::cout << ',';
+      });
+      // print geojson
+      std::cout << std::quoted(feature.gjson, '"','"') << ',';
+      // print rest
+      auto & geom = feature.m_geometry[feature.m_geometry.size()-1];
+      std::cout << geom.m_type << ',';
+      if (geom.m_type == "Point") {
+          auto & polyg = geom.m_polygons[geom.m_polygons.size()-1];
+          std::cout << polyg.m_coord[polyg.m_coord.size()-1].x << ','
+              << polyg.m_coord[polyg.m_coord.size()-1].y;
+      } else
+          std::cout << ',';
+      std::cout << '\n';
+  }
 
   return 0;
+
 }

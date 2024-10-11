@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include "gason.h"
+#include <sstream>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //coord_t
@@ -60,8 +61,9 @@ public:
 
 struct prop {
   std::string name;
-  JsonValue value;
+  std::string value;
 };
+//struct geojson : prop {};
 
 class feature_t
 {
@@ -70,6 +72,7 @@ public:
   {};
   std::string m_name;
   std::vector<prop> props;
+  std::string gjson;
   std::vector<geometry_t> m_geometry;
 };
 
@@ -95,8 +98,8 @@ private:
   int parse_feature(JsonValue value);
   int parse_geometry(JsonValue value, feature_t &feature);
   int parse_coordinates(JsonValue value, const std::string &type, feature_t &feature);
-  int dump_value(JsonValue value, int indent = 0);
-  void dump_string(const char *s);
+  void dump_value(JsonValue & value, std::stringstream & ss, int indent = 0);
+  void dump_string(const char *s, std::stringstream & ss);
 };
 
 #endif

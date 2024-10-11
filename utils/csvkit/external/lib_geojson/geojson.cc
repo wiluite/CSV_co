@@ -29,7 +29,6 @@ int geojson_t::convert(const char* file_name)
   if (buf)
   {
     size_t nbr = fread(buf, 1, length, f);
-    std::cout << "read " << nbr << std::endl;
   }
   fclose(f);
 
@@ -94,7 +93,6 @@ int geojson_t::parse_features(JsonValue value)
   {
     arr_size++;
   }
-  std::cout << "features: " << arr_size << std::endl;
   for (JsonNode *n_feat = value.toNode(); n_feat != nullptr; n_feat = n_feat->next)
   {
     JsonValue object = n_feat->value;
@@ -133,11 +131,12 @@ int geojson_t::parse_feature(JsonValue value)
     else if (std::string(obj->key).compare("properties") == 0)
     {
       assert(obj->value.getTag() == JSON_OBJECT);
-      //dump_value(obj->value);
       for (JsonNode *prp = obj->value.toNode(); prp != nullptr; prp = prp->next)
       {
-        feature.props.emplace_back(prop{prp->key, prp->value});
-        //dump_value(prp->value);
+        std::stringstream ss;
+        dump_value(prp->value, ss);
+        feature.props.emplace_back(prop{prp->key, ss.str()});
+
         if (std::string(prp->key).compare("NAME") == 0 || std::string(prp->key).compare("name") == 0)
         {
           assert(prp->value.getTag() == JSON_STRING);
@@ -166,9 +165,14 @@ int geojson_t::parse_feature(JsonValue value)
 int geojson_t::parse_geometry(JsonValue value, feature_t &feature)
 {
   assert(value.getTag() == JSON_OBJECT);
+  std::stringstream ss;
+  dump_value(value, ss);
+  feature.gjson = ss.str();
+
   std::string str_geometry_type; //"Polygon", "MultiPolygon", "Point"
   for (JsonNode *node = value.toNode(); node != nullptr; node = node->next)
   {
+
     if (std::string(node->key).compare("type") == 0)
     {
       assert(node->value.getTag() == JSON_STRING);
@@ -195,7 +199,7 @@ int geojson_t::parse_geometry(JsonValue value, feature_t &feature)
         polygon.m_coord.push_back(coord);
         geometry.m_polygons.push_back(polygon);
         feature.m_geometry.push_back(geometry);
-      }
+      } else
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////
       //store geometry in parse_coordinates() for polygons
@@ -205,12 +209,18 @@ int geojson_t::parse_geometry(JsonValue value, feature_t &feature)
       {
         assert(node->value.getTag() == JSON_ARRAY);
         parse_coordinates(node->value, str_geometry_type, feature);
-      }
+      } else
       if (str_geometry_type.compare("MultiPolygon") == 0)
       {
         assert(node->value.getTag() == JSON_ARRAY);
         parse_coordinates(node->value, str_geometry_type, feature);
+      } else
+      if (str_geometry_type.compare("LineString") == 0)
+      {
+        assert(node->value.getTag() == JSON_ARRAY);
+        parse_coordinates(node->value, str_geometry_type, feature);
       }
+
     }
   }
   return 0;
@@ -284,96 +294,97 @@ int geojson_t::parse_coordinates(JsonValue value, const std::string &type, featu
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //geojson_t::dump_value
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-int geojson_t::dump_value(JsonValue o, int indent)
+void geojson_t::dump_value(JsonValue & o, std::stringstream & ss, int indent)
 {
   const int SHIFT_WIDTH = 0;
   switch (o.getTag())
   {
   case JSON_NUMBER:
-    fprintf(stdout, "%f", o.toNumber());
+    ss << o.toNumber();
     break;
   case JSON_STRING:
-    dump_string(o.toString());
+    dump_string(o.toString(), ss);
     break;
   case JSON_ARRAY:
     if (!o.toNode())
     {
-      fprintf(stdout, "[]");
+      ss << "[]";
       break;
     }
-    fprintf(stdout, "[");
+    ss << "[";
     for (auto i : o)
     {
-      dump_value(i->value, indent + SHIFT_WIDTH);
-      fprintf(stdout, i->next ? "," : "");
+      dump_value(i->value, ss, indent + SHIFT_WIDTH);
+      ss << (i->next ? "," : "");
     }
-    fprintf(stdout, "]");
+    ss << "]";
     break;
   case JSON_OBJECT:
     if (!o.toNode())
     {
-      fprintf(stdout, "{}");
+      ss << "{}";
       break;
     }
-    fprintf(stdout, "{");
+    ss << "{";
     for (auto i : o)
     {
-      dump_string(i->key);
-      fprintf(stdout, ": ");
-      dump_value(i->value, indent + SHIFT_WIDTH);
-      fprintf(stdout, i->next ? "," : "");
+      dump_string(i->key, ss);
+      ss << ": ";
+      dump_value(i->value, ss, indent + SHIFT_WIDTH);
+      ss << (i->next ? "," : "");
     }
-    fprintf(stdout, "%*s}", indent, "");
+    ss << "}";
     break;
   case JSON_TRUE:
-    fprintf(stdout, "true");
+    ss << "true";
     break;
   case JSON_FALSE:
-    fprintf(stdout, "false");
+    ss << "false";
     break;
   case JSON_NULL:
-    fprintf(stdout, "null");
+    ss << "null";
     break;
   }
-  return 0;
+  return;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //geojson_t::dump_string
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void geojson_t::dump_string(const char *s)
+void geojson_t::dump_string(const char *s, std::stringstream & ss)
 {
-  fputc('"', stdout);
+  ss << '"';
   while (*s)
   {
     int c = *s++;
     switch (c)
     {
     case '\b':
-      fprintf(stdout, "\\b");
+      ss << "\\b";
       break;
     case '\f':
-      fprintf(stdout, "\\f");
+      ss << "\\f";
       break;
     case '\n':
-      fprintf(stdout, "\\n");
+      ss << "\\n";
       break;
     case '\r':
-      fprintf(stdout, "\\r");
+      ss << "\\r";
       break;
     case '\t':
-      fprintf(stdout, "\\t");
+      ss << "\\t";
       break;
     case '\\':
-      fprintf(stdout, "\\\\");
+      ss << "\\\\";
       break;
     case '"':
-      fprintf(stdout, "\\\"");
+      ss << "\\\"";
       break;
     default:
-      fputc(c, stdout);
+      ss << static_cast<char>(c);
     }
   }
-  fprintf(stdout, "%s\"", s);
+  assert(*s == 0);
+  ss << "\"";
 }
