@@ -150,7 +150,8 @@ namespace csvgrep {
                             std::regex_match(span[idx].operator unquoted_cell_string(), expr));
                 });
 
-            } else if (!args.f.empty()) {
+            } else
+            if (!args.f.empty()) {
                 std::ifstream f (args.f);
                 if (!f.good()) {
                     std::cout << "Error argument -f/--file: can't open '" << args.f <<"': " << strerror(errno) << ".\n";
@@ -174,7 +175,8 @@ namespace csvgrep {
 
                 search_and_output(hit_func);
 
-            } else if (!args.match.empty()) {
+            } else
+            if (!args.match.empty()) {
                 search_and_output([&](auto const & span, auto idx) {
                     return (span[idx].operator cell_string().find(args.match) != std::string::npos or
                             span[idx].operator unquoted_cell_string().find(args.match) != std::string::npos);

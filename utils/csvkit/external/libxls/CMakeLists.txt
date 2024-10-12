@@ -6,6 +6,7 @@ add_subdirectory(iconv_c_connector)
 
 if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
+    add_definitions(/wd4245)
 else()
     remove_definitions(-Wno-old-style-cast -fcoroutines -Wno-reorder)
     add_definitions(-Wno-implicit-fallthrough)
