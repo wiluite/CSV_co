@@ -41,7 +41,6 @@
 #include <errno.h>
 
 #ifdef HAVE_ICONV
-//#include <iconv.h>
 #include "../iconv_c_connector/iconv_c_connector.h"
 #endif
 
@@ -134,7 +133,7 @@ static xls_error_t xls_addSST(xlsWorkBook* pWB,SST* sst,DWORD size)
     pWB->sst.lastrt=0;
     pWB->sst.lastsz=0;
 
-    if (sst->num > (1<<24))
+    if (sst->num > (1<<26)) // 64 MB
         return LIBXLS_ERROR_MALLOC;
 
     if (pWB->sst.string)
@@ -391,8 +390,10 @@ static xls_error_t xls_addSheet(xlsWorkBook* pWB, BOUNDSHEET *bs, DWORD size)
 	}
 
     pWB->sheets.sheet = realloc(pWB->sheets.sheet,(pWB->sheets.count+1)*sizeof (struct st_sheet_data));
-    if (pWB->sheets.sheet == NULL)
+    if (pWB->sheets.sheet == NULL) {
+        free(name);
         return LIBXLS_ERROR_MALLOC;
+    }
 
     pWB->sheets.sheet[pWB->sheets.count].name=name;
     pWB->sheets.sheet[pWB->sheets.count].filepos=filepos;
@@ -799,7 +800,7 @@ static xls_error_t xls_mergedCells(xlsWorkSheet* pWS,BOF* bof,BYTE* buf)
     return LIBXLS_OK;
 }
 
-int xls_isRecordTooSmall(xlsWorkBook *pWB, BOF *bof1) {
+int xls_isRecordTooSmall(xlsWorkBook *pWB, BOF *bof1, const BYTE* buf) {
     switch (bof1->id) {
         case XLS_RECORD_BOF:	// BIFF5-8
             return (bof1->size < 2 * sizeof(WORD));
@@ -821,6 +822,24 @@ int xls_isRecordTooSmall(xlsWorkBook *pWB, BOF *bof1) {
             return (bof1->size < offsetof(FONT, name));
         case XLS_RECORD_FORMAT:
             return (bof1->size < offsetof(FORMAT, value));
+        case XLS_RECORD_STYLE:
+            {
+                struct {
+                    unsigned short idx;
+                    unsigned char ident;
+                    unsigned char lvl;
+                } *styl;
+                if(bof1->size < 2) {
+                    return 1;
+                }
+                styl = (void *)buf;
+                if(xlsShortVal(styl->idx) & 0x8000) {
+                    return bof1->size < 4;
+                } else {
+                    if(bof1->size < 3) return 1;
+                    return bof1->size < 3 + styl->ident;
+                }
+            }
 		case XLS_RECORD_1904:
             return (bof1->size < sizeof(BYTE));
         default:
@@ -831,6 +850,8 @@ int xls_isRecordTooSmall(xlsWorkBook *pWB, BOF *bof1) {
 
 xls_error_t xls_parseWorkBook(xlsWorkBook* pWB)
 {
+    if(!pWB) return LIBXLS_ERROR_NULL_ARGUMENT;
+
     BOF bof1 = { .id = 0, .size = 0 };
     BOF bof2 = { .id = 0, .size = 0 };
     BYTE* buf = NULL;
@@ -866,7 +887,7 @@ xls_error_t xls_parseWorkBook(xlsWorkBook* pWB)
             }
         }
 
-        if (xls_isRecordTooSmall(pWB, &bof1)) {
+        if (xls_isRecordTooSmall(pWB, &bof1, buf)) {
             retval = LIBXLS_ERROR_PARSE;
             goto cleanup;
         }
@@ -1040,6 +1061,10 @@ xls_error_t xls_parseWorkBook(xlsWorkBook* pWB)
 				printf("   mode: 0x%x\n", pWB->is1904);
 			}
 			break;
+
+		case XLS_RECORD_FILEPASS:
+			retval = LIBXLS_ERROR_UNSUPPORTED_ENCRYPTION;
+			goto cleanup;
 		
 		case XLS_RECORD_DEFINEDNAME:
 			if(xls_debug) {
@@ -1054,7 +1079,7 @@ xls_error_t xls_parseWorkBook(xlsWorkBook* pWB)
 			if(xls_debug)
 			{
 				//xls_showBOF(&bof1);
-				printf("    Not Processed in parseWoorkBook():  BOF=0x%4.4X size=%d\n", bof1.id, bof1.size);
+				printf("    Not Processed in parseWorkBook():  BOF=0x%4.4X size=%d\n", bof1.id, bof1.size);
 			}
             break;
         }
@@ -1073,6 +1098,8 @@ cleanup:
 
 static xls_error_t xls_preparseWorkSheet(xlsWorkSheet* pWS)
 {
+    if(!pWS) return LIBXLS_ERROR_NULL_ARGUMENT;
+
     BOF tmp;
     BYTE* buf = NULL;
     xls_error_t retval = LIBXLS_OK;
@@ -1222,6 +1249,8 @@ static xls_error_t xls_formatColumn(xlsWorkSheet* pWS)
 
 xls_error_t xls_parseWorkSheet(xlsWorkSheet* pWS)
 {
+    if(!pWS) return LIBXLS_ERROR_NULL_ARGUMENT;
+
     BOF tmp;
     BYTE* buf = NULL;
 	long offset = pWS->filepos;
@@ -1637,7 +1666,7 @@ void xls_close_WS(xlsWorkSheet* pWS)
 }
 
 const char* xls_getVersion(void)
-{   
+{
     return PACKAGE_VERSION;
 }
 
@@ -1654,6 +1683,8 @@ const char* xls_getError(xls_error_t code) {
         return "Unable to allocate memory";
     if (code == LIBXLS_ERROR_PARSE)
         return "Unable to parse file";
+    if (code == LIBXLS_ERROR_UNSUPPORTED_ENCRYPTION)
+        return "Unsupported encryption scheme";
 
     return "Unknown error";
 }

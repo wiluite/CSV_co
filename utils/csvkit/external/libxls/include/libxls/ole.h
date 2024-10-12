@@ -36,6 +36,11 @@
 #ifndef OLE_INCLUDE
 #define OLE_INCLUDE
 
+#ifdef _MSC_VER
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 #ifdef __cplusplus
 #include <cstdio>			// FILE *
 #else
@@ -178,9 +183,6 @@ PSS;
 
 #pragma pack(pop)
 
-#if defined(_MSC_VER)
-#define ssize_t ptrdiff_t
-#endif
 ssize_t ole2_read(void* buf,size_t size,size_t count,OLE2Stream* olest);
 OLE2Stream* ole2_sopen(OLE2* ole,DWORD start, size_t size);
 int ole2_seek(OLE2Stream* olest,DWORD ofs);
