@@ -167,8 +167,8 @@ namespace csvkit::cli {
     };
 
     /// Arguments to control result printing
-    struct output_args {
-        bool & ASAP = flag("ASAP","Print result output stream as soon as possible."); // TODO: implement the functionality throughout the utils.
+    struct output_args : private argparse::Args {
+        bool & asap = flag("ASAP","Print result output stream as soon as possible."); // TODO: implement the functionality throughout the utils.
     };
 
     /// Quickly checks a CSV source for matrix shape
@@ -647,7 +647,7 @@ namespace csvkit::cli {
         max_field_size_checker(Reader const &, ARGS const & args, unsigned columns, init_row ir) 
             : args_(args), columns_(columns), current_row(ir()) {
             if (args_.maxfieldsize != max_unsigned_limit) {
-                cell_span_check_impl = [&] (typename Reader::template typed_span<csv_co::unquoted> const & span) {
+                typed_span_check_impl = [&] (typename Reader::template typed_span<csv_co::unquoted> const & span) {
                     static_assert(std::is_const_v<std::remove_reference_t<decltype(span)>>);
                     check_tmpl(span);
                 };
@@ -668,8 +668,16 @@ namespace csvkit::cli {
                         check_tmpl(e);
                 };
 
+                // if no numeric locale imbued, fall from typed_cell to cell_span and use unquoted string as string to count.
+                try {
+                    Reader::template typed_span<csv_co::unquoted>::num_locale();
+                } catch(...) {
+                    typed_span_check_impl = [&] (typename Reader::cell_span const & span) {
+                        check_tmpl(std::string(static_cast<csv_co::unquoted_cell_string>(span)));
+                    };
+                }
             } else {
-                cell_span_check_impl = [] (typename Reader::template typed_span<csv_co::unquoted> const &) {};
+                typed_span_check_impl = [] (typename Reader::template typed_span<csv_co::unquoted> const &) {};
                 string_check_impl = [] (std::string const & s) {};
                 row_span_check_impl = [] (typename Reader::row_span &) {};
                 vec_span_check_impl = [] (std::vector<typename Reader::cell_span> const &) {};
@@ -678,7 +686,7 @@ namespace csvkit::cli {
 
         // works for numeric-locale-imbued cells only.
         inline void check(typename Reader::cell_span const & cell_span) {
-            cell_span_check_impl(typename Reader::template typed_span<csv_co::unquoted>{cell_span});
+            typed_span_check_impl(typename Reader::template typed_span<csv_co::unquoted>{cell_span});
         }
         // works for any strings from cells that may be numeric-locale-free.
         void check(std::string const & s) {
@@ -704,7 +712,7 @@ namespace csvkit::cli {
             increment_row();
         }
 
-        std::function<void (typename Reader::template typed_span<csv_co::unquoted> const &)> cell_span_check_impl;
+        std::function<void (typename Reader::template typed_span<csv_co::unquoted> const &)> typed_span_check_impl;
         std::function<void (std::string const & )> string_check_impl;
         std::function<void (typename Reader::row_span &)> row_span_check_impl;
         std::function<void (std::vector<typename Reader::cell_span> const &)> vec_span_check_impl;

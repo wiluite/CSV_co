@@ -1538,7 +1538,7 @@ namespace csv_co {
 
         /// Bridge from cell_span to the csv kit cell span with type support 
         template <bool Unquoted>
-        class typed_span : protected cell_span {
+        class typed_span : public cell_span {
         private:
             mutable long double value = 0;                                    /**< Cached numeric value */
             mutable vince_csv::DataType type_ = vince_csv::DataType::UNKNOWN; /**< Cached data type value */

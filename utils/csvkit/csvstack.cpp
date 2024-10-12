@@ -137,8 +137,7 @@ namespace csvstack::detail {
             std::size_t row_idx = 0;
             max_field_size_checker size_checker(r, args, r.cols(), init_row{args.no_header ? 1u : 2u});
             r.run_rows([&](auto & row_span) {
-                // TODO: get rid of premature conversion of row span to vector of strings
-                check_max_size(header_to_strings<csv_co::unquoted>(row_span), size_checker);
+                check_max_size(row_span, size_checker);
                 if (!args.groups.empty() or args.filenames)
                     table[row_idx][0] = args.filenames ? args.files[0] : group_names[0];
 
@@ -164,8 +163,7 @@ namespace csvstack::detail {
 
                 max_field_size_checker size_checker(r, args, cols, init_row{args.no_header ? 1u : 2u});
                 r.run_rows([&](auto & row_span) {
-                    // TODO: get rid of premature conversion of row span to vector of strings
-                    check_max_size(header_to_strings<csv_co::unquoted>(row_span), size_checker);
+                    check_max_size(row_span, size_checker);
                     if (!args.groups.empty() or args.filenames)
                         table[row_idx][0] = args.filenames ? args.files[group_idx] : group_names[group_idx];
 

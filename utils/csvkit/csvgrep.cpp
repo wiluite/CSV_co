@@ -123,12 +123,10 @@ namespace csvgrep {
             else
                 func = all_hits;
 
-            auto const ir = init_row{args.no_header ? 1u : 2u};
-
             auto search_and_output = [&] (auto hit_func) {
                 std::size_t row = 1; 
                 reader.run_rows([&](auto & row_span) {
-                    check_max_size<establish_new_checker>(reader, args, row_span, ir);
+                    check_max_size<establish_new_checker>(reader, args, row_span, init_row{args.no_header ? 1u : 2u});
                     auto const chk_result = func(row_span, hit_func);
                     if ((chk_result and !args.invert) or (!chk_result and args.invert))
                         p.write<cell_string>(row_span, args, row);

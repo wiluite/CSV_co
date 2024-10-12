@@ -274,6 +274,8 @@ namespace csvjoin::detail {
                     auto const header = obtain_header_and_<skip_header>(arg, args);
 
                     max_field_size_checker size_checker(*std::get_if<0>(&r), args, header.size(), init_row{1});
+                    // TODO: it is very hard to optimize this place (get rid of premature transformation - try it out)
+                    //  but it is vain to do, due to no many resources spending.
                     check_max_size(header_to_strings<unquoted>(header), size_checker);
 
                     auto const q_header = header_to_strings<quoted>(header);
