@@ -358,7 +358,7 @@ namespace csvstat {
             auto c_col{0u};
 
             auto const ir = init_row{args.no_header ? 1u : 2u};
-            if (all_columns_selected(ids, header.size())) {
+            if (all_columns_selected(ids, header.size()))
                 reader.run_rows([&](auto &row_span) { // more cache-friendly
                     check_max_size<establish_new_checker>(reader, args, row_span, ir);
                     for (auto &elem: row_span)
@@ -366,7 +366,7 @@ namespace csvstat {
                     c_row++;
                     c_col = 0;
                 });
-            } else {
+            else
                 reader.run_rows([&](auto &row_span) { // less cache-friendly
                     check_max_size<establish_new_checker>(reader, args, row_span, ir);
                     for (auto i: ids)
@@ -374,7 +374,6 @@ namespace csvstat {
                     c_row++;
                     c_col = 0;
                 });
-            }
 
             if (args.count) {
                 std::cout << std::to_string(body_rows) + '\n';
