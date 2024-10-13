@@ -11,7 +11,7 @@
 using namespace ::csvkit::cli;
 
 namespace csvjoin {
-    struct Args : ARGS_positional_files {
+    struct Args final : ARGS_positional_files {
         std::string &num_locale = kwarg("L,locale", "Specify the locale (\"C\") of any formatted numbers.").set_default("C");
         bool &blanks = flag("blanks", R"(Do not convert "", "na", "n/a", "none", "null", "." to NULL.)");
         std::vector<std::string> &null_value = kwarg("null-value","Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
@@ -23,6 +23,7 @@ namespace csvjoin {
         bool &right_join = flag("right", "Perform a right outer join, rather than the default inner join. If more than two files are provided this will be executed as a sequence of right outer joins, starting at the right.");
         bool &no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
         bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
+        bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 
         std::string std_input;
 
@@ -292,11 +293,13 @@ namespace csvjoin::detail {
 
         auto print_results = [&](auto join_flag) {
             std::ostringstream oss;
-            printer p(oss);
+            std::ostream & oss_ = args.asap ? std::cout : oss;
+            printer p(oss_);
             struct non_typed_output {};
             p.write(headers[0], non_typed_output{}, args);
             join_flag ? p.write(std::get<1>(deq.front()), ts_n_blanks[0], args) : p.write(std::get<0>(deq.front()), ts_n_blanks[0], args);
-            std::cout << oss.str();
+            if (!args.asap)
+                std::cout << oss.str();
         };
 
         auto concat_headers = [&headers](unsigned excl_v_idx = static_cast<unsigned>(-1)) {
@@ -738,13 +741,11 @@ namespace csvjoin::detail {
 
 namespace csvjoin::detail {
     void check_arg_semantics (auto const & args) {
-        if (args.left_join and args.right_join) {
+        if (args.left_join and args.right_join)
             throw std::runtime_error("It is not valid to specify both a left and a right join.");
-        }
 
-        if ((args.left_join or args.right_join or args.outer_join) and args.columns.empty()) {
+        if ((args.left_join or args.right_join or args.outer_join) and args.columns.empty())
             throw std::runtime_error("You must provide join column names when performing an outer join.");
-        }                   
     }
     auto get_join_column_names (auto const & args) {
         std::vector<std::string> join_column_names;
@@ -754,10 +755,9 @@ namespace csvjoin::detail {
                 join_column_names.resize(args.files.size());
                 std::fill(join_column_names.begin()+1, join_column_names.end(), join_column_names[0]);
             }
-            if (join_column_names.size() != args.files.size()) {
+            if (join_column_names.size() != args.files.size())
                 throw std::runtime_error ("The number of join column names must match the number of files, or be a single "
                                           "column name that exists in all files.");
-            }
         }
         return join_column_names;
     }

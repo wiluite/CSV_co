@@ -166,11 +166,6 @@ namespace csvkit::cli {
         bool &check_integrity = flag("Q,quick-check", "Quickly check the CSV sources for matrix shape").set_default(true);
     };
 
-    /// Arguments to control result printing
-    struct output_args : private argparse::Args {
-        bool & asap = flag("ASAP","Print result output stream as soon as possible."); // TODO: implement the functionality throughout the utils.
-    };
-
     /// Quickly checks a CSV source for matrix shape
     void quick_check(auto && r, auto const & args) {
         if (!args.check_integrity)

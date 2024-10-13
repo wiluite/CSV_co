@@ -18,7 +18,7 @@ using namespace ocilib;
 using namespace ::csvkit::cli;
 
 namespace csvsql::detail {
-    struct Args : ARGS_positional_files {
+    struct Args final : ARGS_positional_files {
         std::string & num_locale = kwarg("L,locale","Specify the locale (\"C\") of any formatted numbers.").set_default(std::string("C"));
         bool &blanks = flag("blanks", R"(Do not convert "", "na", "n/a", "none", "null", "." to NULL.)");
         std::vector<std::string> &null_value = kwarg("null-value","Convert these values to NULL.").multi_argument().set_default(std::vector<std::string>{});
@@ -45,6 +45,7 @@ namespace csvsql::detail {
         bool &no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
         unsigned & chunk_size = kwarg("chunk-size","Chunk size for batch insert into the table. Requires --insert.").set_default(0);
         bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
+        bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 
         void welcome() final {
             std::cout << "\nGenerate SQL statements for one or more CSV files, or execute those statements directly on a database, and execute one or more SQL queries.\n\n";
@@ -272,16 +273,13 @@ namespace csvsql::detail {
                     stream.str({});
                     stream.clear();
                     stream << create_table_phrase(args);
-                    if (table_names.size() > file_no) {
-                        auto tn = table_names[file_no];
-                        csv_co::string_functions::unquote(tn, '"');
-                        stream << tn;
-                    }
-                    else {
-                        auto tn = std::filesystem::path{args.files[file_no]}.stem().string();
-                        csv_co::string_functions::unquote(tn, '"');
-                        stream << tn;
-                    }
+                    std::string tn;
+                    if (table_names.size() > file_no)
+                        tn = table_names[file_no];
+                    else
+                        tn = std::filesystem::path{args.files[file_no]}.stem().string();
+                    csv_co::string_functions::unquote(tn, '"');
+                    stream << tn;
                     stream << " (\n\t";
                 }
                 ~open_close() {

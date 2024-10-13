@@ -38,7 +38,7 @@ int main() {
     };
 
     "runs"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "test_utf8.csv"; }
         } args;
 
@@ -56,7 +56,7 @@ int main() {
     };
 
     "simple"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "dummy3.csv"; }
         } args;
 
@@ -74,7 +74,7 @@ int main() {
     };
 
     "encoding"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "test_latin1.csv"; encoding = "latin1"; }
         } args;
 
@@ -91,7 +91,7 @@ int main() {
     };
 
     "no blanks"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "blanks.csv"; }
         } args;
 
@@ -109,7 +109,7 @@ int main() {
     };
 
     "blanks"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "blanks.csv"; blanks = true;}
         } args;
 
@@ -126,7 +126,7 @@ int main() {
     };
 
     "no header row"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "no_header_row3.csv"; no_header = true; }
         } args;
 
@@ -145,7 +145,7 @@ int main() {
 
     // TODO: add just unicode test
     "unicode bom"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "test_utf8_bom.csv"; }
         } args;
 
@@ -163,7 +163,7 @@ int main() {
     };
 
     "linenumbers"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "dummy3.csv"; linenumbers = true;}
         } args;
 
@@ -181,7 +181,7 @@ int main() {
     };
 
     "no_inference"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "dummy3.csv"; no_inference = true; }
         } args;
 
@@ -199,7 +199,7 @@ int main() {
     };
 
     "max rows"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "dummy.csv"; max_rows = 0; }
         } args;
 
@@ -216,7 +216,7 @@ int main() {
     };
 
     "max columns"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "dummy.csv"; max_columns = 1; }
         } args;
 
@@ -233,7 +233,7 @@ int main() {
     };
 
     "max columns width"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "dummy4.csv"; max_column_width = 4; }
         } args;
 
@@ -250,7 +250,7 @@ int main() {
     };
 
     "max precision"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "test_precision.csv"; max_precision = 0; }
         } args;
 
@@ -267,7 +267,7 @@ int main() {
     };
 
     "no number ellipsis"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "test_precision.csv"; no_number_ellipsis = true;}
         } args;
 
@@ -284,7 +284,7 @@ int main() {
     };
 
     "max precision no number ellipsis"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "test_precision.csv"; max_precision = 0; no_number_ellipsis = true; }
         } args;
 
@@ -301,7 +301,7 @@ int main() {
     };
 
     "max field size"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, csvlook_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, csvlook_specific_args {
             Args() { file = "test_field_size_limit.csv"; maxfieldsize = 100; }
         } args;
 

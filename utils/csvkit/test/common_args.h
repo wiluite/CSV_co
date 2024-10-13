@@ -33,5 +33,8 @@ namespace csvkit::test_facilities {
         mutable std::string columns {"all columns"};
         mutable std::string not_columns {"no columns"};
     };
+    struct output_args {
+        bool asap = true;
+    };
 
 }

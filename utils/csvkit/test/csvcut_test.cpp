@@ -28,7 +28,7 @@ int main() {
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
     "skip lines"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "test_skip_lines.csv"; columns = "1,3"; skip_lines = 3; }
             bool x_ {false};
         } args;
@@ -45,7 +45,7 @@ int main() {
     };
 
     "simple"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "dummy.csv"; columns = "1, 3 "; }
             bool x_ {false};
         } args;
@@ -62,7 +62,7 @@ int main() {
     };
 
     "linenumbers"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "dummy.csv"; linenumbers = true; columns = "1,3"; }
             bool x_ {false};
         } args;
@@ -79,7 +79,7 @@ int main() {
     };
 
     "unicode"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "test_utf8.csv"; columns = "1,3"; }
             bool x_ {false};
         } args;
@@ -97,7 +97,7 @@ int main() {
     };
 
     "with gzip"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "dummy.csv.gz"; columns = "1,3"; }
             bool x_ {false};
         } args;
@@ -111,7 +111,7 @@ int main() {
     };
 
     "exclude"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "dummy.csv"; not_columns = " 1 ,3"; }
             bool x_ {false};
         } args;
@@ -125,7 +125,7 @@ int main() {
     };
 
     "include and exclude"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "dummy.csv"; columns = "1,3"; not_columns = "3"; } 
             bool x_ {false};
         } args;
@@ -139,7 +139,7 @@ int main() {
     };
 
     "no header row"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "no_header_row.csv"; columns = "2"; no_header = true; } 
             bool x_ {false};
         } args;
@@ -153,7 +153,7 @@ int main() {
     };
 
     "names with skip lines"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "test_skip_lines.csv"; skip_lines = 3; names=true;  } 
             bool x_ {false};
         } args;
@@ -167,7 +167,7 @@ int main() {
     };
 
     "null byte"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "null_byte.csv"; not_columns = ""; }
             bool x_ {false};
         } args;
@@ -184,7 +184,7 @@ int main() {
 
 
     "max field size"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "test_field_size_limit.csv"; maxfieldsize = 100; }
             bool x_ {false};
         } args;

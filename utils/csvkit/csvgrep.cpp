@@ -10,7 +10,7 @@
 using namespace ::csvkit::cli;
 
 namespace csvgrep {
-    struct Args : ARGS_positional_1 {
+    struct Args final : ARGS_positional_1 {
         bool & names = flag ("n,names","Display column names and indices from the input CSV and exit.");
         std::string & columns = kwarg("c,columns","A comma-separated list of column indices, names or ranges to be searched, e.g. \"1,id,3-5\".").set_default("none");
         std::string & match = kwarg("m,match","A string to search for.").set_default("");
@@ -19,6 +19,7 @@ namespace csvgrep {
         std::string & f = kwarg("f,file","A path to a file. For each row, if any line in the file (stripped of line separators) is an exact match of the cell value, the row matches.").set_default("");
         bool & invert = flag("i,invert-match","Select non-matching rows, instead of matching rows.");
         bool & any = flag("a,any-match", "Select rows in which any column matches, instead of all columns.");
+        bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 
         void welcome() final {
             std::cout << "\nSearch CSV files. Like the Unix \"grep\" command, but for tabular data.\n\n";
@@ -90,7 +91,8 @@ namespace csvgrep {
             auto ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes(not_columns));
 
             std::ostringstream oss;
-            printer p{oss};
+            std::ostream & oss_ = args.asap ? std::cout : oss;
+            printer p{oss_};
             // csvstack seems to have non-typed output
             std::vector<std::string> string_header(header.size());
             std::transform(header.begin(), header.end(), string_header.begin(), [](auto & elem) {return optional_quote(elem);});
@@ -132,7 +134,8 @@ namespace csvgrep {
                         p.write<cell_string>(row_span, args, row);
                     ++row;
                 });
-                std::cout << oss.str(); 
+                if(!args.asap)
+                    std::cout << oss.str();
             };
 
             // in priority order:

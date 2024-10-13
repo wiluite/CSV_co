@@ -11,12 +11,13 @@
 using namespace ::csvkit::cli;
 
 namespace csvcut {
-    struct Args : ARGS_positional_1 {
 
+    struct Args final : ARGS_positional_1 {
         bool & names = flag ("n,names","Display column names and indices from the input CSV and exit.");
         std::string & columns = kwarg("c,columns","A comma-separated list of column indices, names or ranges to be extracted, e.g. \"1,id,3-5\".").set_default("all columns");
         std::string & not_columns = kwarg("C,not-columns","A comma-separated list of column indices, names or ranges to be excluded, e.g. \"1,id,3-5\".").set_default("no columns");
         bool & x_ = flag("x,delete-empty-rows", "After cutting delete rows which are completely empty.");
+        bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 
         void welcome() final {
             std::cout << "\nFilter and truncate CSV files. Like the Unix \"cut\" command, but for tabular data.\n\n";
@@ -48,37 +49,38 @@ namespace csvcut {
         try {
             auto ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes(args.not_columns));
             std::ostringstream oss;
+            std::ostream & oss_ = args.asap ? std::cout : oss;
             auto print_container = [&] (auto & row_span, auto const & args) {
                 if (args.linenumbers) {
                     static auto line = 0ul;
                     if (line)
-                        oss << line << delim;
+                        oss_ << line << delim;
                     line++;
                 }
-                oss << optional_quote(row_span[ids.front()]);
+                oss_ << optional_quote(row_span[ids.front()]);
                 for (auto it = ids.cbegin() + 1; it != ids.cend(); ++it) {
-                    oss << delim << optional_quote(row_span[*it]);
+                    oss_ << delim << optional_quote(row_span[*it]);
                 }
-                oss <<'\n';
+                oss_ <<'\n';
             };
 
             struct say_ln {
-                explicit say_ln(std::decay_t<decltype(args)> const & args, std::ostream & oss) {
+                explicit say_ln(std::decay_t<decltype(args)> const & args, std::ostream & os) {
                     if (args.linenumbers)
-                        oss << "line_number" << delim;
+                        os << "line_number" << delim;
                 }
             };           
             
             if (args.no_header) {
                 check_max_size(reader, args, header, init_row{1});
-                static say_ln ln (args, oss);
+                static say_ln ln (args, oss_);
                 print_container(header, args);
             }
 
             reader.run_rows([&] (auto & row_span) {
                 static_assert(std::is_same_v<typename std::decay_t<decltype(reader)>::row_span, std::decay_t<decltype(row_span)>>);
                 if (!args.no_header)
-                    static say_ln ln (args, oss);
+                    static say_ln ln (args, oss_);
 
                 check_max_size<establish_new_checker>(reader, args, row_span, init_row{1});
 
@@ -93,7 +95,8 @@ namespace csvcut {
                         print_container(row_span, args);
                 }
             });
-            std::cout << oss.str();
+            if (!args.asap)
+                std::cout << oss.str();
 
         } catch (ColumnIdentifierError const& e) {
             std::cout << e.what() << '\n';

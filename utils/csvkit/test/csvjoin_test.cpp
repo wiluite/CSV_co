@@ -35,7 +35,7 @@ int main() {
 
     "runs"_test = [] {
         namespace tf = csvkit::test_facilities;
-        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, csvjoin_specific_args {
+        struct Args : tf::common_args, tf::type_aware_args, tf::spread_args, tf::output_args, csvjoin_specific_args {
             Args() {
                 columns.clear();
             }

@@ -10,12 +10,13 @@
 using namespace ::csvkit::cli;
 
 namespace csvstack::detail {
-    struct Args : ARGS_positional_files {
+    struct Args final : ARGS_positional_files {
 
         std::string & groups = kwarg("g,groups", "A comma-separated list of values to add as \"grouping factors\", one per CSV being stacked. These are "
             "added to the output as a new column. You may specify a name for the new column using the -n flag.").set_default("");
         std::string & group_name = kwarg("n,group-name", "A name for the grouping column, e.g. \"year\". Only used when also specifying -g.").set_default("");
         bool & filenames = flag("filenames", "Use the filename of each input file as its grouping value. When specified, -g will be ignored.");
+        bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 
         void welcome() final {
             std::cout << "\nStack up the rows from multiple CSV files, optionally adding a grouping value.\n\n";
@@ -242,11 +243,13 @@ namespace csvstack {
         std::vector<std::vector<std::string>> t (rows, std::vector<std::string>(cols + (args.groups.empty() && !args.filenames ? 0 : 1)));
         put_rest(r_man, put_first(r_man, args, t, group_names), args, t, replace_vec, group_names);
         std::ostringstream oss;
-        printer p(oss);
+        std::ostream & oss_ = args.asap ? std::cout : oss;
+        printer p(oss_);
         struct non_typed_output {};
         p.write(header, args);
         p.write(t, non_typed_output{}, args);
-        std::cout << oss.str(); 
+        if (!args.asap)
+            std::cout << oss.str();
     }
 
 } /// namespace

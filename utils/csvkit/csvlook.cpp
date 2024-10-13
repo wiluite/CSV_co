@@ -13,7 +13,7 @@
 using namespace ::csvkit::cli;
 
 namespace csvlook {
-    struct Args : ARGS_positional_1 {
+    struct Args final : ARGS_positional_1 {
         std::string & num_locale = kwarg("L,locale","Specify the locale (\"C\") of any formatted numbers.").set_default(std::string("C"));
         bool & blanks = flag("blanks",R"(Do not convert "", "na", "n/a", "none", "null", "." to NULL.)");
         std::vector<std::string> & null_value = kwarg("null-value", "Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
@@ -27,6 +27,7 @@ namespace csvlook {
         bool & no_inference = flag("I,no-inference", "Disable type inference when parsing the input. This disables the reformatting of values.");
         std::string & glob_locale = kwarg("G,glob-locale", "Superseded global locale.").set_default("C");
         bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
+        bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 
         void welcome() final {
             std::cout << "\nRender a CSV file in the console as a Markdown-compatible, fixed-width table.\n\n";
@@ -163,6 +164,7 @@ namespace csvlook {
         }
 
         std::ostringstream oss;
+        std::ostream & oss_ = args.asap ? std::cout : oss;
         auto print_func_impl = [&] (auto && elem_str, unsigned max_size, std::size_t row) {
             auto const refactor_elem = [&]() -> std::tuple<unsigned, unsigned, std::string> {
                 auto const str = csv_co::csvkit::to_basic_string_32(elem_str);
@@ -180,8 +182,8 @@ namespace csvlook {
             };
             auto const [p,s,e] = refactor_elem();
             auto const w = [&](unsigned positions, unsigned elem_size) { return positions < max_size ? max_size + elem_size - positions : max_size; } (p, s);
-            oss.width(w);
-            oss << (row != args.max_rows ? e : ((w < 2) ? micro_ellipsis : ((w < 3) ? mini_ellipsis : native_ellipsis))) << " | ";
+            oss_.width(w);
+            oss_ << (row != args.max_rows ? e : ((w < 2) ? micro_ellipsis : ((w < 3) ? mini_ellipsis : native_ellipsis))) << " | ";
         };
 
         static constexpr char const * const linenumbers_header = "line_numbers";
@@ -189,64 +191,64 @@ namespace csvlook {
         static_assert (linenumbers_header_length == 12);
 
         auto print_hdr = [&] {
-            oss << "| ";
+            oss_ << "| ";
             if (args.linenumbers) {
                 print_func_impl(std::string(linenumbers_header), std::min(linenumbers_header_length, args.max_column_width), max_size_t_limit - 1);
             }
 
             auto col = 0u;
             for (auto &elem: header) {
-                oss.setf(types[col] == column_type::text_t || args.no_inference || (args.blanks && blanks[col]) ? std::ios::left : std::ios::right, std::ios::adjustfield);
+                oss_.setf(types[col] == column_type::text_t || args.no_inference || (args.blanks && blanks[col]) ? std::ios::left : std::ios::right, std::ios::adjustfield);
                 print_func_impl(elem.operator csv_co::unquoted_cell_string(), max_sizes[col], max_size_t_limit - 1);
                 if (++col == args.max_columns && col != header.size()) {
-                    oss << "... |";
+                    oss_ << "... |";
                     break;
                 }
             }
-            oss << "\n| ";
+            oss_ << "\n| ";
 
             if (args.linenumbers) {
                 for (auto i = 0ul; i < std::min(linenumbers_header_length, args.max_column_width); i++)
-                    oss << '-';
-                oss << " | ";
+                    oss_ << '-';
+                oss_ << " | ";
             }
 
             col = 0u;
             for (auto const &elem: max_sizes) {
-                oss.width(elem);
-                oss.fill('-');
-                oss << '-';
-                oss.fill(' ');
-                oss << " | ";
+                oss_.width(elem);
+                oss_.fill('-');
+                oss_ << '-';
+                oss_.fill(' ');
+                oss_ << " | ";
                 if (++col == args.max_columns && col != max_sizes.size()) {
-                    oss << "--- |";
+                    oss_ << "--- |";
                     break;
                 }
             }
-            oss << '\n';
+            oss_ << '\n';
         };
 
         if (args.max_columns)
             print_hdr();
         else {
             // print header corner cases.
-            oss << "| ";
+            oss_ << "| ";
             if (args.linenumbers)
                 print_func_impl(std::string(linenumbers_header), std::min(linenumbers_header_length, args.max_column_width), max_size_t_limit - 1);
-            oss << "... |\n| "; 
+            oss_ << "... |\n| ";
             if (args.linenumbers) {
                 for (auto i = 0ul; i < std::min(linenumbers_header_length, args.max_column_width); i++)
-                    oss << '-';
-                oss << " | ";
+                    oss_ << '-';
+                oss_ << " | ";
             }
-            oss << "--- |\n";
+            oss_ << "--- |\n";
         }
 
-        tune_ostream<custom_boolean_and_groping_sep_facet>(oss);
+        tune_ostream<custom_boolean_and_groping_sep_facet>(oss_);
 
         auto line_numbers_print = [&] (auto index) {
             if (args.linenumbers) {
-                oss.setf(args.no_inference? std::ios::left : std::ios::right, std::ios::adjustfield);
+                oss_.setf(args.no_inference? std::ios::left : std::ios::right, std::ios::adjustfield);
                 print_func_impl(std::to_string(index + 1), std::min(linenumbers_header_length, args.max_column_width), index);
             }
         };
@@ -256,7 +258,7 @@ namespace csvlook {
                 auto print_func = [&](auto && elem, std::size_t col, std::size_t row) {
                     bool const is_null = elem.is_null();
                     if (types[col] == column_type::text_t or (!args.blanks && is_null)) {
-                        oss.setf(std::ios::left, std::ios::adjustfield);
+                        oss_.setf(std::ios::left, std::ios::adjustfield);
                         print_func_impl(!args.blanks && is_null ? "" : compose_text(elem), max_sizes[col], row);
                         return;
                     }
@@ -280,7 +282,7 @@ namespace csvlook {
                             }
                     };
 
-                    oss.setf(std::ios::right, std::ios::adjustfield);
+                    oss_.setf(std::ios::right, std::ios::adjustfield);
                     auto const type_index = static_cast<std::size_t>(types[col]) - 1;
                     using num_tuple_t = std::tuple<unsigned, unsigned, bool>;
                     std::any info = (type_index == 1) ? num_tuple_t(args.max_precision, precisions[col], args.no_number_ellipsis) : std::any{};
@@ -288,18 +290,18 @@ namespace csvlook {
                 };
                 std::size_t row = 0;
                 reader.run_rows([&] (auto & row_span) {
-                    oss << "| ";
+                    oss_ << "| ";
                     line_numbers_print(row);
 
                     auto col = 0u;
                     for (auto & elem : row_span) {
                         print_func(elem_type{elem}, col, row);
                         if (++col == args.max_columns && col != row_span.size()) {
-                            oss << "... |";                                                           
+                            oss_ << "... |";
                             break;
                         }
                     }
-                    oss << "\n";
+                    oss_ << "\n";
                     if (row++ == args.max_rows)
                         throw typename std::decay_t<decltype(reader)>::implementation_exception();
                 });
@@ -311,46 +313,48 @@ namespace csvlook {
                 // print body corner cases.
                 auto line_numbers_dotted_print = [&] {
                     if (args.linenumbers) {
-                        oss.setf(args.no_inference ? std::ios::left : std::ios::right, std::ios::adjustfield);
-                        oss.width(std::min(linenumbers_header_length, args.max_column_width));
-                        oss << "...";
-                        oss << " | ";
+                        oss_.setf(args.no_inference ? std::ios::left : std::ios::right, std::ios::adjustfield);
+                        oss_.width(std::min(linenumbers_header_length, args.max_column_width));
+                        oss_ << "...";
+                        oss_ << " | ";
                     }
                 };
 
                 if (!args.max_columns) {
                     unsigned long const rows = reader.rows();
                     for (auto i = 0ul; i < std::min(rows, args.max_rows); i++) {
-                        oss << "| ";
+                        oss_ << "| ";
                         line_numbers_print(i);
-                        oss << "... |\n";
+                        oss_ << "... |\n";
                     }  
                     if (rows > args.max_rows) {
-                        oss << "| ";
+                        oss_ << "| ";
                         line_numbers_dotted_print();
-                        oss << "... |\n";
+                        oss_ << "... |\n";
                     }
                 } else {
-                    oss << "| ";
+                    oss_ << "| ";
                     line_numbers_dotted_print();
 
                     auto col = 0u;
                     for (auto const &sz: max_sizes) {
-                        oss.setf(types[col] == column_type::text_t || args.no_inference || (args.blanks && blanks[col]) ? std::ios::left : std::ios::right, std::ios::adjustfield);
-                        oss.width(sz);
-                        oss << (sz >= native_ellipsis_len ? native_ellipsis : (sz == 1 ? micro_ellipsis : mini_ellipsis));
-                        oss << " | ";
+                        oss_.setf(types[col] == column_type::text_t || args.no_inference || (args.blanks && blanks[col]) ? std::ios::left : std::ios::right, std::ios::adjustfield);
+                        oss_.width(sz);
+                        oss_ << (sz >= native_ellipsis_len ? native_ellipsis : (sz == 1 ? micro_ellipsis : mini_ellipsis));
+                        oss_ << " | ";
                         if (++col == args.max_columns && col != max_sizes.size()) {
-                            oss << "... |";
+                            oss_ << "... |";
                             break;
                         }
                     }
-                    oss << '\n';
+                    oss_ << '\n';
                 }
             }
 
         } catch (...) {} // may be awaitable reader::implementation_exception
-        std::cout << oss.str(); 
+
+        if (!args.asap)
+            std::cout << oss.str();
     }
 
     std::string special_read_standard_input(auto const & args) {
