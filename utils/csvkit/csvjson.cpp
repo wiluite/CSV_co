@@ -234,7 +234,6 @@ namespace csvjson {
         if (!geojson) {
             if (!args.key.empty())
                 args.maxfieldsize = max_unsigned_limit;
-            max_field_size_checker size_checker(reader, args, header.size(), init_row{args.no_header ? 1u : 2u});
 
             if (!args.stream)
                 oss << (args.key.empty() ? '[' : '{');
@@ -400,8 +399,6 @@ namespace csvjson {
 
             if (!args.no_bbox and !args.stream)
                 args.maxfieldsize = max_unsigned_limit;
-
-            max_field_size_checker size_checker(reader, args, header.size(), init_row{args.no_header ? 1u : 2u});
 
             struct item_scope_printer {
                 explicit item_scope_printer(json_indenter const & indenter)

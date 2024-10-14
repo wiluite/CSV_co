@@ -870,7 +870,6 @@ namespace csvkit::cli {
 
     template <typename Reader, typename Args>
     auto typify(Reader & reader, Args const & args, typify_option option) -> typify_result {
-
         // Detect types and blanks presence in columns, also imbue cell locale
         update_null_values(args.null_value);
 
@@ -888,14 +887,16 @@ namespace csvkit::cli {
         if (!reader.cols()) // alternatively : if (!reader.rows())
             throw std::runtime_error("Typify(). Columns == 0. Vain to do next actions!"); // well, vain to do rest things
 
-        check_max_size(reader, args, header, init_row{1});
+        max_field_size_checker size_checker1(reader, args, header.size(), init_row{1});
+        check_max_size(header, size_checker1);
 
         fixed_array_2d_replacement<typename Reader::template typed_span<csv_co::unquoted>> table(header.size(), reader.rows());
 
         auto c_row{0u};
         auto c_col{0u};
 
-        auto const ir = init_row{args.no_header ? 1u : 2u};
+        max_field_size_checker size_checker2(reader, args, header.size(), init_row{args.no_header ? 1u : 2u});
+
         reader.run_rows([&] (auto & rowspan) {
             static struct tabular_checker {
                 using cell_span_t= typename Reader::cell_span;
@@ -904,7 +905,8 @@ namespace csvkit::cli {
                         throw typename Reader::exception("The number of header and data columns do not match. Use -K option to align.");
                 }
             } checker (header, rowspan);
-            check_max_size(reader, args, rowspan, ir);
+
+            check_max_size(rowspan, size_checker2);
 
             for (auto & elem : rowspan)
                 table[c_col++][c_row] = elem;
