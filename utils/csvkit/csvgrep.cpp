@@ -129,7 +129,7 @@ namespace csvgrep {
                 std::size_t row = 1;
                 auto const ir = init_row{args.no_header ? 1u : 2u};
                 reader.run_rows([&](auto & row_span) {
-                    check_max_size<establish_new_checker>(reader, args, row_span, ir);
+                    check_max_size(reader, args, row_span, ir);
                     auto const chk_result = func(row_span, hit_func);
                     if ((chk_result and !args.invert) or (!chk_result and args.invert))
                         p.write<cell_string>(row_span, args, row);

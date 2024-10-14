@@ -205,7 +205,6 @@ namespace csvsort {
             auto const ir = init_row{args.no_header ? 1u : 2u};
 
             reader.run_rows([&] (auto & row_span) {
-                check_max_size<establish_new_checker>(reader, args, row_span, ir);
                 unsigned i = 0;
                 for (auto & elem : row_span)                                        
                     impl_ref[row][i++] = elem;
@@ -240,8 +239,7 @@ namespace csvsort {
         quick_check(reader, args);
 
         auto  header = obtain_header_and_<skip_header>(reader, args);
-        check_max_size(reader, args, header, init_row{1});
- 
+
         if (args.names) {
             print_header(std::cout, header, args);
             return;
@@ -252,10 +250,12 @@ namespace csvsort {
             std::string not_columns;
             auto const ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes{not_columns});
 
+            auto const types_blanks = std::get<1>(typify(reader, args, typify_option::typify_without_precisions));
+
             // Filling in data to sort.
             // It is sufficient to have csv_co::quoted cell_spans in it, because comparison is quite sophisticated and takes it into account
             compromise_table_MxN table(reader, args);
-            auto const types_blanks = std::get<1>(typify(reader, args, typify_option::typify_without_precisions));
+
             auto cfa = ::csvkit::cli::compare::detail::obtain_compare_functionality<std::decay_t<decltype(table[0][0])>>(ids, types_blanks, args);
             if (args.r) {
                 if (args.parallel_sort)

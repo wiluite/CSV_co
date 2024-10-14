@@ -82,7 +82,7 @@ namespace csvcut {
                 if (!args.no_header)
                     static say_ln ln (args, oss_);
 
-                check_max_size<establish_new_checker>(reader, args, row_span, init_row{1});
+                check_max_size(reader, args, row_span, init_row{1});
 
                 if (!args.x_ )
                     print_container(row_span, args);

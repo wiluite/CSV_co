@@ -45,7 +45,6 @@ namespace csvsql::detail {
         bool &no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
         unsigned & chunk_size = kwarg("chunk-size","Chunk size for batch insert into the table. Requires --insert.").set_default(0);
         bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
-        bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 
         void welcome() final {
             std::cout << "\nGenerate SQL statements for one or more CSV files, or execute those statements directly on a database, and execute one or more SQL queries.\n\n";

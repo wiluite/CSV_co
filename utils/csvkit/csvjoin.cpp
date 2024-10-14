@@ -32,6 +32,156 @@ namespace csvjoin {
         }
     };
 }
+namespace csvjoin::detail::typify {
+    template <typename Reader, typename Args>
+    auto typify(Reader & reader, Args const & args, typify_option option) -> typify_result {
+
+        // Detect types and blanks presence in columns, also imbue cell locale
+        update_null_values(args.null_value);
+
+        struct hibernator {
+            explicit hibernator(Reader & reader) : reader_(reader) { reader_.skip_rows(0); }
+            ~hibernator() { reader_.skip_rows(0); }
+        private:
+            Reader & reader_;
+        };
+
+        hibernator h(reader);
+        skip_lines(reader, args);
+        auto header = obtain_header_and_<skip_header>(reader, args);
+
+        if (!reader.cols()) // alternatively : if (!reader.rows())
+            throw std::runtime_error("Typify(). Columns == 0. Vain to do next actions!"); // well, vain to do rest things
+
+        //check_max_size(reader, args, header, init_row{1});
+
+        fixed_array_2d_replacement<typename Reader::template typed_span<csv_co::unquoted>> table(header.size(), reader.rows());
+
+        auto c_row{0u};
+        auto c_col{0u};
+
+        //auto const ir = init_row{args.no_header ? 1u : 2u};
+        reader.run_rows([&] (auto & rowspan) {
+            static struct tabular_checker {
+                using cell_span_t= typename Reader::cell_span;
+                tabular_checker (std::vector<cell_span_t> const & header, typename Reader::row_span const & row_span) {
+                    if (header.size() != row_span.size())
+                        throw typename Reader::exception("The number of header and data columns do not match. Use -K option to align.");
+                }
+            } checker (header, rowspan);
+            //check_max_size(reader, args, rowspan, ir);
+
+            for (auto & elem : rowspan)
+                table[c_col++][c_row] = elem;
+
+            c_row++;
+            c_col = 0;
+        });
+
+        std::vector<column_type> task_vec (table.rows(), column_type::unknown_t);
+
+        std::vector<std::size_t> column_numbers (task_vec.size());
+        std::iota(column_numbers.begin(), column_numbers.end(), 0);
+
+        transwarp::parallel exec(std::thread::hardware_concurrency());
+
+        std::vector<unsigned char> blanks (task_vec.size(), 0);
+        std::vector<unsigned> precisions (task_vec.size(), 0);
+
+        imbue_numeric_locale(reader, args);
+        [&option] {
+            using unquoted_elem_type = typename Reader::template typed_span<csv_co::unquoted>;
+            unquoted_elem_type::maxprecision_flag(option == typify_option::typify_without_precisions);
+
+            using quoted_elem_type = typename Reader::template typed_span<csv_co::quoted>;
+            unquoted_elem_type::maxprecision_flag(option == typify_option::typify_without_precisions);
+        }();
+
+        setup_date_parser_backend(reader, args);
+
+        //TODO: for now e.is_null() calling first is obligate. Can we do better?
+
+        #define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = 1;
+
+        auto task = transwarp::for_each(exec, column_numbers.cbegin(), column_numbers.cend(), [&](auto c) {
+            if (std::all_of(table[c].begin(), table[c].end(), [&blanks, &c, &args](auto & e)  {
+                SETUP_BLANKS
+                return n || (!args.no_inference && e.is_boolean());
+            })) {
+                task_vec[c] = column_type::bool_t;
+                return;
+            }
+            if (std::all_of(table[c].begin(), table[c].end(), [&args, &blanks, &c](auto &e) {
+                SETUP_BLANKS
+                return n || (!args.no_inference && std::get<0>(e.timedelta_tuple()));
+            })) {
+                task_vec[c] = column_type::timedelta_t;
+                return;
+            }
+            if (option == typify_option::typify_with_precisions) {
+                if (std::all_of(table[c].begin(), table[c].end(), [&blanks, &c, &args, &precisions](auto & e) {
+                    SETUP_BLANKS
+                    auto const result = n || (!args.no_inference && e.is_num());
+                    if (result and !n) {
+                        if (precisions[c] < e.precision())
+                            precisions[c] = e.precision();
+                    }
+                    return result;
+                })) {
+                    task_vec[c] = column_type::number_t;
+                    return;
+                }
+            } else {
+                if (std::all_of(table[c].begin(), table[c].end(), [&blanks, &c, &args](auto & e) {
+                    SETUP_BLANKS
+                    return n || (!args.no_inference && e.is_num());
+                })) {
+                    task_vec[c] = column_type::number_t;
+                    return;
+                }
+            }
+            if (std::all_of(table[c].begin(), table[c].end(), [&args, &blanks, &c](auto & e) {
+                SETUP_BLANKS
+                return n || (!args.no_inference && std::get<0>(e.datetime(args.datetime_fmt)));
+            })) {
+                task_vec[c] = column_type::datetime_t;
+                return;
+            }
+            if (std::all_of(table[c].begin(), table[c].end(), [&args, &blanks, &c](auto &e) {
+                SETUP_BLANKS
+                return n || (!args.no_inference && std::get<0>(e.date(args.date_fmt)));
+            })) {
+                task_vec[c] = column_type::date_t;
+                return;
+            }
+            // Text type: check ALL rows for an absent.
+            if (std::all_of(table[c].begin(), table[c].end(), [&](auto &e) {
+                if (e.is_null() && !blanks[c] && !args.blanks)
+                    blanks[c] = true;
+                return true;
+            })) {
+                task_vec[c] = column_type::text_t;
+                return;
+            }
+        });
+
+        #undef SETUP_BLANKS
+
+        task->wait();
+
+        for (auto & elem : task_vec) {
+            assert(elem != column_type::unknown_t);
+            if (args.no_inference and elem != column_type::text_t) {
+                assert(elem == column_type::bool_t);  // all nulls in a column otherwise boolean
+                elem = column_type::text_t;           // force setting it to text
+            }
+        }
+        if (option == typify_option::typify_with_precisions)
+            return std::tuple{task_vec, blanks, precisions};
+        else
+            return std::tuple{task_vec, blanks};
+    }
+}
 
 namespace csvjoin::detail {
 
@@ -262,12 +412,12 @@ namespace csvjoin::detail {
                 std::visit([&](auto &&arg) {
                     if constexpr (!std::is_same_v<std::decay_t<decltype(arg)>, reader_fake<reader_type>>) {
                         quick_check();
-                        ts_n_blanks.push_back(std::get<1>(typify(arg, args, typify_option::typify_without_precisions)));
+                        ts_n_blanks.push_back(std::get<1>(typify::typify(arg, args, typify_option::typify_without_precisions)));
                     }
 #else
                 if (!std::holds_alternative<reader_fake<reader_type>>(r)) {                    
                     quick_check();
-                    ts_n_blanks.push_back(std::get<1>(typify(std::get<0>(r), args, typify_option::typify_without_precisions)));
+                    ts_n_blanks.push_back(std::get<1>(typify::typify(std::get<0>(r), args, typify_option::typify_without_precisions)));
                 }
                 std::visit([&](auto &&arg) {
 #endif
@@ -440,7 +590,6 @@ namespace csvjoin::detail {
                         max_field_size_checker f_size_checker(*std::get_if<0>(&first_source), args, arg.cols(), init_row{args.no_header ? 1u : 2u});
 
                         arg.run_rows([&](auto &span) {
-
                             if constexpr (!std::is_same_v<std::remove_reference_t<decltype(span[0])>, std::string>)
                                 check_max_size(span, f_size_checker);
 
@@ -633,6 +782,7 @@ namespace csvjoin::detail {
                                 arg.run_rows([&](auto &span1) {
                                     if constexpr (!std::is_same_v<std::remove_reference_t<decltype(span1[0])>, std::string>)
                                         check_max_size(span1, s_size_checker);
+
                                     std::visit([&](auto &&cmp) {
                                         if (!cmp(elem_t{span[c_ids[0]]}, elem_t{span1[c_ids[1]]})) {
                                             std::vector<std::string> join_vec;
@@ -697,6 +847,7 @@ namespace csvjoin::detail {
                         mutable std::vector<std::string> null_value;
                         bool no_inference{};
                         bool date_lib_parser{};
+                        unsigned maxfieldsize = max_unsigned_limit;
                     } tmp_args{
                         true
                         , 0
@@ -706,8 +857,10 @@ namespace csvjoin::detail {
                         , args.blanks
                         , args.null_value  
                         , args.no_inference
-                        , args.date_lib_parser};
-                    ts_n_blanks[0] = std::get<1>(typify(tmp_reader, tmp_args, typify_option::typify_without_precisions));
+                        , args.date_lib_parser
+                        , args.maxfieldsize
+                    };
+                    ts_n_blanks[0] = std::get<1>(typify::typify(tmp_reader, tmp_args, typify_option::typify_without_precisions));
                 }
                 deq.push_front(std::move(impl));
                 assert(deq.size() == ts_n_blanks.size());

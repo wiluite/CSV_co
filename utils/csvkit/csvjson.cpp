@@ -77,7 +77,6 @@ namespace csvjson {
         skip_lines(reader, args);
         static auto const header = obtain_header_and_<skip_header>(reader, args);
         using header_type = decltype(header);
-        check_max_size(reader, args, header, init_row{1});
 
         using elem_type = typename std::decay_t<decltype(reader)>::template typed_span<unquoted>;
         unsigned key_idx {};
@@ -140,7 +139,6 @@ namespace csvjson {
             auto const ir = init_row{args.no_header ? 1u : 2u};
 
             reader.run_rows([&] (auto & row_span) {
-                check_max_size(reader, args, row_span, ir);
                 type2key_check_func[static_cast<std::size_t>(types[key_idx]) - 1](elem_type{row_span[key_idx]});
             });
 
@@ -245,7 +243,6 @@ namespace csvjson {
             auto const rows = reader.rows();
 
             reader.run_rows([&] (auto & row_span) {
-                check_max_size(row_span, size_checker);
                 if (!args.key.empty()) {
                     auto const key = elem_type{row_span[key_idx]};
                     to_stream(oss
@@ -298,7 +295,6 @@ namespace csvjson {
             if (!args.no_bbox and !args.stream) {
                 auto const ir = init_row{args.no_header ? 1u : 2u};
                 reader.run_rows([&](auto &row_span) {
-                    check_max_size(reader, args, row_span, ir);
                     auto update_min_max = [&](auto & e, long double & max_, long double & min_, elem_type & max_e, elem_type & min_e) {
                         auto const et = elem_type{e};
                         auto const element_value = et.num();
@@ -417,10 +413,6 @@ namespace csvjson {
             };
 
             reader.run_rows([&] (auto & row_span) {
-
-#ifndef _MSC_VER
-                check_max_size(row_span, size_checker);
-#endif
 
                 struct feature_printer {
                     explicit feature_printer(json_indenter const & indenter) {

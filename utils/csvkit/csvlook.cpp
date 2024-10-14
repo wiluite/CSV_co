@@ -82,7 +82,6 @@ namespace csvlook {
 
         skip_lines(reader, args);
         auto const header = obtain_header_and_<skip_header>(reader, args);
-        check_max_size(reader, args, header, init_row{1});
 
         std::vector<unsigned> max_sizes (header.size());
         std::transform (header.begin(), header.end(), max_sizes.begin(),[&](auto & elem) {
@@ -99,7 +98,6 @@ namespace csvlook {
 
                 reader.run_rows([&](auto & row_span) {
                     unsigned i = 0;
-                    check_max_size(reader, args, row_span, ir);
                     for (auto & elem : row_span) {
                         args.precision_locally = precisions[i];
                         auto max_size_func = [&](auto && elem) {
