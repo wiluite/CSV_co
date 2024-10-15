@@ -20,7 +20,6 @@ option (_SANITY_CHECK "Build all with Clang sanitizers" OFF)
 option (_STDLIB_LIBCPP "Build all with Clang STL (if Clang)" OFF)
 option (_LLD_LINKER_FLAG "Build all lld linker" OFF)
 option (IO_CSVKIT_UTILS "Build with csvsql, sql2csv, in2csv" ON)
-option (IO_CSVKIT_MARIADB "MariaDB instead MYSQL" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
