@@ -412,7 +412,7 @@ R"({"text": "Chicago Reader", "float": "1.0", "datetime": "1971-01-01T04:14:00",
         } args;
 
         test_reader_r1 r(args.file);
-        std::reference_wrapper<test_reader_r1> ref = std::ref(r);
+        std::reference_wrapper<decltype(r)> ref = std::ref(r);
         CALL_TEST_AND_REDIRECT_TO_COUT
 
         expect(cout_buffer.str() ==
@@ -443,7 +443,7 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
         } args;
 
         test_reader_r2 r(args.file);
-        std::reference_wrapper<test_reader_r2> ref = std::ref(r);
+        std::reference_wrapper<decltype(r)> ref = std::ref(r);
         CALL_TEST_AND_REDIRECT_TO_COUT
         expect(cout_buffer.str() ==
 R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee Lounge", "description": "In addition to being the only coffee shop in downtown Tyler, DCL also features regular exhibitions of work by local artists.", "address": "200 West Erwin Street", "type": "Gallery", "last_seen_date": "3/30/12"}, "geometry": {"type": "Point", "coordinates": [-95.30181, 32.35066]}}
@@ -477,23 +477,23 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
 
             using namespace z_test;
 
-            Z_CHECK(csvjson::json, test_reader_r3, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+            Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
 #ifndef _MSC_VER
             // Fixme. Recent MSVC Community, Preview has bug in place for this test to work. You can safely uncomment this code but the test does not throw the (implied) exception here!
-            Z_CHECK(csvjson::json, test_reader_r5, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+            Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
 #endif
 
             args.lat = "1";
             args.lon = "2";
 #ifndef _MSC_VER
             // Fixme. Recent MSVC Community, Preview has bug in place for this test to work. You can safely uncomment this code but the test does not throw the (implied) exception here!
-            Z_CHECK(csvjson::json, test_reader_r4, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
-            Z_CHECK(csvjson::json, test_reader_r6, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+            Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+            Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
 #endif
-            Z_CHECK(csvjson::json, test_reader_r7, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+            Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
 #ifndef _MSC_VER
             // Fixme. Recent MSVC Community, Preview has bug in place for this test to work. You can safely uncomment this code but the test does not throw the (implied) exception here!
-            Z_CHECK(csvjson::json, test_reader_r8, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+            Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
 #endif
         };
     };
@@ -509,14 +509,14 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
         expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT}));
 
         using namespace z_test;
-        Z_CHECK(csvjson::json, test_reader_r9, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
-        Z_CHECK(csvjson::json, test_reader_r10, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
 
-        Z_CHECK(csvjson::json, test_reader_r11, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
-        Z_CHECK(csvjson::json, test_reader_r12, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
 
-        Z_CHECK(csvjson::json, test_reader_r13, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
-        Z_CHECK(csvjson::json, test_reader_r14, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
     };
 
 

@@ -881,14 +881,14 @@ try {
         expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT(csvsql::sql<notrimming_reader_type>(args))}));
 
         using namespace z_test;
-        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), 1, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
-        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), 2, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
+        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
 
-        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), 3, skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
-        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), 4, skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), skip_lines::skip_lines_0, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
+        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), skip_lines::skip_lines_0, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 2.)")
 
-        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), 5, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
-        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), 6, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
+        Z_CHECK1(csvsql::sql<notrimming_reader_type>(args), skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
     };
 
 } catch (std::exception const & e) {

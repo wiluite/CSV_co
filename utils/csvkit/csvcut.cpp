@@ -81,6 +81,7 @@ namespace csvcut {
                 static_assert(std::is_same_v<typename std::decay_t<decltype(reader)>::row_span, std::decay_t<decltype(row_span)>>);
                 if (!args.no_header)
                     static say_ln ln (args, oss_);
+                static_assert(!std::is_same_v<std::decay_t<decltype(row_span)>, std::decay_t<decltype(header)>>);
 
                 check_max_size(reader, args, row_span, init_row{1});
 

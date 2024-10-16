@@ -323,7 +323,10 @@ namespace csvstat {
         quick_check(reader, args);
 
         auto const header = obtain_header_and_<skip_header>(reader, args);
-        check_max_size(reader, args, header, init_row{1});
+        {
+            max_field_size_checker size_checker(reader, args, header.size(), init_row{1});
+            check_max_size(header, size_checker);
+        }
 
         if (args.names) {
             print_header(std::cout, header, args);
@@ -356,10 +359,11 @@ namespace csvstat {
             auto c_row{0u};
             auto c_col{0u};
 
-            auto const ir = init_row{args.no_header ? 1u : 2u};
+            max_field_size_checker size_checker(reader, args, header.size(), init_row{args.no_header ? 1u : 2u});
+
             if (all_columns_selected(ids, header.size()))
                 reader.run_rows([&](auto &row_span) { // more cache-friendly
-                    check_max_size(reader, args, row_span, ir);
+                    check_max_size(row_span, size_checker);
                     for (auto &elem: row_span)
                         transposed_2d[c_col++][c_row] = elem;
                     c_row++;
@@ -367,7 +371,7 @@ namespace csvstat {
                 });
             else
                 reader.run_rows([&](auto &row_span) { // less cache-friendly
-                    check_max_size(reader, args, row_span, ir);
+                    check_max_size(row_span, size_checker);
                     for (auto i: ids)
                         transposed_2d[c_col++][c_row] = row_span[i];
                     c_row++;
