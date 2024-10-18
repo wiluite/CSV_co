@@ -1,10 +1,9 @@
-#include "bz2_connector.h"
 #include "../bzip2/bzlib.h"
 #include <stdexcept>
 
 #if defined(__unix__)
 #define BZ_UNIX 1
- #define BZ_LCCWIN32 0
+#define BZ_LCCWIN32 0
 #else
 #define BZ_UNIX 0
 #define BZ_LCCWIN32 1

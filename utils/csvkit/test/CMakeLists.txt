@@ -124,6 +124,11 @@ add_custom_command(
 add_custom_command(
         TARGET csvcut_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv.bz2
+        ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv.bz2)
+add_custom_command(
+        TARGET csvcut_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/no_header_row.csv
         ${CMAKE_CURRENT_BINARY_DIR}/no_header_row.csv)
 add_custom_command(

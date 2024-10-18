@@ -110,6 +110,20 @@ int main() {
         expect(cout_buffer.str() == "a,c\n1,3\n");
     };
 
+    "with bzip2"_test = [] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
+            Args() { file = "dummy.csv.bz2"; columns = "1,3"; }
+            bool x_ {false};
+        } args;
+
+        notrimming_reader_type r (args.file);
+        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
+        CALL_TEST_AND_REDIRECT_TO_COUT
+
+        expect(cout_buffer.str() == "a,c\n1,3\n");
+    };
+
     "exclude"_test = [] {
         struct Args : tf::single_file_arg, tf::common_args, tf::spread_args, tf::output_args {
             Args() { file = "dummy.csv"; not_columns = " 1 ,3"; }
