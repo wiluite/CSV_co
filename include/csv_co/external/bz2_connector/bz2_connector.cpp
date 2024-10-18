@@ -1,10 +1,6 @@
 #include "bz2_connector.h"
 #include "../bzip2/bzlib.h"
 #include <stdexcept>
-//#include <iostream>
-//#define ERROR_IF_EOF(i)       { if ((i) == EOF)  ioError(); }
-//#define ERROR_IF_NOT_ZERO(i)  { if ((i) != 0)    ioError(); }
-////#define ERROR_IF_MINUS_ONE(i) { if ((i) == (-1)) ioError(); }
 
 #if defined(__unix__)
 #define BZ_UNIX 1
@@ -75,7 +71,6 @@
 #   include <io.h>
 #   include <fcntl.h>
 #   include <sys/stat.h>
-#include <fstream>
 
 #   define NORETURN       /**/
 #   define PATH_SEP       '\\'
@@ -117,6 +112,7 @@ typedef unsigned short  UInt16;
 #define False ((Bool)0)
 
 namespace bz2_connector::detail {
+
     static
     Bool myfeof ( FILE* f )
     {
@@ -134,25 +130,28 @@ namespace bz2_connector::detail {
         if (tmp != nullptr) fclose ( tmp );
         return exists;
     }
+
+    constexpr std::size_t obuf_size = 1000000;
+    static_assert(obuf_size == BZ_MAX_UNUSED);
+
+    UChar   obuf[obuf_size];
+    UChar   unused[BZ_MAX_UNUSED];
 }
 
 namespace bz2_connector {
     std::string read_all(char const * filename)
     {
         using namespace detail;
+
         if (!fileExists(filename))
             throw std::runtime_error("bz2_connector: No file found.");
         FILE *zStream = fopen (filename, "rb" );
 
         BZFILE* bzf;
+
         Int32   verbosity = 0;
         Int32   bzerr, bzerr_dummy, ret, nread, streamNo, i;
 
-        constexpr std::size_t obuf_size = 1000000;
-        static_assert(obuf_size == BZ_MAX_UNUSED);
-
-        UChar   obuf[obuf_size];
-        UChar   unused[BZ_MAX_UNUSED];
         Int32   nUnused;
         void*   unusedTmpV;
         UChar*  unusedTmp;
@@ -237,6 +236,7 @@ namespace bz2_connector {
         }
 
         throw std::runtime_error("bz2_connector: decompress:end");
+
     }
 }
 

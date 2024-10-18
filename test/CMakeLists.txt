@@ -48,5 +48,10 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv.gz
         ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv.gz)
+add_custom_command(
+        TARGET test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/test/examples/dummy.csv.bz2
+        ${CMAKE_CURRENT_BINARY_DIR}/dummy.csv.bz2)
 
 enable_testing ()

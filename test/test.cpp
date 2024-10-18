@@ -628,6 +628,28 @@ int main() {
         ) << "it shouldn't throw";
     };
 
+    "Read a .bz2 file"_test = [] {
+
+        std::vector<cell_string> v;
+        std::vector<cell_string> v2;
+
+        expect(nothrow([&] {
+                   static char const chars[] = "\r";
+                   reader<trim_policy::trimming<chars>> r(std::filesystem::path("dummy.csv.bz2"));
+                   r.run_spans<1>([&](auto &s) {
+                                      v.emplace_back(s);
+                                  }, [&](auto &s) {
+                                      v2.emplace_back(s);
+                                  }, [&] {
+                                  }
+                   );
+                   expect(v.size()==3 and v2.size()==3);
+                   expect(v[0]=="a" && v[1]=="b" && v[2]=="c");
+                   expect(v2[0]=="1" && v2[1]=="2" && v2[2]=="3");
+               }) >> fatal
+        ) << "it shouldn't throw";
+    };
+
     // -- Topic change: Move Operations --
 
     "Move construction and assignment"_test = [] {
