@@ -13,11 +13,12 @@ else()
 endif()
 
 add_executable(csvkit_core_test csvkit_core_test.cpp)
-target_link_libraries(csvkit_core_test libcppp-reiconv.static -lpthread)
+target_link_libraries(csvkit_core_test libcppp-reiconv.static  -lpthread )
 add_test(csvkit_core_test csvkit_core_test)
 
 add_executable(encoding_test encoding_test.cpp)
-target_link_libraries(encoding_test libcppp-reiconv.static simdutf)
+target_link_libraries(encoding_test libcppp-reiconv.static simdutf bz2_connector)
+
 add_custom_command(
         TARGET encoding_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -31,7 +32,7 @@ add_custom_command(
 add_test(encoding_test encoding_test)
 
 add_executable(csvclean_bad_skip_lines_test csvclean_bad_skip_lines_test.cpp csvclean_test_funcs.h)
-target_link_libraries(csvclean_bad_skip_lines_test libcppp-reiconv.static)
+target_link_libraries(csvclean_bad_skip_lines_test libcppp-reiconv.static bz2_connector)
 add_custom_command(
         TARGET csvclean_bad_skip_lines_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -40,7 +41,7 @@ add_custom_command(
 add_test(csvclean_bad_skip_lines_test csvclean_bad_skip_lines_test)
 
 add_executable(csvclean_no_header_row_test csvclean_no_header_row_test.cpp csvclean_test_funcs.h)
-target_link_libraries(csvclean_no_header_row_test libcppp-reiconv.static)
+target_link_libraries(csvclean_no_header_row_test libcppp-reiconv.static bz2_connector)
 add_custom_command(
         TARGET csvclean_no_header_row_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -49,7 +50,7 @@ add_custom_command(
 add_test(csvclean_no_header_row_test csvclean_no_header_row_test)
 
 add_executable(csvclean_optional_quote_characters_test csvclean_optional_quote_characters_test.cpp csvclean_test_funcs.h)
-target_link_libraries(csvclean_optional_quote_characters_test libcppp-reiconv.static)
+target_link_libraries(csvclean_optional_quote_characters_test libcppp-reiconv.static bz2_connector)
 add_custom_command(
         TARGET csvclean_optional_quote_characters_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -58,7 +59,7 @@ add_custom_command(
 add_test(csvclean_optional_quote_characters_test csvclean_optional_quote_characters_test)
 
 add_executable(csvclean_mac_newlines_test csvclean_mac_newlines_test.cpp csvclean_test_funcs.h)
-target_link_libraries(csvclean_mac_newlines_test libcppp-reiconv.static)
+target_link_libraries(csvclean_mac_newlines_test libcppp-reiconv.static bz2_connector)
 add_custom_command(
         TARGET csvclean_mac_newlines_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -67,7 +68,7 @@ add_custom_command(
 add_test(csvclean_mac_newlines_test csvclean_mac_newlines_test)
 
 add_executable(csvclean_changes_character_encoding_test csvclean_changes_character_encoding_test.cpp csvclean_test_funcs.h)
-target_link_libraries(csvclean_changes_character_encoding_test libcppp-reiconv.static)
+target_link_libraries(csvclean_changes_character_encoding_test libcppp-reiconv.static bz2_connector)
 add_custom_command(
         TARGET csvclean_changes_character_encoding_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -76,7 +77,7 @@ add_custom_command(
 add_test(csvclean_changes_character_encoding_test csvclean_changes_character_encoding_test)
 
 add_executable(csvclean_removes_bom_test csvclean_removes_bom_test.cpp csvclean_test_funcs.h)
-target_link_libraries(csvclean_removes_bom_test libcppp-reiconv.static)
+target_link_libraries(csvclean_removes_bom_test libcppp-reiconv.static bz2_connector)
 add_custom_command(
         TARGET csvclean_removes_bom_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -85,7 +86,7 @@ add_custom_command(
 add_test(csvclean_removes_bom_test csvclean_removes_bom_test)
 
 add_executable(csvclean_dry_run_test csvclean_dry_run_test.cpp)
-target_link_libraries(csvclean_dry_run_test libcppp-reiconv.static)
+target_link_libraries(csvclean_dry_run_test libcppp-reiconv.static bz2_connector)
 add_custom_command(
         TARGET csvclean_dry_run_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -136,7 +137,7 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/null_byte.csv
         ${CMAKE_CURRENT_BINARY_DIR}/null_byte.csv)
 
-target_link_libraries(csvcut_test libcppp-reiconv.static)
+target_link_libraries(csvcut_test libcppp-reiconv.static bz2_connector)
 add_test(csvcut_test csvcut_test)
 
 add_executable(csvlook_test csvlook_test.cpp)
@@ -191,7 +192,7 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
-target_link_libraries(csvlook_test libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvlook_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(csvlook_test csvlook_test)
 
 add_executable(csvstat_test csvstat_test.cpp)
@@ -226,8 +227,7 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_latin1.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_latin1.csv)
 
-
-target_link_libraries(csvstat_test libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvstat_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(csvstat_test csvstat_test)
 
 add_executable(csvsort_test csvsort_test.cpp)
@@ -277,7 +277,7 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
-target_link_libraries(csvsort_test libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvsort_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(csvsort_test csvsort_test)
 
 add_executable(csvjoin_test csvjoin_test.cpp)
@@ -316,7 +316,7 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
-target_link_libraries(csvjoin_test libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvjoin_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(csvjoin_test csvjoin_test)
 
 add_executable(csvstack_test csvstack_test.cpp)
@@ -366,7 +366,7 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
-target_link_libraries(csvstack_test libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvstack_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(csvstack_test csvstack_test)
 
 add_executable(csvjson_test csvjson_test.cpp)
@@ -411,7 +411,7 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
-target_link_libraries(csvjson_test libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvjson_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(csvjson_test csvjson_test)
 
 add_executable(csvgrep_test csvgrep_test.cpp)
@@ -447,9 +447,8 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
 
-target_link_libraries(csvgrep_test libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvgrep_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(csvgrep_test csvgrep_test)
-
 
 if (IO_CSVKIT_UTILS)
   if (NOT _SANITY_CHECK)
@@ -525,7 +524,7 @@ if (IO_CSVKIT_UTILS)
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/piped_stdin
         ${CMAKE_CURRENT_BINARY_DIR}/piped_stdin)
 
-    target_link_libraries(csvsql_test libcppp-reiconv.static simdutf soci_core -lpthread ociliba)
+    target_link_libraries(csvsql_test libcppp-reiconv.static simdutf soci_core ociliba bz2_connector -lpthread)
     add_test(csvsql_test csvsql_test)
 
     if (UNIX)
@@ -593,7 +592,7 @@ if (IO_CSVKIT_UTILS)
             ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/stdin_select
             ${CMAKE_CURRENT_BINARY_DIR}/stdin_select)
 
-    target_link_libraries(sql2csv_test libcppp-reiconv.static simdutf soci_core -lpthread ociliba)
+    target_link_libraries(sql2csv_test libcppp-reiconv.static simdutf soci_core ociliba bz2_connector -lpthread)
     add_test(sql2csv_test sql2csv_test)
 
     if (UNIX)
@@ -616,7 +615,7 @@ if (IO_CSVKIT_UTILS)
   endif()
 
 add_executable(in2csv_test in2csv_test.cpp)
-target_link_libraries(in2csv_test libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(in2csv_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(in2csv_test in2csv_test)
 
 endif()

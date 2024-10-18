@@ -8,9 +8,13 @@ endif()
 #endif()
 
 add_executable(spanbench spanbench.cpp)
+target_link_libraries(spanbench bz2_connector)
 add_executable(rowsbench rowsbench.cpp)
+target_link_libraries(rowsbench bz2_connector)
 add_executable(castbench castbench.cpp)
+target_link_libraries(castbench bz2_connector)
 add_executable(validatebench validatebench.cpp)
+target_link_libraries(validatebench bz2_connector)
 
 add_custom_command(
         TARGET spanbench POST_BUILD

@@ -9,6 +9,8 @@ else()
 endif()
  
 add_executable(test test.cpp)
+target_link_libraries(test bz2_connector)
+
 add_test(test test)
 
 add_custom_command(

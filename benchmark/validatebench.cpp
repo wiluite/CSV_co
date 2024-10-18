@@ -21,7 +21,7 @@ int main(int argc, char ** argv) {
         auto & _ {r.validate()};
         (void)_;
         auto const end = std::chrono::high_resolution_clock::now();
-        std::cout << "Execution Time : " << std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() << '\n';
+        std::cout << "Execution Time : " << std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() << " ms \n";
     } catch (reader<>::exception const & e) {
         std::cout << e.what() << '\n';
     } catch(std::exception const & e) {

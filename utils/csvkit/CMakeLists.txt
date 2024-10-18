@@ -69,7 +69,7 @@ if (NOT _SANITY_CHECK)
         PRIVATE
         ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MARIADB_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR} external/ocilib/include
     )
-    target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core ociliba)
+    target_link_libraries(csvsql PRIVATE libcppp-reiconv.static simdutf soci_core ociliba bz2_connector -lpthread)
     if (UNIX)
     else()
         if (MSVC)
@@ -102,7 +102,7 @@ if (NOT _SANITY_CHECK)
         PRIVATE
         ${CMAKE_BINARY_DIR}/external/soci/include ${SQLITE3_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR} ${MARIADB_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${FIREBIRD_INCLUDE_DIR} ${ORACLE_INCLUDE_DIR} external/ocilib/include
     )
-    target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf -lpthread soci_core ociliba)
+    target_link_libraries(sql2csv PRIVATE libcppp-reiconv.static simdutf soci_core ociliba bz2_connector -lpthread)
     if (UNIX)
     else()
         if (MSVC)
@@ -130,29 +130,29 @@ endif()
 
 add_subdirectory(test)
 add_executable(csvclean csvclean.cpp)
-target_link_libraries(csvclean libcppp-reiconv.static simdutf)
+target_link_libraries(csvclean libcppp-reiconv.static simdutf bz2_connector)
 
 add_executable(csvcut csvcut.cpp)
-target_link_libraries(csvcut libcppp-reiconv.static simdutf)
+target_link_libraries(csvcut libcppp-reiconv.static simdutf bz2_connector)
 
 add_executable(csvlook csvlook.cpp)
-target_link_libraries(csvlook libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvlook libcppp-reiconv.static simdutf bz2_connector -lpthread)
 
 add_executable(csvstat csvstat.cpp)
-target_link_libraries(csvstat libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvstat libcppp-reiconv.static simdutf bz2_connector -lpthread)
 
 add_executable(csvsort csvsort.cpp)
-target_link_libraries(csvsort libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvsort libcppp-reiconv.static simdutf bz2_connector -lpthread)
 
 add_executable(csvjson csvjson.cpp)
-target_link_libraries(csvjson libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvjson libcppp-reiconv.static simdutf bz2_connector -lpthread)
 
 add_executable(csvjoin csvjoin.cpp)
-target_link_libraries(csvjoin libcppp-reiconv.static simdutf -lpthread)
+target_link_libraries(csvjoin libcppp-reiconv.static simdutf bz2_connector -lpthread)
 
 add_executable(csvstack csvstack.cpp)
-target_link_libraries(csvstack libcppp-reiconv.static simdutf)
+target_link_libraries(csvstack libcppp-reiconv.static simdutf bz2_connector)
 
 add_executable(csvgrep csvgrep.cpp)
-target_link_libraries(csvgrep libcppp-reiconv.static simdutf)
+target_link_libraries(csvgrep libcppp-reiconv.static simdutf bz2_connector)
 
