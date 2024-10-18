@@ -21,6 +21,7 @@
 #include "csv_co/external/vince-csv-parser/enum_data_type.h"
 #include "external/has_member.hpp"
 #include "external/ezgz/ezgz.hpp"
+#include "csv_co/external/bz2_connector/bz2_connector.h"
 //-----------------------------
 
 #if (IS_CLANG==0)
@@ -1282,13 +1283,16 @@ namespace csv_co {
         /// Constructs reader from disk file source
         explicit reader(std::filesystem::path const & csv_src) : src {mio::ro_mmap {}} {
             auto const str = csv_src.string();
-            if (str.find(".gz") == std::string::npos) {
+            if (str.find(".gz") != std::string::npos)
+                src = EzGz::IGzFile<>(str).readAll();
+            else if (str.find(".bz2") != std::string::npos)
+                src = bz2_connector::read_all(str.c_str());
+            else {
                 std::error_code mmap_error;
                 std::get<0>(src).map(str.c_str(), mmap_error);
                 if (mmap_error)
                     throw exception (mmap_error.message(), " : ", str );
-            } else
-                src = EzGz::IGzFile<>(str).readAll();
+            }
         }
 
         /// Constructs reader from string source

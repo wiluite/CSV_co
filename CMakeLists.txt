@@ -142,8 +142,7 @@ endif()
 
 include_directories(utils/csvkit/external/multiprecision/include)
 
-
-
+add_subdirectory(include/csv_co/external/bz2_connector)
 add_subdirectory(example)
 add_subdirectory(benchmark)
 if (MSVC)
