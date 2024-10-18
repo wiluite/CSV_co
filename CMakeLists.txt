@@ -96,6 +96,8 @@ if (NOT MSVC)
     endif()
 endif()
 
+add_subdirectory(include/csv_co/external/bzip2)
+
 if(MSVC)
     add_definitions(-DIS_MSVC=true)
     add_definitions(/WX)
@@ -138,7 +140,9 @@ else()
     endif()
 endif()
 
-include_directories(external/multiprecision/include)
+include_directories(utils/csvkit/external/multiprecision/include)
+
+
 
 add_subdirectory(example)
 add_subdirectory(benchmark)

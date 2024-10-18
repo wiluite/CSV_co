@@ -1288,7 +1288,7 @@ namespace csv_co {
                 if (mmap_error)
                     throw exception (mmap_error.message(), " : ", str );
             } else
-                src = EzGz::IGzFile<>(str ).readAll();
+                src = EzGz::IGzFile<>(str).readAll();
         }
 
         /// Constructs reader from string source
