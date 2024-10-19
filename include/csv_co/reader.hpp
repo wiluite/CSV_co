@@ -1670,7 +1670,7 @@ namespace csv_co {
             static std::locale & num_locale();
 
             /// States whether to calculate most decimal places for some utils
-            static void maxprecision_flag(bool) noexcept;
+            static void no_maxprecision(bool) noexcept;
 
             /// Cell numeric precision getter
             unsigned char precision() const noexcept;
@@ -1692,7 +1692,7 @@ namespace csv_co {
             };
 
             inline static std::locale * num_locale_ {nullptr};
-            inline static bool no_maxprecision {false};
+            inline static bool no_maxprec_ {false};
             inline unsigned char get_precision(std::string & rep) const;
             inline bool can_be_money(std::string const & s) const;
             inline void get_num_from_money() const;

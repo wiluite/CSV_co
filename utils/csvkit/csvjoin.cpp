@@ -91,10 +91,10 @@ namespace csvjoin::detail::typify {
         imbue_numeric_locale(reader, args);
         [&option] {
             using unquoted_elem_type = typename Reader::template typed_span<csv_co::unquoted>;
-            unquoted_elem_type::maxprecision_flag(option == typify_option::typify_without_precisions);
+            unquoted_elem_type::no_maxprecision(option == typify_option::typify_without_precisions);
 
             using quoted_elem_type = typename Reader::template typed_span<csv_co::quoted>;
-            unquoted_elem_type::maxprecision_flag(option == typify_option::typify_without_precisions);
+            unquoted_elem_type::no_maxprecision(option == typify_option::typify_without_precisions);
         }();
 
         setup_date_parser_backend(reader, args);

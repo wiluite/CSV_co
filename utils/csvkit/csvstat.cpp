@@ -404,10 +404,10 @@ namespace csvstat {
                         using reader_type = std::decay_t<decltype(reader)>;
 
                         using unquoted_elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
-                        unquoted_elem_type::maxprecision_flag(args.no_mdp);
+                        unquoted_elem_type::no_maxprecision(args.no_mdp);
 
                         using quoted_elem_type = typename reader_type::template typed_span<csv_co::quoted>;
-                        quoted_elem_type::maxprecision_flag(args.no_mdp);
+                        quoted_elem_type::no_maxprecision(args.no_mdp);
                     }();
 
                     setup_date_parser_backend(reader, args);

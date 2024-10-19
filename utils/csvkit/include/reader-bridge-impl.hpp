@@ -64,7 +64,7 @@ namespace csv_co {
             std::function<unsigned char(std::string &)> fun_impl;
         public:
             precision_calculator() {
-                if (!no_maxprecision) {
+                if (!no_maxprec_) {
                     fun_impl = [&] (std::string & rep) -> unsigned char {
                         rep.erase(0, rep.find_first_not_of(" \t\r"));
                         rep.erase(rep.find_last_not_of(" \t\r") + 1);
@@ -373,8 +373,8 @@ namespace csv_co {
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::maxprecision_flag(bool flag) noexcept {
-        no_maxprecision = flag;
+    void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::no_maxprecision(bool flag) noexcept {
+        no_maxprec_ = flag;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
