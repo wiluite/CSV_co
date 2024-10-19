@@ -30,6 +30,8 @@ int main() {
     struct in2csv_specific_args {
         std::string format;
         std::string schema;
+        std::string key;
+        bool names = false;
     };
 
     "exceptions"_test = [] {
@@ -44,7 +46,9 @@ int main() {
             stdin_redir sr("stdin_select");
             expect(throws<in2csv::detail::no_format_specified_on_piping>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
         }
+
         args.file = "blah-blah";
+        args.format.clear();
         expect(throws<in2csv::detail::no_schema_when_no_extension>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
 
         args.file = "blah-blah.unknown";
@@ -65,6 +69,11 @@ int main() {
 
         args.file = "stdin_select"; // all is fine (format, schema and file) - no exception
         expect(nothrow([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
+
+        args.file = "";
+        args.format = "dbf";
+        expect(throws<in2csv::detail::dbf_cannot_be_converted_from_stdin>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
+
     };
 
 }
