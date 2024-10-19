@@ -1674,6 +1674,7 @@ namespace csv_co {
 
             /// Cell numeric precision getter
             unsigned char precision() const noexcept;
+            static void no_leading_zeroes(bool) noexcept;
         private:
             static inline auto date_datetime_call_operator_implementation(auto const & ccs, auto & formats);
 
@@ -1696,6 +1697,7 @@ namespace csv_co {
             inline unsigned char get_precision(std::string & rep) const;
             inline bool can_be_money(std::string const & s) const;
             inline void get_num_from_money() const;
+            inline static bool no_leading_zeroes_ {false};
         public:
             enum class date_parser_backend_t {
                 compiler_supported = 0,

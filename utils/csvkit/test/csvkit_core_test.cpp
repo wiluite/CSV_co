@@ -280,7 +280,37 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             using policy = csv_co::trim_policy::alltrim;
             expect(reader<policy>::typed_span<unquoted>{reader<policy>::cell_span{cs}}.is_boolean());
             expect(not reader<policy>::typed_span<quoted>{reader<policy>::cell_span{cs}}.is_boolean());
+        };
 
+        "no leading zeroes"_test = [&cs] {
+            cs = R"( 01 )";
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num());
+            }
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                reader<>::typed_span<quoted>::no_leading_zeroes(true);
+                expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num());
+                reader<>::typed_span<quoted>::no_leading_zeroes(false);
+            }
+            cs = R"( 02.3 )";
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                expect(!span.is_boolean() and span.is_num());
+            }
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                reader<>::typed_span<quoted>::no_leading_zeroes(true);
+                expect(!span.is_boolean() and !span.is_num() and span.is_str());
+                reader<>::typed_span<quoted>::no_leading_zeroes(false);
+            }
+            {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                reader<>::typed_span<unquoted>::no_leading_zeroes(true);
+                expect(!span.is_boolean() and !span.is_num() and span.is_str());
+                reader<>::typed_span<unquoted>::no_leading_zeroes(false);
+            }
         };
 
     };

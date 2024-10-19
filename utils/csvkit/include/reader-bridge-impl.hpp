@@ -166,17 +166,31 @@ namespace csv_co {
     void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::get_value() const {
         // Check to see if value has been cached previously, if not evaluate it
         if (type_ == vince_csv::DataType::UNKNOWN) {
-            assert (type_ == vince_csv::DataType::UNKNOWN);
             auto s_ = str();
+
+            auto postprocess_num = [this, &s_]() {
+                if (no_leading_zeroes_) {
+                    assert(type_ > vince_csv::DataType::CSV_STRING);
+                    // if not boolean
+                    if (!(type_ == vince_csv::DataType::CSV_INT8 && (value == 0 or value == 1))) {
+                        auto const pos = s_.find_first_not_of(' ');
+                        if (pos != std::string::npos and s_[pos] == '0')
+                            type_ = vince_csv::DataType::CSV_STRING;
+                    }
+                }
+            };
+
             if (num_locale().name() == "C") {
                 if ((type_ = vince_csv::internals::data_type(s_, &value)) > vince_csv::DataType::CSV_STRING) {
                     prec = (type_ == vince_csv::DataType::CSV_DOUBLE) ? get_precision(s_) : 0;
+                    postprocess_num();
                     return;
                 }
             } else {
                 if (to_C_locale(s_)) {
                     if ((type_ = vince_csv::internals::data_type(s_, &value)) > vince_csv::DataType::CSV_STRING) {
                         prec = (type_ == vince_csv::DataType::CSV_DOUBLE) ? get_precision(s_) : 0;
+                        postprocess_num();
                         return;
                     } else if (type_ ==  vince_csv::DataType::CSV_STRING) {
                         if (can_be_money(s_))
@@ -192,7 +206,7 @@ namespace csv_co {
                     prec = 0;
                 }
             }
-        }
+        } // type_ == vince_csv::DataType::UNKNOWN
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
@@ -293,9 +307,9 @@ namespace csv_co {
     template<bool Unquoted>
     bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_boolean() const {
         type();
-        if (type_ == vince_csv::DataType::CSV_INT8 && (value == 0 or value == 1)) {
+        if (type_ == vince_csv::DataType::CSV_INT8 && (value == 0 or value == 1))
             return true;
-        } else if (type_ == vince_csv::DataType::CSV_STRING) {
+        else if (type_ == vince_csv::DataType::CSV_STRING) {
             auto const str = toupper_cell_string<T,Unquoted>(*this);
             auto const result = get_bool_set().find(str) != get_bool_set().end();
             if (result) {
@@ -491,6 +505,13 @@ namespace csv_co {
     void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::setup_date_parser_backend(date_parser_backend_t value) noexcept {
         date_parser_backend = value;
     }
+
+    template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
+    template<bool Unquoted>
+    void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::no_leading_zeroes(bool flag) noexcept {
+        no_leading_zeroes_ = flag;
+    }
+
 
     /// Time storage class for time parser class right underneath
     class time_storage {
