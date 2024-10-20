@@ -512,6 +512,13 @@ namespace csv_co {
         no_leading_zeroes_ = flag;
     }
 
+    template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
+    template<bool Unquoted>
+    void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::case_insensitivity(bool flag) noexcept {
+#if 0
+        case_insensitivity_ = flag ? _stricmp : strcmp;
+#endif
+    }
 
     /// Time storage class for time parser class right underneath
     class time_storage {
