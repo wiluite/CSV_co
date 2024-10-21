@@ -359,13 +359,6 @@ message(STATUS "Summary of build options:
         C compiler:     ${CMAKE_C_COMPILER}
         CFLAGS:         ${CMAKE_C_FLAGS_${_build_type}} ${CMAKE_C_FLAGS}
         WARNCFLAGS:     ${WARNCFLAGS}
-    Test:
-        Python:         ${Python3_FOUND} (${Python3_VERSION}, ${Python3_EXECUTABLE})
-    Docs:
-        Build docs:     ${ENABLE_DOCS}
-    Features:
-        Applications:   ${ENABLE_APP}
-        Examples:       ${ENABLE_EXAMPLES}
 ")
 if(ENABLE_LIB_ONLY_DISABLED_OTHERS)
     message("Only the library will be built. To build other components "

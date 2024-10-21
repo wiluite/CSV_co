@@ -6,6 +6,8 @@ by Jan Bergström, Alphabet AB, 2021 Open source code
 
 2021-10-21
 
+2024 wiluite, Slight modifications.
+
 *******************************************************************************************/
 //#define UTF32_TEST 1
 #include <stdlib.h> 
