@@ -23,8 +23,6 @@
   #define isatty _isatty
 #endif
 
-// TODO: Urgent
-// 1. implement -z option in typify() for utils that use typify()
 namespace csvkit::cli {
     /// Returns zero-based index of a column by name or by order depending on the offset value 
     unsigned match_column_identifier (auto const & column_names, char const * c, auto column_offset);

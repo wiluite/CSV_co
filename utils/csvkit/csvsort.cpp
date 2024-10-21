@@ -21,6 +21,7 @@ namespace csvsort {
         bool & names = flag ("n,names","Display column names and indices from the input CSV and exit.");
         std::string & columns = kwarg("c,columns","A comma-separated list of column indices, names or ranges to sort by, e.g. \"1,id,3-5\".").set_default("all columns");
         bool & r = flag("r,reverse", "Sort in descending order.");
+        bool & ignore_case = flag("i,ignore-case", "Perform case-independent sorting.");
         bool & no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
         bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported.").set_default(true);
         bool & parallel_sort = flag("p,parallel-sort", "Use parallel sort.");
@@ -231,6 +232,12 @@ namespace csvsort {
     static_assert(!std::is_copy_constructible<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
     static_assert(std::is_move_constructible<compromise_table_MxN<csv_co::reader<>,ARGS>>::value);
 
+    template <typename Reader, typename Args>
+    void setup_string_comparison_type(Reader &, Args const &args) {
+        using unquoted_elem_type = typename Reader::template typed_span<csv_co::unquoted>;
+        unquoted_elem_type::case_insensitivity(args.ignore_case);
+    }
+
     void sort(auto & reader_reference, auto const & args) {
         using namespace csv_co;
 
@@ -238,7 +245,7 @@ namespace csvsort {
         skip_lines(reader, args);
         quick_check(reader, args);
 
-        auto  header = obtain_header_and_<skip_header>(reader, args);
+        auto header = obtain_header_and_<skip_header>(reader, args);
 
         if (args.names) {
             print_header(std::cout, header, args);
@@ -249,6 +256,8 @@ namespace csvsort {
             args.columns = args.columns == "all columns" ? "" : args.columns;
             std::string not_columns;
             auto const ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes{not_columns});
+
+            setup_string_comparison_type(reader, args);
 
             auto const types_blanks = std::get<1>(typify(reader, args, typify_option::typify_without_precisions));
 

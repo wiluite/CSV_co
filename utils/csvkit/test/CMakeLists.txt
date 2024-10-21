@@ -281,6 +281,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_field_size_limit.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_field_size_limit.csv)
+add_custom_command(
+        TARGET csvsort_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_ignore_case.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_ignore_case.csv)
 
 target_link_libraries(csvsort_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(csvsort_test csvsort_test)

@@ -28,6 +28,7 @@ int main() {
 #endif
     struct csvsort_specific_args {
         bool r {false};
+        bool ignore_case {false};
         bool parallel_sort {true};
     };
 
@@ -105,6 +106,24 @@ int main() {
         });
 
         expect(test_order == new_order);
+    };
+
+    "ignore case"_test = [] {
+        namespace tf = csvkit::test_facilities;
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, tf::output_args, csvsort_specific_args {
+            Args() { file = "test_ignore_case.csv"; date_fmt = "%Y-%m-%d"; ignore_case = true; }
+        } args;
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(csvsort::sort)
+
+
+        expect(cout_buffer.str() == R"(a,b,c
+3,2009-01-01,d
+20,2001-01-01,c
+20,2002-01-01,b
+100,2003-01-01,a
+100,2003-01-01,A
+)");
     };
 
     "no blanks"_test = [] {
