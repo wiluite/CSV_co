@@ -1699,7 +1699,7 @@ namespace csv_co {
             inline bool can_be_money(std::string const & s) const;
             inline void get_num_from_money() const;
             inline static bool no_leading_zeroes_ {false};
-            inline static int(*case_insensitivity_)(char const *, char const *) = strcmp;
+            inline static int(*string_comparison_func)(void const *, void const*) = reinterpret_cast<int (*)(void const *, void const*)>(strcmp);
         public:
             enum class date_parser_backend_t {
                 compiler_supported = 0,

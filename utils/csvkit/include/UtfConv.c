@@ -8744,7 +8744,7 @@ int StrnCiCmpUtf8(const Utf8Char* pUtf8s1, const Utf8Char* pUtf8s2, size_t ztCou
 			int iDiff = StrnCiCmpUtf32(pUtf32s1, pUtf32s2, ztCount);
 			free(pUtf32s1);
 			free(pUtf32s2);
-			return iDiff;
+			return (iDiff < 0 ? -1 : (iDiff > 0 ? 1 : 0));
 		}
 		free(pUtf32s1);
 		return (-1); // calloc() failure

@@ -12,6 +12,7 @@
 #include <deque>
 #include "../external/date/date.h"
 #include <codecvt>
+#include "UtfConv.c"
 
 namespace csv_co::csvkit {
     constexpr auto to_basic_string_32(auto && str) {
@@ -233,7 +234,7 @@ namespace csv_co {
     template<bool Unquoted>
     [[nodiscard]] auto reader<T, Q, D, L, M, E>::typed_span<Unquoted>::compare(typed_span const &other) const -> int {
         static_assert(Unquoted == csv_co::unquoted);
-        return unquoted_cell_string(*this).compare(unquoted_cell_string(other));
+        return string_comparison_func(unquoted_cell_string(*this).c_str(), unquoted_cell_string(other).c_str());
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
@@ -515,9 +516,10 @@ namespace csv_co {
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::case_insensitivity(bool flag) noexcept {
-#if 0
-        case_insensitivity_ = flag ? _stricmp : strcmp;
-#endif
+        if (flag)
+            string_comparison_func = reinterpret_cast<int (*)(void const*, void const*)>(StrCiCmpUtf8);
+        else
+            string_comparison_func = reinterpret_cast<int (*)(void const*, void const*)>(strcmp);
     }
 
     /// Time storage class for time parser class right underneath

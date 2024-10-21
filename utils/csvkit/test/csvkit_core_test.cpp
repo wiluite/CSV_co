@@ -313,6 +313,25 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             }
         };
 
+        "utf-8 ignore case comparison"_test = [&cs] {
+            cs = R"( ПрИвЕт, C++ )";
+            std::string cs2 = R"( привет, c++ )";
+            {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                reader<>::typed_span<unquoted> span2{reader<>::cell_span{cs2}};
+                reader<>::typed_span<unquoted>::case_insensitivity(false);
+                expect (span.compare(span2) < 0);
+            }
+            {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                reader<>::typed_span<unquoted> span2{reader<>::cell_span{cs2}};
+                reader<>::typed_span<unquoted>::case_insensitivity(true);
+                expect(span.compare(span2) == 0);
+                reader<>::typed_span<unquoted>::case_insensitivity(false);
+            }
+        };
+
+
     };
 
     "generate column names"_test = [] {
@@ -393,7 +412,6 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
         if (std::strcmp(t.acp(), "UTF-8") != 0) {
             expect(str.size() != 7);
         }
-        std::cout << str.size() << std::endl;
     };
 
     if (locale_support) {
