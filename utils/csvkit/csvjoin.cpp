@@ -22,7 +22,7 @@ namespace csvjoin {
         bool &outer_join = flag("outer", "Perform a full outer join, rather than the default inner join.");
         bool &left_join = flag("left", "Perform a left outer join, rather than the default inner join. If more than two files are provided this will be executed as a sequence of left outer joins, starting at the left.");
         bool &right_join = flag("right", "Perform a right outer join, rather than the default inner join. If more than two files are provided this will be executed as a sequence of right outer joins, starting at the right.");
-        bool &no_inference = flag("I,no-inference", "Disable type inference when parsing the input.");
+        bool &no_inference = flag("I,no-inference", "Disable type inference (and --locale, --date-format, --datetime-format, --no-leading-zeroes) when parsing the input.");
         bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
         bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 

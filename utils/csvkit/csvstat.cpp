@@ -47,7 +47,7 @@ namespace csvstat {
 
         std::string &decimal_format = kwarg("decimal-format","%-format specification for printing decimal numbers. Defaults to locale-specific formatting with \"%.3f\"").set_default("%.3f");
         bool &no_grouping_sep = flag("G,no-grouping-separator", "Do not use grouping separators in decimal numbers");
-        bool &no_inference = flag("I,no-inference","Disable type inference when parsing the input. Disable reformatting of values.");
+        bool &no_inference = flag("I,no-inference","Disable type inference (and --locale, --date-format, --datetime-format, --no-leading-zeroes) when parsing the input.");
         bool &no_mdp = flag("no-mdp,no-max-precision","Do not calculate most decimal places.");
         bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
 

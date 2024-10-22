@@ -25,7 +25,7 @@ namespace csvlook {
         unsigned & max_column_width = kwarg("max-column-width","Truncate all columns to at most this width. The remainder will be replaced with ellipsis.").set_default(max_unsigned_limit);
         unsigned & max_precision = kwarg("max-precision","The maximum number of decimal places to display. The remainder will be replaced with ellipsis.").set_default(3u);
         bool & no_number_ellipsis = flag("no-number-ellipsis","Disable the ellipsis if --max-precision is exceeded.");
-        bool & no_inference = flag("I,no-inference", "Disable type inference when parsing the input. This disables the reformatting of values.");
+        bool & no_inference = flag("I,no-inference", "Disable type inference (and --locale, --date-format, --datetime-format, --no-leading-zeroes) when parsing the input.");
         std::string & glob_locale = kwarg("G,glob-locale", "Superseded global locale.").set_default("C");
         bool &date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
         bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);

@@ -27,7 +27,7 @@ namespace csvjson {
         std::string & crs = kwarg("crs", "A coordinate reference system string to be included with GeoJSON output. Requires --lat and --lon.").set_default("");
         bool & no_bbox = flag("no-bbox","Disable the calculation of a bounding box.");
         bool & stream = flag("stream","Output JSON as a stream of newline-separated objects, rather than an as an array.");
-        bool & no_inference = flag("I,no-inference", "Disable type inference (and --locale, --date-format, --datetime-format) when parsing CSV input.");
+        bool & no_inference = flag("I,no-inference", "Disable type inference (and --locale, --date-format, --datetime-format) when parsing the input.");
         bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
 
         void welcome() final {
