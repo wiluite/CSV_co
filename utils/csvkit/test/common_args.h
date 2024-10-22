@@ -25,6 +25,7 @@ namespace csvkit::test_facilities {
         bool blanks {false};
         std::string date_fmt {R"(%m/%d/%Y)"};
         std::string datetime_fmt {R"(%m/%d/%Y %I:%M %p)"};
+        bool no_leading_zeroes {false};
         bool no_inference {false};
         bool date_lib_parser {true};
     };

@@ -21,6 +21,7 @@ namespace csvstat {
         std::vector<std::string> &null_value = kwarg("null-value","Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
         std::string &date_fmt = kwarg("date-format","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
         std::string &datetime_fmt = kwarg("datetime-format","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
+        bool & no_leading_zeroes = flag("no-leading-zeroes", "Do not convert a numeric value with leading zeroes to a number.");
         bool &csv = flag("csv", "Output results as a CSV table, rather than plain text.");
         bool &json = flag("json", "Output results as a JSON test, rather than plain text.");
         int &indent = kwarg("i,indent","Indent the output JSON this many spaces. Disabled by default.").set_default(min_int_limit);
@@ -411,6 +412,7 @@ namespace csvstat {
                     }();
 
                     setup_date_parser_backend(reader, args);
+                    setup_leading_zeroes_processing(reader, args);
 
                     //TODO: for now e.is_null() calling first is obligate. Can we do better?
                     #define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = true;

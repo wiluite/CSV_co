@@ -847,6 +847,16 @@ namespace csvkit::cli {
             quoted_elem_type::date_parser_backend_t::compiler_supported : quoted_elem_type::date_parser_backend_t::date_lib_supported);
     }
 
+    void setup_leading_zeroes_processing(auto & reader, auto const & args) {
+        using reader_type = std::decay_t<decltype(reader)>;
+
+        using unquoted_elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
+        unquoted_elem_type::no_leading_zeroes(args.no_leading_zeroes);
+
+        using quoted_elem_type = typename reader_type::template typed_span<csv_co::quoted>;
+        quoted_elem_type::no_leading_zeroes(args.no_leading_zeroes);
+    }
+
     void update_null_values(std::vector<std::string> & null_values) {
         for (auto & e: null_values) {
             std::transform(e.begin(), e.end(), e.begin(), ::toupper);
@@ -938,6 +948,7 @@ namespace csvkit::cli {
         }();
 
         setup_date_parser_backend(reader, args);
+        setup_leading_zeroes_processing(reader, args);
 
         //TODO: for now e.is_null() calling first is obligate. Can we do better?
 

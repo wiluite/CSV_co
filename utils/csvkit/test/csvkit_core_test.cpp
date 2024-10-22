@@ -8,11 +8,13 @@
 #include "ut.hpp"
 #include <cli.h>
 #include "test_reader_macros.h"
+#include "common_args.h"
 
 int main() {
     using namespace boost::ut;
     using namespace csv_co;
     using namespace ::csvkit::cli;
+    using namespace ::csvkit::test_facilities;
 
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
@@ -501,21 +503,13 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
     using detect_date_and_datetime_types_reader_type = test_reader_r1;
 
     "detect date and datetime types"_test = [&] {
-        // TODO: change it to from common_args.h 
-        struct args {
-            std::string num_locale="C";
-            unsigned maxfieldsize = max_unsigned_limit;
-            std::string datetime_fmt = R"(%d/%m/%EY %I:%M:%S)";
-            std::string date_fmt {};
-            bool no_header = false;
-            unsigned skip_lines= 0;
-            bool blanks = false;
-            bool no_inference = false;
-            bool date_lib_parser {false};
-            mutable std::vector<std::string> null_value {};
-        } a;
+        struct args : common_args, type_aware_args {} a;
         {
+            a.maxfieldsize = max_unsigned_limit;
+            a.datetime_fmt = R"(%d/%m/%EY %I:%M:%S)";
             a.date_fmt = R"(%d/%m/%Y)"; // can not use %Y against 2-digit year in all cases!
+            a.date_lib_parser = false;
+
             notrimming_reader_type r("a\n01/02/24\n");
             auto [types, blanks] = std::get<1>(typify(r, a, typify_option::typify_without_precisions));
             expect(types.size() == 1);
@@ -601,20 +595,11 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
     using yet_one_reader_type = test_reader_r3;
 
     "detect date and datetime types with Howard Hinnant's date library parser"_test = [&] {
-        struct args {
-            std::string num_locale="C";
-            unsigned maxfieldsize = max_unsigned_limit;
-            std::string datetime_fmt = R"(%d/%m/%EY %H:%M:%S)";
-            std::string date_fmt {};
-            bool no_header = false;
-            unsigned skip_lines= 0;
-            bool blanks = false;
-            bool no_inference = false;
-            bool date_lib_parser {true};
-            mutable std::vector<std::string> null_value {};
-        } a;
+        struct args : common_args, type_aware_args {} a;
 
         {
+            expect(a.date_lib_parser == true);
+            a.datetime_fmt = R"(%d/%m/%EY %H:%M:%S)";
             a.date_fmt = R"(%d/%m/%Y)"; // We really can use %Y against 2-digit year.
             another_reader_type r("a\n01/02/24\n");
             auto [types, blanks] = std::get<1>(typify(r, a, typify_option::typify_without_precisions));
@@ -687,19 +672,11 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
 
     "typify"_test = [&] {
 
-        struct args {
-            std::string num_locale="C";
-            unsigned maxfieldsize = max_unsigned_limit;
-            std::string datetime_fmt = R"(%d/%m/%EY %I:%M:%S)";
-            std::string date_fmt = R"(%d/%m/%EY)";
-            bool no_header = false;
-            unsigned skip_lines= 0;
-            bool blanks = false;
-            bool no_inference = false;
-            bool date_lib_parser {false};
-            mutable std::vector<std::string> null_value {};
-        } a;
+        struct args : common_args, type_aware_args {} a;
 
+        a.datetime_fmt = R"(%d/%m/%EY %I:%M:%S)";
+        a.date_fmt = R"(%d/%m/%EY)";
+        a.date_lib_parser = false;
         // 10  ,  NULL,  28/02/2023 08:08:08, 14/04/2023,              ,1sec
         // NULL,  F   ,  29/03/2023 08:08:08, 15/04/2023,  another text,1sec
         // -inf,  F   ,  30/03/2003 07:08:09, 16/04/2023,  yet one     ,1sec
@@ -766,18 +743,11 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
     };
 
     "typify with precisions"_test = [&] {
-        struct args {
-            std::string num_locale="C";
-            unsigned maxfieldsize = max_unsigned_limit;
-            std::string datetime_fmt = R"(%d/%m/%EY %I:%M:%S)";
-            std::string date_fmt = R"(%d/%m/%EY)";
-            bool no_header = false;
-            unsigned skip_lines= 0;
-            bool blanks = false;
-            bool no_inference = false;
-            bool date_lib_parser {false};
-            mutable std::vector<std::string> null_value {};
-        } a;
+        struct args : common_args, type_aware_args {} a;
+
+        a.datetime_fmt = R"(%d/%m/%EY %I:%M:%S)";
+        a.date_fmt = R"(%d/%m/%EY)";
+        a.date_lib_parser = false;
 
         notrimming_reader_type r("h1\n10.1\n10.1234\n10.12\n");
         {

@@ -17,6 +17,7 @@ namespace csvjoin {
         std::vector<std::string> &null_value = kwarg("null-value","Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
         std::string &date_fmt = kwarg("date-format", "Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
         std::string &datetime_fmt = kwarg("datetime-format", "Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
+        bool & no_leading_zeroes = flag("no-leading-zeroes", "Do not convert a numeric value with leading zeroes to a number.");
         std::string &columns = kwarg("c,columns", "The column name(s) on which to join. Should be either one name (or index) or a comma-separated list with one name (or index) for each file, in the same order that the files were specified. May also be left unspecified, in which case the two files will be joined sequentially without performing any matching.").set_default("");
         bool &outer_join = flag("outer", "Perform a full outer join, rather than the default inner join.");
         bool &left_join = flag("left", "Perform a left outer join, rather than the default inner join. If more than two files are provided this will be executed as a sequence of left outer joins, starting at the left.");
@@ -98,6 +99,7 @@ namespace csvjoin::detail::typify {
         }();
 
         setup_date_parser_backend(reader, args);
+        setup_leading_zeroes_processing(reader, args);
 
         //TODO: for now e.is_null() calling first is obligate. Can we do better?
 
@@ -843,6 +845,7 @@ namespace csvjoin::detail {
                         std::string num_locale;
                         std::string datetime_fmt;
                         std::string date_fmt;
+                        bool no_leading_zeroes;
                         bool blanks{};
                         mutable std::vector<std::string> null_value;
                         bool no_inference{};
@@ -854,6 +857,7 @@ namespace csvjoin::detail {
                         , args.num_locale
                         , args.datetime_fmt
                         , args.date_fmt
+                        , args.no_leading_zeroes
                         , args.blanks
                         , args.null_value  
                         , args.no_inference

@@ -18,6 +18,7 @@ namespace csvsort {
         std::vector<std::string> & null_value = kwarg("null-value NULL_VALUES [NULL_VALUES ...]", "Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
         std::string & date_fmt = kwarg("date-format","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
         std::string & datetime_fmt = kwarg("datetime-format","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
+        bool & no_leading_zeroes = flag("no-leading-zeroes", "Do not convert a numeric value with leading zeroes to a number.");
         bool & names = flag ("n,names","Display column names and indices from the input CSV and exit.");
         std::string & columns = kwarg("c,columns","A comma-separated list of column indices, names or ranges to sort by, e.g. \"1,id,3-5\".").set_default("all columns");
         bool & r = flag("r,reverse", "Sort in descending order.");

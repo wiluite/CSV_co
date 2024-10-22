@@ -17,6 +17,7 @@ namespace csvjson {
         std::vector<std::string> &null_value = kwarg("null-value","Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
         std::string &date_fmt = kwarg("date-format","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
         std::string &datetime_fmt = kwarg("datetime-format","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
+        bool & no_leading_zeroes = flag("no-leading-zeroes", "Do not convert a numeric value with leading zeroes to a number.");
         int & indent = kwarg("i,indent", "Indent the output JSON this many spaces. Disabled by default.").set_default(min_int_limit);
         std::string & key = kwarg("k,key","Output JSON as an object keyed by a given column, KEY, rather than as an array. All column values must be unique. If --lat and --lon are specified, this column is used as the GeoJSON Feature ID.").set_default("");
         std::string & lat = kwarg("lat", "A column index or name containing a latitude. Output will be GeoJSON instead of JSON. Requires --lon.").set_default("");
