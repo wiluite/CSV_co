@@ -77,13 +77,6 @@ namespace in2csv::detail {
         return {};
     }
 
-#if 0
-    struct converter_client
-    {
-        virtual ~converter_client() = default;
-        virtual void convert() = 0;
-    };
-#endif
     template <class Args2>
     struct csv_client : converter_client {
         explicit csv_client(Args2 & args) : args(args) {
@@ -109,47 +102,6 @@ namespace in2csv::detail {
     private:
         Args2 & args;
     };
-
-#if 0
-    void conv(auto & reader, auto const & args) {
-        static_assert(std::is_same_v<std::decay_t<decltype(reader)>, notrimming_reader_type> or 
-                      std::is_same_v<std::decay_t<decltype(reader)>, skipinitspace_reader_type>);
-    }
-#endif
-
-#if 0
-    template <class Args2>
-    struct fixed_client : converter_client {
-        explicit fixed_client(Args2 & args) : args(args) {
-        }
-        void convert() override {
-#if 0
-            std::variant<std::monostate,                                                             
-                    std::reference_wrapper<notrimming_reader_type>  
-                   , std::reference_wrapper<skipinitspace_reader_type>> variants;
-                                                                                 
-            if (!args.skip_init_space) {                                             
-                notrimming_reader_type r (std::filesystem::path{args.schema});
-                variants = std::ref(r);            
-            } else {
-                skipinitspace_reader_type r (std::filesystem::path{args.schema});
-                variants = std::ref(r);            
-            }
-            std::visit([&](auto & reader) {
-                if constexpr(!std::is_same_v<std::decay_t<decltype(reader)>, std::monostate>) {
-                    recode_source(reader.get(), args);  
-                    conv(reader.get(), args);
-                }
-            }, variants);
-#endif
-        }
-        static std::shared_ptr<converter_client> create(Args2 & args) {
-            return std::make_shared<fixed_client>(args);
-        }
-    private:
-        Args2 & args;
-    };
-#endif
 
     template <class Args2>
     struct geojson_client : converter_client {
