@@ -120,6 +120,7 @@ int main() {
         std::string prefix;
         std::string before_insert;
         std::string after_insert;
+        std::string sql_delimiter=";";
         std::string tables;
         bool no_constraints{false};
         std::string unique_constraint;

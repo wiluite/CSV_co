@@ -27,11 +27,12 @@ namespace csvsql::detail {
         bool & no_leading_zeroes = flag("no-leading-zeroes", "Do not convert a numeric value with leading zeroes to a number.");
         std::string & dialect = kwarg("i,dialect","Dialect of SQL {mysql,postgresql,sqlite,firebird,oracle} to generate. Cannot be used with --db or --query. ").set_default(std::string(""));
         std::string & db = kwarg("db","If present, a 'soci' connection string to use to directly execute generated SQL on a database.").set_default(std::string(""));
-        std::string & query = kwarg("query","Execute one or more SQL queries delimited by \";\" and output the result of the last query as CSV. QUERY may be a filename. --query may be specified multiple times.").set_default(std::string(""));
+        std::string & query = kwarg("query","Execute one or more SQL queries delimited by --sql-delimiter, and output the result of the last query as CSV. QUERY may be a filename. --query may be specified multiple times.").set_default(std::string(""));
         bool &insert = flag("insert", "Insert the data into the table. Requires --db.");
         std::string & prefix = kwarg("prefix","Add an expression following the INSERT keyword, like OR IGNORE or OR REPLACE.").set_default(std::string(""));
-        std::string & before_insert = kwarg("before-insert","Execute SQL before the INSERT command. Requires --insert.").set_default(std::string(""));
-        std::string & after_insert = kwarg("after-insert","Execute SQL after the INSERT command. Requires --insert.").set_default(std::string(""));
+        std::string & before_insert = kwarg("before-insert","Before the INSERT command, execute one or more SQL queries delimited by --sql-delimiter. Requires --insert.").set_default(std::string(""));
+        std::string & after_insert = kwarg("after-insert","After the INSERT command, execute one or more SQL queries delimited by --sql-delimiter. Requires --insert.").set_default(std::string(""));
+        std::string & sql_delimiter = kwarg("sql-delimiter","Delimiter separating SQL queries in --query, --before-insert, and --after-insert.").set_default(std::string(";"));
         std::string & tables = kwarg("tables","A comma-separated list of names of tables to be created. By default, the tables will be named after the filenames without extensions or \"stdin\".").set_default(std::string(""));
         bool &no_constraints = flag("no-constraints", "Generate a schema without length limits or null checks. Useful when sampling big tables.");
         std::string & unique_constraint = kwarg("unique-constraint","A comma-separated list of names of columns to include in a UNIQUE constraint").set_default(std::string(""));
@@ -391,7 +392,7 @@ namespace csvsql::detail {
             queries << recode_source(std::move(queries_s), args);
         } else
             queries << args.query;
-        return sql_split(std::move(queries));
+        return sql_split(std::move(queries), args.sql_delimiter[0]);
     }
 
     // quote or unquote a cell while storing it in DB.
