@@ -44,7 +44,7 @@ int main() {
             }
         } args;
 
-        expect(nothrow([&] {CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))}));
+        expect(nothrow([&] {CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))}));
     };
 
     "query"_test = [] {
@@ -54,7 +54,7 @@ int main() {
             }
         } args;
 
-        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
 
         expect(cout_buffer.str().find("question") != std::string::npos);
         expect(cout_buffer.str().find("54") != std::string::npos);
@@ -67,7 +67,7 @@ int main() {
             }
         } args;
 
-        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
 
         expect(cout_buffer.str().find("question") != std::string::npos);
         expect(cout_buffer.str().find("36") != std::string::npos);
@@ -81,7 +81,7 @@ int main() {
             }
         } args;
 
-        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
 
         expect(cout_buffer.str().find("question") != std::string::npos);
         expect(cout_buffer.str().find("54") != std::string::npos);
@@ -96,7 +96,7 @@ int main() {
         stdin_redir sr("stdin_select");
 
         expect(nothrow([&]{
-            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
             expect(cout_buffer.str().find("answer") != std::string::npos);
             expect(cout_buffer.str().find("42") != std::string::npos);
         }));
@@ -112,7 +112,7 @@ int main() {
         stdin_redir sr("stdin_select");
 
         expect(nothrow([&]{
-            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
             expect(cout_buffer.str().find("question") != std::string::npos);
             expect(cout_buffer.str().find("54") != std::string::npos);
         }));
@@ -128,7 +128,7 @@ int main() {
         stdin_redir sr("stdin_select");
 
         expect(nothrow([&]{
-            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
             expect(cout_buffer.str().find("question") != std::string::npos);
             expect(cout_buffer.str().find("36") != std::string::npos);
         }));
@@ -145,7 +145,7 @@ int main() {
         stdin_redir sr("stdin_select");
 
         expect(nothrow([&]{
-            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+            CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
             expect(cout_buffer.str().find("question") != std::string::npos);
             expect(cout_buffer.str().find("54") != std::string::npos);
         }));
@@ -166,7 +166,7 @@ int main() {
         std::string operator()() const {
             return file;
         }
-    } ;
+    };
 
     auto csvsql = [&](db_file & dbfile, char const * const csv_file) {
         namespace tf = csvkit::test_facilities;
@@ -220,7 +220,7 @@ int main() {
                 query = "select * from foo";
             }
         } args(dbfile);
-        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
         expect(std::equal(expected.cbegin(), expected.cend(), cout_buffer.str().cbegin()));
     };
 
@@ -234,7 +234,7 @@ int main() {
                 no_header = true;
             }
         } args(dbfile);
-        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
         expect(cout_buffer.str().find("a,b,c") == std::string::npos);
         expect(cout_buffer.str().find("1,2,3") != std::string::npos);
     };
@@ -249,7 +249,7 @@ int main() {
                 linenumbers = true;
             }
         } args(dbfile);
-        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
         expect(cout_buffer.str().find("line_number,a,b,c") != std::string::npos);
         expect(cout_buffer.str().find("1,1,2,3") != std::string::npos);
     };
@@ -263,9 +263,8 @@ int main() {
                 query = "select * from foo where species LIKE '%'";
             }
         } args(dbfile);
-        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv<notrimming_reader_type>(args))
+        CALL_TEST_AND_REDIRECT_TO_COUT(sql2csv::sql2csv(args))
         expect(cout_buffer.str().find("sepal_length,sepal_width,petal_length,petal_width,species") != std::string::npos);
         expect(cout_buffer.str().find("5.1,3.5,1.4,0.2,Iris-setosa") != std::string::npos);
     };
-
 }

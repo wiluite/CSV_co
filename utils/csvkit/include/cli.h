@@ -61,7 +61,7 @@ namespace csvkit::cli::detail{
     }
 
     /// Checks if a C-style string value can be a number
-    bool python_isdigit (char const * value) {
+    static bool python_isdigit (char const * value) {
         return std::all_of(&value[0], &value[0] + strlen(value), [](auto e) { return std::isdigit(e); });
     }
 
@@ -431,12 +431,12 @@ namespace csvkit::cli {
     };
 
     /// Sets up default or replaces the C++ global locale with specific one
-    void setup_global_locale(std::string_view default_global_locale) {
+    static void setup_global_locale(std::string_view default_global_locale) {
         std::locale::global(std::locale(std::string(default_global_locale)));
     }
 
     /// Detects that not only C/Posix locale supported
-    bool detect_locale_support() noexcept {
+    static bool detect_locale_support() noexcept {
         try {
             std::locale::global(std::locale("en_US"));
         } catch (...) {
@@ -600,7 +600,7 @@ namespace csvkit::cli {
     }
 
     /// Uniquely maps a column number to a letter
-    std::string letter_name(std::size_t column) {
+    static std::string letter_name(std::size_t column) {
         char const * const letters = "abcdefghijklmnopqrstuvwxyz";
         unsigned const count = std::strlen(letters);
         std::string s;
@@ -810,7 +810,7 @@ namespace csvkit::cli {
     static_assert(std::is_move_assignable<fixed_array_2d_replacement<typename notrimming_reader_type::template typed_span<csv_co::quoted>>>::value);
 
     constexpr const char * bad_locale_message = "Your development tool, operation system, standard library, or combination thereof does not allow this particular locale to be used within this utility.";
-    std::locale & cell_numeric_locale(char const * const name) {
+    static std::locale & cell_numeric_locale(char const * const name) {
         try {
             static std::map<std::string, std::locale> localemap;
             if (auto search = localemap.find(name); search != localemap.end())
@@ -857,7 +857,7 @@ namespace csvkit::cli {
         quoted_elem_type::no_leading_zeroes(args.no_leading_zeroes);
     }
 
-    void update_null_values(std::vector<std::string> & null_values) {
+    static void update_null_values(std::vector<std::string> & null_values) {
         for (auto & e: null_values) {
             std::transform(e.begin(), e.end(), e.begin(), ::toupper);
             csv_co::get_none_set().insert(e);
@@ -1075,7 +1075,7 @@ namespace csvkit::cli {
         return result;
     }
 
-    bool all_columns_selected(std::vector<unsigned> const & ids, unsigned cols) {
+    static bool all_columns_selected(std::vector<unsigned> const & ids, unsigned cols) {
         if (cols != ids.size())
             return false;
         std::vector<unsigned> atom (ids.size());
@@ -1122,25 +1122,25 @@ namespace csvkit::cli {
         return std::get<1>(elem.datetime());  
     }
 
-    auto datetime_s(date::sys_seconds const & tp) {   // get string from time_point (sys_seconds)
+    static auto datetime_s(date::sys_seconds const & tp) {   // get string from time_point (sys_seconds)
         std::stringstream ss;
         date::to_stream(ss, "%Y-%m-%d %H:%M:%S", tp); 
         return ss.str(); 
     }
 
-    auto datetime_s_json(date::sys_seconds const & tp) {
+    static auto datetime_s_json(date::sys_seconds const & tp) {
         std::stringstream ss;
         date::to_stream(ss, "%Y-%m-%dT%H:%M:%S", tp);
         return ss.str();
     }
 
-    auto datetime_s(auto const & elem) { // get string from csvkit cell span
+    static auto datetime_s(auto const & elem) { // get string from csvkit cell span
         auto const tp = std::get<1>(elem.datetime());
         static_assert(std::is_same_v<decltype(tp), date::sys_seconds const>); 
         return datetime_s(tp);
     }
 
-    auto datetime_s_json(auto const & elem) { // get string from csvkit cell span
+    static auto datetime_s_json(auto const & elem) { // get string from csvkit cell span
         auto const tp = std::get<1>(elem.datetime());
         static_assert(std::is_same_v<decltype(tp), date::sys_seconds const>);
         return datetime_s_json(tp);
@@ -1150,13 +1150,13 @@ namespace csvkit::cli {
         return std::get<1>(elem.date());  
     }
 
-    auto date_s(date::sys_seconds const & tp) {
+    static auto date_s(date::sys_seconds const & tp) {
         std::stringstream ss;
         date::to_stream(ss, "%Y-%m-%d", tp); 
         return ss.str(); 
     }
 
-    auto date_s(auto const & elem) {
+    static auto date_s(auto const & elem) {
         auto const tp = std::get<1>(elem.date());
         static_assert(std::is_same_v<decltype(tp), date::sys_seconds const>);
         return date_s(tp); 

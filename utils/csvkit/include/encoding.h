@@ -67,7 +67,7 @@ namespace csvkit::cli::encoding {
         return validate_utf8_with_errors(source.data(), source.size());
     }
 
-    auto lookup_encoding(std::string & e_name) {
+    static auto lookup_encoding(std::string & e_name) {
         using namespace detail;
         iconvlist(check_encoding_impl, static_cast<void*>(&e_name));
         if (!e_name_found()) {
@@ -196,12 +196,12 @@ namespace csvkit::cli::encoding {
         }
     }
 
-    auto active_code_page_name() {
+    static auto active_code_page_name() {
         iconvlist(detail::active_code_page_name_impl, nullptr);
         return detail::acp_string().empty() ? std::tuple{false, "UTF-8"} : std::tuple{true, detail::acp_string().c_str()};
     }
 
-    std::string iconv(const std::string& to, const std::string& from, std::string const & what) {
+    static std::string iconv(const std::string& to, const std::string& from, std::string const & what) {
         return iconv_converter(from, to).convert(const_cast<char*>(what.data()), what.data()+what.size());
     }
 

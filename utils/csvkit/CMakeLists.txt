@@ -22,6 +22,7 @@ else()
         add_definitions(-Wa,-mbig-obj)
     endif()
     add_definitions(-Wno-format)
+    add_definitions(-Wno-unused-function)
 endif()
 
 find_package(Threads REQUIRED)
@@ -123,8 +124,8 @@ if (NOT _SANITY_CHECK)
 endif()
 
 add_subdirectory(external/libxls)
-add_executable(in2csv in2csv.cpp)
-target_link_libraries(in2csv libcppp-reiconv.static simdutf xlsreader)
+add_executable(in2csv in2csv.cpp src/in2csv/in2csv_fixed.cpp)
+target_link_libraries(in2csv libcppp-reiconv.static simdutf xlsreader bz2_connector)
 
 endif()
 

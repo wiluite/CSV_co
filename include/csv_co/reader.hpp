@@ -1745,7 +1745,7 @@ namespace csv_co {
     static_assert(std::is_move_constructible<reader<>>::value);
     static_assert(std::is_move_assignable<reader<>>::value);
 
-    std::ostream& operator<< (std::ostream& os, vince_csv::DataType const & d) {
+    inline std::ostream& operator<< (std::ostream& os, vince_csv::DataType const & d) {
         os << static_cast<int>(d);
         return os;
     }

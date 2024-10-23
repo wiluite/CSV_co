@@ -105,12 +105,12 @@ namespace mio {
             return *this;
         }
 
-        ~ro_mmap();
+        inline ~ro_mmap();
 
         [[nodiscard]] handle_type file_handle() const noexcept { return file_handle_; }
         [[nodiscard]] bool is_open() const noexcept { return file_handle_ != invalid_handle; }
         [[nodiscard]] bool empty() const noexcept { return length() == 0; }
-        [[nodiscard]] bool is_mapped() const noexcept;
+        [[nodiscard]] inline bool is_mapped() const noexcept;
         [[nodiscard]] size_type size() const noexcept { return length(); }
         [[nodiscard]] size_type length() const noexcept { return length_; }
         [[nodiscard]] size_type mapping_offset() const noexcept
@@ -129,19 +129,19 @@ namespace mio {
         const_reference operator[](const size_type i) const noexcept { return data_[i]; }
 
         template<typename String>
-        void map(const String& path, size_type offset,
+        inline void map(const String& path, size_type offset,
                  size_type length, std::error_code& error);
 
         template<typename String>
-        void map(const String& path, std::error_code& error)
+        inline void map(const String& path, std::error_code& error)
         {
             map(path, 0, map_entire_file, error);
         }
 
-        void map(handle_type handle, size_type offset,
+        inline void map(handle_type handle, size_type offset,
                  size_type length, std::error_code& error);
 
-        void unmap();
+        inline void unmap();
 
     private:
         [[nodiscard]] const_pointer get_mapping_start() const noexcept
@@ -266,7 +266,7 @@ namespace mio {
                 return n & 0xffffffff;
             }
 
-            std::wstring s_2_ws(const std::string& value)
+            inline std::wstring s_2_ws(const std::string& value)
             {
                 if (value.empty())
                     return{};
