@@ -164,7 +164,6 @@ namespace sql2csv::detail {
 } /// detail
 
 namespace sql2csv {
-    template<typename ReaderType>
     void sql2csv(auto &args) {
         using namespace detail;
         if (args.query.empty() and args.query_file.empty() and isatty(STDIN_FILENO))
@@ -200,7 +199,7 @@ int main(int argc, char * argv[]) {
     OutputCodePage65001 ocp65001;
 
     try {
-        sql2csv::sql2csv<notrimming_reader_type>(args);
+        sql2csv::sql2csv(args);
     }
     catch (soci::soci_error const & e) {
         std::cout << e.get_error_message() << std::endl;
