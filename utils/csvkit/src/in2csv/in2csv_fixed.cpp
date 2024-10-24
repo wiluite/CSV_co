@@ -10,10 +10,40 @@ namespace in2csv::detail::fixed {
                       std::is_same_v<std::decay_t<decltype(reader)>, skipinitspace_reader_type>);
         skip_lines(reader, args);
         quick_check(reader, args);
-        reader.run_spans([&](auto e) {
-            std::cout << " " << e.operator csv_co::unquoted_cell_string() << std::endl;
-        }, [&] {
-        });
+
+        std::vector<std::string> columns;
+
+        std::unordered_map<std::string, std::vector<std::variant<std::string, unsigned>>> all;
+        using elem_type = typename std::decay_t<decltype(reader)>::template typed_span<csv_co::unquoted>;
+        static std::locale loc("C");
+        elem_type::imbue_num_locale(loc);
+
+        reader.run_rows(
+            [&columns](auto rowspan) {
+                for (auto e : rowspan)
+                    columns.push_back(e.operator csv_co::unquoted_cell_string());
+            }
+            ,[&](auto rowspan) {
+                unsigned col = 0;
+                for (auto e : rowspan) {
+                   auto et {elem_type{e}};
+                   if (et.is_num())
+                       all[columns[col]].push_back(static_cast<unsigned>(et.num()));
+                   else
+                   if (et.is_str())
+                       all[columns[col]].push_back(et.operator csv_co::unquoted_cell_string());
+                   else
+                      throw std::runtime_error("A value of unsupported type or a null value is in the schema file.");
+                   ++col;
+                }
+            }
+        );
+        if (all.find("column") == all.end())
+            throw std::runtime_error("ValueError: A column named \"column\" must exist in the schema file.");
+        if (all.find("start") == all.end())
+            throw std::runtime_error("ValueError: A column named \"start\" must exist in the schema file.");
+        if (all.find("length") == all.end())
+            throw std::runtime_error("ValueError: A column named \"length\" must exist in the schema file.");
 
     }
 
