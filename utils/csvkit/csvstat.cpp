@@ -314,11 +314,10 @@ namespace csvstat {
 
     static auto is_operation(auto const &args) -> bool;
 
-    void stat(auto &reader_reference, auto const &args, std::string_view default_global_locale = "") {
+    void stat(auto &reader, auto const &args, std::string_view default_global_locale = "") {
         using namespace csv_co;
         throw_if_names_and_no_header(args);
         bool operation_option = is_operation(args);
-        auto & reader = reader_reference.get();
 
         skip_lines(reader, args);
         quick_check(reader, args);

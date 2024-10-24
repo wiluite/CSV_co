@@ -38,7 +38,7 @@ namespace csvjson {
 
     void json(std::monostate &, auto const &) {}
 
-    void json(auto & reader_reference, auto const & args) {
+    void json(auto & reader, auto const & args) {
 
         using namespace csv_co;
 
@@ -63,7 +63,6 @@ namespace csvjson {
 
         using args_type = decltype(args);
 
-        auto & reader = reader_reference.get();
         skip_lines(reader, args);
         quick_check(reader, args);
 

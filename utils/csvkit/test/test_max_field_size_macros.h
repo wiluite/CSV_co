@@ -8,12 +8,11 @@
         bool thrown##READER = false;                                                 \
         try {                                                                        \
             READER rdr(args.file);                                                   \
-            std::reference_wrapper<READER> rdr_ref = std::ref(rdr);                  \
             std::stringstream cout_buffer;                                           \
             {                                                                        \
                 redirect(cout)                                                       \
                 redirect_cout cr(cout_buffer.rdbuf());                               \
-                CALLFUNC(rdr_ref, args);                                             \
+                CALLFUNC(rdr, args);                                                 \
             }                                                                        \
         } catch(std::runtime_error const & e) {                                      \
             thrown##READER = true;                                                   \
@@ -67,8 +66,7 @@
         bool thrown##READER = false;                                         \
         try {                                                                \
             READER rdr(args.file);                                           \
-            std::reference_wrapper<READER> ref = std::ref(rdr);              \
-            csvstat::stat(ref, args);                                        \
+            csvstat::stat(rdr, args);                                        \
         } catch(std::runtime_error const & e) {                              \
             thrown##READER = true;                                           \
             expect(std::string(e.what()) == CALLRESULT);                     \

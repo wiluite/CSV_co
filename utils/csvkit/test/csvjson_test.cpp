@@ -15,12 +15,12 @@
 #include "test_reader_macros.h"
 #include "test_max_field_size_macros.h"
 
-#define CALL_TEST_AND_REDIRECT_TO_COUT   std::stringstream cout_buffer;                        \
-                                         {                                                     \
-                                             redirect(cout)                                    \
-                                             redirect_cout cr(cout_buffer.rdbuf());            \
-                                             csvjson::json(ref, args);                         \
-                                         }
+#define CALL_TEST_AND_REDIRECT_TO_COUT std::stringstream cout_buffer;                        \
+                                       {                                                     \
+                                           redirect(cout)                                    \
+                                           redirect_cout cr(cout_buffer.rdbuf());            \
+                                           csvjson::json(r, args);                           \
+                                       }
 
 #if !defined(__unix__)
 #undef GetObject
@@ -53,7 +53,6 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -80,7 +79,6 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -113,7 +111,6 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -152,7 +149,6 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -182,7 +178,6 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -213,8 +208,9 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
+
         expect(cout_buffer.str().find(R"(        "a": true,)") != std::string::npos);
     };
 
@@ -227,7 +223,6 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -264,11 +259,10 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
-        expect(throws<std::runtime_error>([&] { csvjson::json(ref, args); }));
+        expect(throws<std::runtime_error>([&] { csvjson::json(r, args); }));
 
-        try { csvjson::json(ref, args); } catch (std::runtime_error const &e) {
+        try { csvjson::json(r, args); } catch (std::runtime_error const &e) {
             expect(e.what() == std::string("ValueError: Value True is not unique in the key column."));
         }
     };
@@ -283,8 +277,9 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
+
         Document document;
         document.Parse(cout_buffer.str().c_str());
         expect(!document.HasParseError());
@@ -326,8 +321,9 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
+
         Document document;
         document.Parse(cout_buffer.str().c_str());
         expect(!document.HasParseError());
@@ -345,8 +341,9 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
+
         Document document;
         document.Parse(cout_buffer.str().c_str());
         expect(document.HasMember("crs"));
@@ -363,8 +360,9 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
+
         Document document;
         document.Parse(cout_buffer.str().c_str());
         expect(!document.HasMember("bbox"));
@@ -376,7 +374,7 @@ int main() {
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
 
         expect( cout_buffer.str() ==
@@ -394,8 +392,9 @@ R"({"text": "Chicago Reader", "float": 1.0, "datetime": "1971-01-01T04:14:00", "
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
+
         expect( cout_buffer.str() ==
 R"({"text": "Chicago Reader", "float": "1.0", "datetime": "1971-01-01T04:14:00", "boolean": "True", "time": "4:14:00", "date": "1971-01-01", "integer": "40"}
 {"text": "Chicago Sun-Times", "float": "1.27", "datetime": "1948-01-01T14:57:13", "boolean": "True", "time": "14:57:13", "date": "1948-01-01", "integer": "63"}
@@ -412,7 +411,7 @@ R"({"text": "Chicago Reader", "float": "1.0", "datetime": "1971-01-01T04:14:00",
         } args;
 
         test_reader_r1 r(args.file);
-        std::reference_wrapper<decltype(r)> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
 
         expect(cout_buffer.str() ==
@@ -443,8 +442,9 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
         } args;
 
         test_reader_r2 r(args.file);
-        std::reference_wrapper<decltype(r)> ref = std::ref(r);
+
         CALL_TEST_AND_REDIRECT_TO_COUT
+
         expect(cout_buffer.str() ==
 R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee Lounge", "description": "In addition to being the only coffee shop in downtown Tyler, DCL also features regular exhibitions of work by local artists.", "address": "200 West Erwin Street", "type": "Gallery", "last_seen_date": "3/30/12"}, "geometry": {"type": "Point", "coordinates": [-95.30181, 32.35066]}}
 {"type": "Feature", "properties": {"slug": "tyler-museum", "title": "Tyler Museum of Art", "description": "The Tyler Museum of Art on the campus of Tyler Junior College is the largest art museum in Tyler. Visit them online at <a href=\"http://www.tylermuseum.org/\">http://www.tylermuseum.org/</a>.", "address": "1300 South Mahon Avenue", "type": "Museum", "last_seen_date": "4/2/12"}, "geometry": {"type": "Point", "coordinates": [-95.28174, 32.33396]}}
@@ -471,7 +471,6 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
             args.lon = "Boasting";
 
             notrimming_reader_type r(args.file);
-            std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
             expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT}));
 
@@ -504,7 +503,6 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
         } args;
 
         notrimming_reader_type r(args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT}));
 
@@ -518,7 +516,6 @@ R"({"type": "Feature", "properties": {"slug": "dcl", "title": "Downtown Coffee L
         Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
         Z_CHECK(csvjson::json, notrimming_reader_type, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
     };
-
 
 }
 

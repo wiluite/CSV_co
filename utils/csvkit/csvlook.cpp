@@ -51,7 +51,7 @@ namespace csvlook {
         void make_required_adjustments(auto const & args);
     }
 
-    void look(auto & reader_reference, auto const & args) {
+    void look(auto & reader, auto const & args) {
         using namespace detail;
         check_str_symbols_func_compatibility(args.glob_locale);
         setup_global_locale(args.glob_locale);
@@ -66,7 +66,6 @@ namespace csvlook {
 
         using namespace csv_co;
 
-        auto & reader = reader_reference.get();
         skip_lines(reader, args);
         quick_check(reader, args);
 

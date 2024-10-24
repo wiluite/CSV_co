@@ -30,8 +30,7 @@ int main() {
         using namespace csv_co;
         using mac_reader_type = csv_co::reader<csv_co::trim_policy::no_trimming, double_quotes, comma_delimiter, line_break<'\r'>>;
         mac_reader_type r (args.file);
-        std::reference_wrapper<mac_reader_type> ref = std::ref(r);
-        csvclean::clean(ref, args);
+        csvclean::clean(r, args);
 
         expect(nothrow([&] {
             notrimming_reader_type out {std::filesystem::path{"mac_newlines_out.csv"}};

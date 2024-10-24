@@ -14,9 +14,9 @@
 
 #define CALL_TEST_AND_REDIRECT_TO_COUT std::stringstream cout_buffer; \
 {                                                                     \
-redirect(cout)                                                        \
-redirect_cout cr(cout_buffer.rdbuf());                                \
-csvlook::look(ref, args);                                             \
+    redirect(cout)                                                    \
+    redirect_cout cr(cout_buffer.rdbuf());                            \
+    csvlook::look(r, args);                                           \
 }
 
 int main() {
@@ -42,7 +42,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -60,7 +59,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -95,7 +93,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -113,7 +110,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -130,7 +126,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -149,7 +144,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -167,7 +161,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -185,7 +178,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -203,7 +195,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -220,7 +211,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -237,7 +227,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -254,7 +243,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -271,7 +259,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -288,7 +275,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -305,11 +291,9 @@ int main() {
         } args;
 
         csv_co::reader<> r (args.file);
-        std::reference_wrapper<csv_co::reader<>> ref = std::ref(r);
         expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT}));
 
         using namespace z_test;
-
         Z_CHECK(csvlook::look, notrimming_reader_type, skip_lines::skip_lines_0, header::has_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
         Z_CHECK(csvlook::look, notrimming_reader_type, skip_lines::skip_lines_0, header::no_header, 12, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 12 characters on line 1.)")
 
@@ -319,5 +303,4 @@ int main() {
         Z_CHECK(csvlook::look, notrimming_reader_type, skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
         Z_CHECK(csvlook::look, notrimming_reader_type, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
     };
-
 }

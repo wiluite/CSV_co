@@ -60,10 +60,8 @@ namespace csvgrep {
         }
     };
 
-    void grep(auto & reader_reference, auto const & args) {
+    void grep(auto & reader, auto const & args) {
         using namespace csv_co;
-
-        auto & reader = reader_reference.get();
 
         skip_lines(reader, args);
 

@@ -239,10 +239,9 @@ namespace csvsort {
         unquoted_elem_type::case_insensitivity(args.ignore_case);
     }
 
-    void sort(auto & reader_reference, auto const & args) {
+    void sort(auto & reader, auto const & args) {
         using namespace csv_co;
 
-        auto & reader = reader_reference.get();
         skip_lines(reader, args);
         quick_check(reader, args);
 

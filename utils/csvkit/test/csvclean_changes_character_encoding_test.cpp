@@ -23,9 +23,8 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
         // TODO: It should be done inside assertCleaned. -e latin1 is needed simply to parse and also to use transformation
-        csvclean::clean(ref, args);
+        csvclean::clean(r, args);
         expect(nothrow([&](){
             using namespace csvkit::cli;
             std::u8string u8str = u8"4,5,©";

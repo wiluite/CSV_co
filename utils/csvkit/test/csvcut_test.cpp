@@ -16,7 +16,7 @@
                                        {                                                     \
                                            redirect(cout)                                    \
                                            redirect_cout cr(cout_buffer.rdbuf());            \
-                                           csvcut::cut(ref, args);                           \
+                                           csvcut::cut(r, args);                             \
                                        }
 
 
@@ -34,7 +34,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -51,7 +50,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -68,7 +66,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -85,7 +82,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -103,7 +99,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -117,7 +112,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -131,7 +125,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -145,7 +138,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -159,7 +151,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -173,7 +164,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
 
         CALL_TEST_AND_REDIRECT_TO_COUT
 
@@ -187,7 +177,6 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
         expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT
             std::array<unsigned char,12> awaitable {{'\x61','\x2c','\x62','\x2c','\x63','\x0A','\x00','\x2c','\x32','\x2c','\x33','\x0a'}};
             std::string c = cout_buffer.str();
@@ -204,7 +193,6 @@ int main() {
         } args;
 
         csv_co::reader<> r (args.file);
-        std::reference_wrapper<csv_co::reader<>> ref = std::ref(r);
         expect(nothrow([&]{CALL_TEST_AND_REDIRECT_TO_COUT}));
 
         using namespace z_test;

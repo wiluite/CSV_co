@@ -624,7 +624,7 @@ if (IO_CSVKIT_UTILS)
 
   endif()
 
-add_executable(in2csv_test in2csv_test.cpp)
+add_executable(in2csv_test in2csv_test.cpp ../src/in2csv/in2csv_fixed.cpp)
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf bz2_connector -lpthread)
 add_test(in2csv_test in2csv_test)
 

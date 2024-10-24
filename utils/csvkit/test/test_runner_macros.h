@@ -5,11 +5,7 @@
 
 #pragma once
 
-#define test_reader_configurator_and_runner(arguments, function)                   \
-        std::variant<std::monostate                                                \
-                   , std::reference_wrapper<notrimming_reader_type>                \
-                   , std::reference_wrapper<skipinitspace_reader_type>> variants;  \
-        notrimming_reader_type r(std::filesystem::path{arguments.file});           \
-        recode_source(r, arguments);                                               \
-        variants = std::ref(r);                                                    \
-        std::visit([&](auto & arg) { function(arg, arguments);}, variants);
+#define test_reader_configurator_and_runner(arguments, function)         \
+        notrimming_reader_type r(std::filesystem::path{arguments.file}); \
+        recode_source(r, arguments);                                     \
+        function(r, arguments);

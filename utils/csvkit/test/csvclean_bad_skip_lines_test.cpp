@@ -23,8 +23,7 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
-        csvclean::clean(ref, args);
+        csvclean::clean(r, args);
         expect(nothrow([&](){
             csvkit::test_facilities::assertCleaned ("bad_skip_lines",
                                                     {"column_a,column_b,""column_c","0,mixed types.... uh oh,17"},

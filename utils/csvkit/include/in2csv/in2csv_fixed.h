@@ -10,6 +10,8 @@ namespace in2csv::detail {
             bool skip_init_space;
             std::string schema;
             std::string encoding;
+            unsigned skip_lines;
+            bool check_integrity;
         };
 
         struct impl {
@@ -24,7 +26,8 @@ namespace in2csv::detail {
     template <class Args2>
     struct fixed_client final : converter_client {
         explicit fixed_client(Args2 & args) {
-            fixed::pimpl = std::make_shared<fixed::impl>(fixed::impl_args(args.skip_init_space, args.schema, args.encoding));
+            fixed::pimpl = std::make_shared<fixed::impl>
+                (fixed::impl_args(args.skip_init_space, args.schema, args.encoding, args.skip_lines, args.check_integrity));
         }
         void convert() override {
             fixed::pimpl->convert();

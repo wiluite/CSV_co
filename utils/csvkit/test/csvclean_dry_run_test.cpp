@@ -25,13 +25,12 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
        
         std::stringstream cerr_buffer;
         {
             redirect(cerr)
             redirect_cerr cr (cerr_buffer.rdbuf());
-            csvclean::clean(ref, args);
+            csvclean::clean(r, args);
         }
 
         expect(nothrow([&] {

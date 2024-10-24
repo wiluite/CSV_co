@@ -16,21 +16,19 @@
 #include "test_runner_macros.h"
 
 #define TEST_NO_THROW  \
-std::reference_wrapper<decltype(r)> ref = std::ref(r);  \
 std::stringstream cout_buffer;                          \
 {                                                       \
 redirect(cout)                                          \
 redirect_cout cr(cout_buffer.rdbuf());                  \
-expect(nothrow ([&] { csvstat::stat(ref, args); }));    \
+expect(nothrow ([&] { csvstat::stat(r, args); }));      \
 }
 
-#define TEST_NO_THROW_EN_US_LOCALE                                 \
-std::stringstream cout_buffer;                                     \
-std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);  \
-{                                                                  \
-redirect(cout)                                                     \
-redirect_cout cr(cout_buffer.rdbuf());                             \
-expect(nothrow ([&] { csvstat::stat(ref, args, "en_US"); }));      \
+#define TEST_NO_THROW_EN_US_LOCALE                              \
+std::stringstream cout_buffer;                                  \
+{                                                               \
+redirect(cout)                                                  \
+redirect_cout cr(cout_buffer.rdbuf());                          \
+expect(nothrow ([&] { csvstat::stat(r, args, "en_US"); }));     \
 }
 
 int main() {
@@ -74,8 +72,7 @@ int main() {
         }
         {
             notrimming_reader_type r("aa\n");
-            std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
-            expect(throws([&] { csvstat::stat(ref, args); }));
+            expect(throws([&] { csvstat::stat(r, args); }));
         }
         {
             notrimming_reader_type r("aa\n1\n");
@@ -496,5 +493,4 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
         Z_CHECK2(notrimming_reader_type , skip_lines::skip_lines_1, header::has_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
         Z_CHECK2(notrimming_reader_type, skip_lines::skip_lines_1, header::no_header, 13, R"(FieldSizeLimitError: CSV contains a field longer than the maximum length of 13 characters on line 1.)")
     };
-
 }

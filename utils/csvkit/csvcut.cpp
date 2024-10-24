@@ -26,11 +26,10 @@ namespace csvcut {
 
     void cut(std::monostate &, auto const &) {}
 
-    void cut(auto & reader_reference, auto const & args) {
+    void cut(auto & reader, auto const & args) {
         using namespace csv_co;
 
         throw_if_names_and_no_header(args);
-        auto & reader = reader_reference.get();
         skip_lines(reader, args);
         quick_check(reader, args);
         auto const header = obtain_header_and_<no_skip_header>(reader, args);

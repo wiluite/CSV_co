@@ -133,10 +133,9 @@ namespace csvclean {
 
     void clean(std::monostate &, auto const &) {}
 
-    void clean(auto & reader_reference, auto const & args) {
+    void clean(auto & reader, auto const & args) {
         using namespace detail;
 
-        auto & reader = reader_reference.get();
         auto constexpr delim = std::decay_t<decltype(reader)>::delimiter_type::value;
         auto constexpr quote = std::decay_t<decltype(reader)>::quote_type::value;
 

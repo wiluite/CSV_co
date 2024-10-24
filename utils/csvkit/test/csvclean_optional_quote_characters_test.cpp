@@ -23,8 +23,7 @@ int main() {
         } args;
 
         notrimming_reader_type r (args.file);
-        std::reference_wrapper<notrimming_reader_type> ref = std::ref(r);
-        csvclean::clean(ref, args);
+        csvclean::clean(r, args);
         expect(nothrow([&](){
             csvkit::test_facilities::assertCleaned ("optional_quote_characters",{"a,b,c","1,2,3"},{});
         }));

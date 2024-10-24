@@ -174,7 +174,6 @@ namespace csvkit::cli {
 
         auto cols = 0u;
         auto row = 1ul;
-
         std::unordered_map<unsigned , unsigned> cols_map;
         r.run_spans([&](auto e) {
             cols++;
@@ -563,8 +562,7 @@ namespace csvkit::cli {
 #define runner_impl(reader_type_, reader_arg_, function_)                                            \
     reader_type_ r(reader_arg_);                                                                     \
     recode_source(r, args);                                                                          \
-    variants = std::ref(r);                                                                          \
-    std::visit([&](auto & arg) { function_(arg, args);}, variants);
+    function_(r, args);
 
 #define basic_reader_configurator_and_runner(std_cin_reader, function)                               \
     try {                                                                                            \
@@ -574,9 +572,6 @@ namespace csvkit::cli {
             throw std::runtime_error("Error: You have both: the input file and piped data.");        \
         if (args.file.empty())                                                                       \
             args.file = "_";                                                                         \
-        std::variant<std::monostate                                                                  \
-                   , std::reference_wrapper<notrimming_reader_type>                                  \
-                   , std::reference_wrapper<skipinitspace_reader_type>> variants;                    \
                                                                                                      \
         if (!args.skip_init_space) {                                                                 \
             if (!(args.file == "_")) {                                                               \
