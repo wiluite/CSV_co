@@ -2,6 +2,7 @@
 #include <cli.h>
 
 using namespace ::csvkit::cli;
+using namespace ::csvkit::cli::encoding;
 
 namespace in2csv::detail::fixed {
 
@@ -45,12 +46,52 @@ namespace in2csv::detail::fixed {
         if (all.find("length") == all.end())
             throw std::runtime_error("ValueError: A column named \"length\" must exist in the schema file.");
 
+        std::ifstream f(args.file);
+        if (!(f.is_open()))
+           throw std::runtime_error("Error opening the query file: '" + args.file.string() + "'.");
+
+        auto & names = all["column"];
+        auto & starts = all["start"];
+        auto & lengths = all["length"];
+        assert(names.size() == starts.size());
+        assert(names.size() == lengths.size());
+
+        auto bytes_from = [](std::string const & str, unsigned byte_offset, unsigned symbols) {
+            unsigned bytes = 0;
+            if (!symbols)
+                return bytes;
+            unsigned len = 0;
+            for(auto ptr = str.begin() + byte_offset; ptr != str.end(); ptr++) {
+                len += (*ptr & 0xc0) != 0x80;
+                ++bytes;
+                if (len == symbols) {
+                    ++ptr;
+                    while(ptr != str.end() and (len += (*ptr & 0xc0) != 0x80, len) == symbols) {
+                        ++bytes;
+                        ++ptr;
+                    }
+                    return bytes;
+                }
+            }
+            return bytes;
+        };
+
+        for (std::string ln; std::getline(f, ln, '\n');) {
+            // TODO: fixme. If recode_source() is called not once - be sure to reconsider encodings names again.
+            auto _ = recode_source(std::move(ln), args);
+            for (auto i = 0u; i < names.size(); i++) {
+                auto b = bytes_from(_, 0, std::get<1>(starts[i]));
+                auto e = bytes_from(_, 0, std::get<1>(starts[i]) + std::get<1>(lengths[i]));
+                auto piece = std::string(_.begin() + b, _.begin() + e);
+                piece.erase(piece.find_last_not_of(" ") + 1);
+                std::cout << piece << (i < names.size() - 1 ? "," : "");
+            }
+            std::cout << '\n';
+        }
     }
 
     void impl::convert() {
-        std::variant<std::monostate
-            , notrimming_reader_type
-            , skipinitspace_reader_type> variants;
+        std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
 
         if (!a.skip_init_space)
             variants = notrimming_reader_type(std::filesystem::path{a.schema});
@@ -59,7 +100,6 @@ namespace in2csv::detail::fixed {
 
         std::visit([&](auto & arg) {
             if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
-                //TODO: why can't we use: recode_source(reader.get(), a) - UB now.
                 recode_source(arg, a);
                 convert_impl(arg, a);
             }
