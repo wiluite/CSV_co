@@ -76,6 +76,10 @@ namespace in2csv::detail::fixed {
             return bytes;
         };
 
+        for (auto const & e : names)
+            std::cout << std::get<0>(e) << (std::addressof(names.back()) != std::addressof(e) ? "," : "");
+        std::cout << '\n';
+
         for (std::string ln; std::getline(f, ln, '\n');) {
             // TODO: fixme. If recode_source() is called not once - be sure to reconsider encodings names again.
             auto _ = recode_source(std::move(ln), args);
