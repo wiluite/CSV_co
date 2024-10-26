@@ -85,8 +85,8 @@ namespace in2csv::detail::fixed {
             auto _ = recode_source(std::move(ln), args);
             for (auto i = 0u; i < names.size(); i++) {
                 auto b = bytes_from(_, 0, std::get<1>(starts[i]));
-                auto e = bytes_from(_, 0, std::get<1>(starts[i]) + std::get<1>(lengths[i]));
-                auto piece = std::string(_.begin() + b, _.begin() + e);
+                auto e = bytes_from(_, b, std::get<1>(lengths[i]));
+                auto piece = std::string(_.begin() + b, _.begin() + e + b);
                 piece.erase(piece.find_last_not_of(" ") + 1);
                 std::cout << piece << (i < names.size() - 1 ? "," : "");
             }
