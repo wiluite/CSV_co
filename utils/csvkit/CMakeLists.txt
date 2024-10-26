@@ -124,6 +124,7 @@ if (NOT _SANITY_CHECK)
 endif()
 
 add_subdirectory(external/libxls)
+add_subdirectory(external/dbf_lib)
 add_executable(in2csv in2csv.cpp src/in2csv/in2csv_fixed.cpp)
 target_link_libraries(in2csv libcppp-reiconv.static simdutf xlsreader bz2_connector)
 

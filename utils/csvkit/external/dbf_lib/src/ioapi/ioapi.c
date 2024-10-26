@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "zlib.h"
-#include "ioapi.h"
+#include "../../include/ioapi/zlib.h"
+#include "../../include/ioapi/ioapi.h"
 #ifdef _WIN32
    #include <io.h>
 #else

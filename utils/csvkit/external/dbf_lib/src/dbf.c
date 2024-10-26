@@ -15,11 +15,11 @@
     #include <ctime>
 #endif
 
-#include "bool.h"
-#include "dbf.h"
-#include "ioapi/zlib.h"
-#include "ioapi/ioapi.h"
-#include "stdint-ms.h"
+#include "../include/bool.h"
+#include "../include/dbf.h"
+#include "../include/ioapi/zlib.h"
+#include "../include/ioapi/ioapi.h"
+#include "../include/stdint-ms.h"
 
 #define _max(a,b) ((a)>(b)?(a):(b))
 #define _min(a,b) ((a)<(b)?(a):(b))
