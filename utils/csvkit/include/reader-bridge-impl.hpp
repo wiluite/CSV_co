@@ -300,7 +300,7 @@ namespace csv_co {
     }
 
     inline auto & get_bool_set() {
-        static std::unordered_set<std::string_view> bool_set {"T", "F", "TRUE", "FALSE", "\"0\"", "\"1\""};
+        static std::unordered_set<std::string_view> bool_set {"T", "F", "TRUE", "FALSE", "\"1\"", "\"0\"", "Y", "N", "YES", "NO"};
         return bool_set;
     }
 
@@ -315,7 +315,7 @@ namespace csv_co {
             auto const result = get_bool_set().find(str) != get_bool_set().end();
             if (result) {
                 // update value for get_bool() function use.
-                value = (str == "F" || str == "FALSE" || str == "\"0\"") ? 0 : 1;
+                value = (str == "F" || str == "FALSE" || str == "\"0\"" || str == "N" || str == "NO") ? 0 : 1;
                 // we now are able to change inner type for better caching.
                 type_ = vince_csv::DataType::CSV_INT8;
             }
