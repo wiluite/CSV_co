@@ -67,7 +67,7 @@ namespace in2csv::detail {
     std::array<std::string, 8> formats {"csv", "dbf", "fixed", "geojson", "json", "ndjson", "xls", "xlsx" };
 
     std::string guess_format(std::string const & extension) {
-        auto ext = extension.empty() ? "fixed" : extension;
+        auto ext = extension.empty() ? "fixed" : std::string{extension.cbegin() + 1, extension.cend()};
         std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return std::tolower(c); });
         if (std::find(formats.cbegin(), formats.cend(), ext) != formats.cend()) {
             if (ext == "csv" or ext == "dbf" or ext == "fixed" or ext == "xls" or ext == "xlsx")

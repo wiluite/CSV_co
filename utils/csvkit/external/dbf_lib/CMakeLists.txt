@@ -5,7 +5,3 @@ else()
 endif()
 
 add_library(dbf STATIC src/dbf.c src/ioapi/ioapi.c)
-
-add_executable(dbftest test.cpp)
-target_link_libraries(dbftest dbf)
-

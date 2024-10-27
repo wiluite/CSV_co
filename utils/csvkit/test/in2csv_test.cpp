@@ -68,6 +68,7 @@ int main() {
         expect(throws<in2csv::detail::file_not_found>([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
 
         args.file = "stdin_select"; // all is fine (format, schema and file) - no exception
+        args.schema = "testfixed_schema.csv";
         expect(nothrow([&] {CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))}));
 
         args.file = "";

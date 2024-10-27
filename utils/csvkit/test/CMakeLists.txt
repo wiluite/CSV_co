@@ -625,6 +625,13 @@ if (IO_CSVKIT_UTILS)
   endif()
 
 add_executable(in2csv_test in2csv_test.cpp ../src/in2csv/in2csv_fixed.cpp ../src/in2csv/in2csv_dbf.cpp)
+
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testfixed_schema.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/testfixed_schema.csv)
+
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf bz2_connector -lpthread)
 add_test(in2csv_test in2csv_test)
 
