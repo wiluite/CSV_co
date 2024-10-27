@@ -6,8 +6,8 @@
 #include "include/dbf.h"
 
 int main() {
-  DBF_HANDLE handle = dbf_open("testdbf.dbf", NULL);
-  BOOL ok = (handle != NULL);
+  DBF_HANDLE handle = dbf_open("testdbf.dbf", nullptr);
+  BOOL ok = (handle != nullptr);
   printf("%d\n",ok);
   if(ok)
       dbf_close(&handle);

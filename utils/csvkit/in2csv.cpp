@@ -4,6 +4,7 @@
 #include <cli.h>
 #include "external/libxls/include/xls.h"
 #include "include/in2csv/in2csv_fixed.h"
+#include "include/in2csv/in2csv_dbf.h"
 
 using namespace ::csvkit::cli;
 
@@ -85,19 +86,6 @@ namespace in2csv::detail {
         }
         static std::shared_ptr<converter_client> create(Args2 & args) {
             return std::make_shared<csv_client>(args);
-        }
-    private:
-        Args2 & args;
-    };
-
-    template <class Args2>
-    struct dbf_client : converter_client {
-        explicit dbf_client(Args2 & args) : args(args) {
-        }
-        void convert() override {
-        }
-        static std::shared_ptr<converter_client> create(Args2 & args) {
-            return std::make_shared<dbf_client>(args);
         }
     private:
         Args2 & args;

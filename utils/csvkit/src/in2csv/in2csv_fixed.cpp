@@ -9,8 +9,9 @@ namespace in2csv::detail::fixed {
     void convert_impl(auto & reader, auto const & args) {
         static_assert(std::is_same_v<std::decay_t<decltype(reader)>, notrimming_reader_type> or
                       std::is_same_v<std::decay_t<decltype(reader)>, skipinitspace_reader_type>);
-        skip_lines(reader, args);
-        quick_check(reader, args);
+
+        skip_lines(reader, args); // args uses neither "file" nor "schema", so that's fine.
+        quick_check(reader, args); // args uses neither "file" nor "schema", so that's fine again.
 
         std::vector<std::string> columns;
 
