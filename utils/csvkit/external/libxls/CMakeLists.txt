@@ -14,6 +14,3 @@ else()
 endif()
 add_library(xlsreader STATIC src/xlstool.c src/endian.c src/locale.c src/ole.c src/xls.c)
 target_link_libraries(xlsreader iconv_c_connector)
-
-add_executable(test_xls test.c)
-target_link_libraries(test_xls xlsreader)

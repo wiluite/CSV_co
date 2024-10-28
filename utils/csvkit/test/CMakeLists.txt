@@ -624,7 +624,7 @@ if (IO_CSVKIT_UTILS)
 
   endif()
 
-add_executable(in2csv_test in2csv_test.cpp ../src/in2csv/in2csv_fixed.cpp ../src/in2csv/in2csv_dbf.cpp)
+add_executable(in2csv_test in2csv_test.cpp ../src/in2csv/in2csv_fixed.cpp ../src/in2csv/in2csv_dbf.cpp ../src/in2csv/in2csv_xls.cpp)
 
 add_custom_command(
         TARGET in2csv_test POST_BUILD

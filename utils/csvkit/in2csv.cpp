@@ -2,9 +2,9 @@
 // Created by wiluite on 10/6/24.
 //
 #include <cli.h>
-#include "external/libxls/include/xls.h"
 #include "include/in2csv/in2csv_fixed.h"
 #include "include/in2csv/in2csv_dbf.h"
+#include "include/in2csv/in2csv_xls.h"
 
 using namespace ::csvkit::cli;
 
@@ -27,7 +27,7 @@ namespace in2csv::detail {
 #if 0
         bool reset_dimensions //Ignore the sheet dimensions provided by the XLSX file.
 #endif
-        std::string & encoding_xls = kwarg("encoding-xls","Specify the encoding of the input XLS file.").set_default(std::string{});
+        std::string & encoding_xls = kwarg("encoding-xls","Specify the encoding of the input XLS file.").set_default(std::string{"UTF-8"});
         bool & no_inference = flag("I,no-inference", "Disable type inference (and --locale, --date-format, --datetime-format, --no-leading-zeroes) when parsing the input.");
 
         void welcome() final {
@@ -52,7 +52,7 @@ namespace in2csv::detail {
             + f + '\'' + " (choose from 'csv', 'dbf', 'fixed', 'geojson', 'json', 'ndjson', 'xls', 'xlsx')") {}
     };
     struct schema_file_not_found : std::runtime_error {
-        explicit schema_file_not_found(std::string const & f) : std::runtime_error(std::string("File not found error: No such file or directory: ") + '\'' + f +'\'') {}
+        explicit schema_file_not_found(std::string const & f) : std::runtime_error(std::string("FileNotFoundError: No such file or directory: ") + '\'' + f +'\'') {}
     };
     struct file_not_found : schema_file_not_found {
         using schema_file_not_found::schema_file_not_found;
@@ -125,19 +125,6 @@ namespace in2csv::detail {
         }
         static std::shared_ptr<converter_client> create(Args2 & args) {
             return std::make_shared<ndjson_client>(args);
-        }
-    private:
-        Args2 & args;
-    };
-
-    template <class Args2>
-    struct xls_client : converter_client {
-        explicit xls_client(Args2 & args) : args(args) {
-        }
-        void convert() override {
-        }
-        static std::shared_ptr<converter_client> create(Args2 & args) {
-            return std::make_shared<xls_client>(args);
         }
     private:
         Args2 & args;
