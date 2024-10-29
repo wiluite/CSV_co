@@ -29,6 +29,8 @@ namespace in2csv::detail {
 #endif
         std::string & encoding_xls = kwarg("encoding-xls","Specify the encoding of the input XLS file.").set_default(std::string{"UTF-8"});
         bool & no_inference = flag("I,no-inference", "Disable type inference (and --locale, --date-format, --datetime-format, --no-leading-zeroes) when parsing the input.");
+        bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
+        bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);
 
         void welcome() final {
             std::cout << "\nConvert common, but less awesome, tabular data formats to CSV.\n\n";

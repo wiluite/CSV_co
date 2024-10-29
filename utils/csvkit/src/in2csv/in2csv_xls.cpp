@@ -3,6 +3,7 @@
 #include "../../external/libxls/include/xls.h"
 #include "../../external/date/date.h"
 #include <iostream>
+#include <sstream>
 
 using namespace ::csvkit::cli;
 
@@ -11,23 +12,23 @@ using namespace ::csvkit::cli;
 
 namespace in2csv::detail::xls {
 
-static char  stringSeparator = '\"';
+static char stringSeparator = '\"';
 static char const *fieldSeparator = ",";
 
-static void OutputString(const char *string) {
+static void OutputString(auto & oss, const char *string) {
     const char *str;
 
-    printf("%c", stringSeparator);
+    oss << stringSeparator;
     for (str = string; *str; str++) {
         if (*str == stringSeparator) {
-            printf("%c%c", stringSeparator, stringSeparator);
+            oss << stringSeparator << stringSeparator;
         } else if (*str == '\\') {
-            printf("\\\\");
+            oss << "\\\\";
         } else {
-            printf("%c", *str);
+            oss << *str;
         }
     }
-    printf("%c", stringSeparator);
+    oss << stringSeparator;
 }
 
 static std::chrono::system_clock::time_point to_chrono_time_point(double d) {
@@ -40,10 +41,11 @@ static std::chrono::system_clock::time_point to_chrono_time_point(double d) {
     return date::sys_days{date::January/01/1904} + round<system_clock::duration>(ddays{d});
 }
 
+static bool is1904_and_datetime_header;
 // Output a CSV Number
-static void OutputNumber(const double number) {
+static void OutputNumber(auto & oss, const double number) {
 #if 1
-    printf("%.15g", number);
+    oss << number;
 #else
     //TODO: if is1904 and "date" in header
     using date::operator<<;
@@ -54,7 +56,10 @@ static void OutputNumber(const double number) {
     void impl::convert() {
         using namespace ::xls;
         xls_error_t error = LIBXLS_OK;
-        auto const pWB = xls_open_file(a.file.string().c_str(), a.encoding_xls.c_str(), &error);
+        auto pWB = xls_open_file(a.file.string().c_str(), a.encoding_xls.c_str(), &error);
+        assert(xls_parseWorkBook(pWB) == 0);
+//        printf("   mode: 0x%x\n", pWB->is5ver);
+//        printf("   mode: 0x%x\n", pWB->is1904);
         if (!pWB)
             std::runtime_error(std::string(xls_getError(error)));
         if (a.names) {
@@ -80,11 +85,14 @@ static void OutputNumber(const double number) {
         // open and parse the sheet
         auto const pWS = xls_getWorkSheet(pWB, sheet_index);
         if (xls_parseWorkSheet(pWS) != LIBXLS_OK)
-            throw std::runtime_error("Error parsing the document.");
+            throw std::runtime_error("Error parsing the sheet.");
 
-        for (auto j = 0u; j <= (unsigned int)pWS->rows.lastrow; ++j) {
+        std::ostringstream oss;
+        tune_format(oss, "%.15g");
+        for (auto j = a.skip_lines; j <= (unsigned int)pWS->rows.lastrow; ++j) {
             WORD cellRow = (WORD)j;
-            if (j) printf("\n");
+            if (j)
+                oss << '\n';
 
             WORD cellCol;
             for (cellCol = 0; cellCol <= pWS->rows.lastcol; cellCol++) {
@@ -93,7 +101,8 @@ static void OutputNumber(const double number) {
                     continue;
 
                 if (cellCol)
-                    printf(fieldSeparator);
+                    oss << fieldSeparator;
+
                 // display the colspan as only one cell, but reject rowspans (they can't be converted to CSV)
                 if (cell->rowspan > 1) {
 #if 0
@@ -102,31 +111,31 @@ static void OutputNumber(const double number) {
                 }
                 // display the value of the cell (either numeric or string)
                 if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER) {
-                    OutputNumber(cell->d);
+                    OutputNumber(oss, cell->d);
                 } else if (cell->id == XLS_RECORD_FORMULA || cell->id == XLS_RECORD_FORMULA_ALT) {
                     // formula
                     if (cell->l == 0)
-                        OutputNumber(cell->d);
+                        OutputNumber(oss, cell->d);
                     else if (cell->str) {
                         if (!strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
                         {
-                            OutputString((int) cell->d ? "true" : "false");
+                            OutputString(oss, (int) cell->d ? "true" : "false");
                         } else if (!strcmp((char *)cell->str, "error")) // formula is in error
                         {
-                            OutputString("*error*");
+                            OutputString(oss, "*error*");
                         } else // ... cell->str is valid as the result of a string formula.
                         {
-                            OutputString((char *)cell->str);
+                            OutputString(oss, (char *)cell->str);
                         }
                     }
                 } else if (cell->str) {
-                    OutputString((char *)cell->str);
+                    OutputString(oss, (char *)cell->str);
                 } else {
-                    OutputString("");
+                    OutputString(oss, "");
                 }
             }
         }
-
+        std::cout << oss.str() << std::endl;
         xls_close(pWB);
     }
 }
