@@ -32,10 +32,14 @@ int main() {
         std::string schema;
         std::string key;
         bool names = false;
+        std::string sheet;
+        std::string write_sheets;
+        bool use_sheet_names = false;
+        std::string encoding_xls = "UTF-8";
     };
 
     "exceptions"_test = [] {
-        struct Args : tf::single_file_arg, tf::common_args, in2csv_specific_args {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
             Args() = default;
         } args;
 

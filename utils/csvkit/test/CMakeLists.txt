@@ -632,7 +632,7 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testfixed_schema.csv
         ${CMAKE_CURRENT_BINARY_DIR}/testfixed_schema.csv)
 
-target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf bz2_connector -lpthread)
+target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xlsreader bz2_connector -lpthread)
 add_test(in2csv_test in2csv_test)
 
 endif()

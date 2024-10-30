@@ -619,11 +619,11 @@ DBF_HANDLE dbf_open(const char* file, const DBF_OPEN* parm)
    if (stream)
    {
       void* memostream = NULL;
-      char temp[PATH_MAX];
+      char tmp[PATH_MAX];
 
-      dbf_getmemofilename(file, temp, _countof(temp));
+      dbf_getmemofilename(file, tmp, _countof(tmp));
       if (parm->memo)
-          memostream = (*api->zopen_file)(api->opaque, temp, openmode);
+          memostream = (*api->zopen_file)(api->opaque, tmp, openmode);
       handle = dbf_attach(stream, api, parm->editmode, parm->charconv, memostream, parm->tablename);
       if (handle)
       {
@@ -1609,10 +1609,10 @@ DBF_HANDLE dbf_create(const char* filePath, const DBF_CREATE* parm_ptr)
        open_parm.memo = (NOT_FOUND != find_memo(parm.array, parm.array_count));
        if (stream && open_parm.memo)
        {
-          char temp[PATH_MAX];
+          char tmp[PATH_MAX];
 
-          dbf_getmemofilename(filePath, temp, _countof(temp));
-          memoStream = (*open_parm.api->zopen_file)(open_parm.api->opaque, temp, openmode);
+          dbf_getmemofilename(filePath, tmp, _countof(tmp));
+          memoStream = (*open_parm.api->zopen_file)(open_parm.api->opaque, tmp, openmode);
           if (NULL == memoStream)
           {
              ZCLOSE(*open_parm.api, stream);
