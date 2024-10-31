@@ -82,6 +82,8 @@ namespace in2csv::detail::fixed {
         };
 
         auto print_header = [&] {
+            if (args.linenumbers)
+                std::cout << "line_number,";
             for (auto const & e : names)
                 std::cout << std::get<0>(e) << (std::addressof(names.back()) != std::addressof(e) ? "," : "");
             std::cout << '\n';
@@ -92,7 +94,10 @@ namespace in2csv::detail::fixed {
         while (skip_lns--)
             std::getline(f, ln, '\n');
 
+        std::size_t linenumber = 0;
         for (; std::getline(f, ln, '\n');) {
+            if (args.linenumbers)
+                std::cout << ++linenumber << ',';
             // TODO: fixme. If recode_source() is called not once - be sure to reconsider encodings names again.
             auto _ = recode_source(std::move(ln), args);
             for (auto i = 0u; i < names.size(); i++) {
