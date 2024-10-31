@@ -19,7 +19,7 @@ namespace in2csv::detail::dbf {
     void impl::convert() {
         DBF_HANDLE handle = dbf_open(a.file.string().c_str(), nullptr);
         BOOL ok = (handle != nullptr);
-        if (ok)
+        if (!ok)
             throw std::runtime_error(std::string("Unable to open file: ") + "'" + a.file.string() + "'");
 
         size_t rows = dbf_getrecordcount(handle);
