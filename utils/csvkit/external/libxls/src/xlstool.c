@@ -77,64 +77,64 @@ enum xls_format_e {
 };
 
 static const DWORD colors[] =
-    {
-        0x000000,
-        0xFFFFFF,
-        0xFF0000,
-        0x00FF00,
-        0x0000FF,
-        0xFFFF00,
-        0xFF00FF,
-        0x00FFFF,
-        0x800000,
-        0x008000,
-        0x000080,
-        0x808000,
-        0x800080,
-        0x008080,
-        0xC0C0C0,
-        0x808080,
-        0x9999FF,
-        0x993366,
-        0xFFFFCC,
-        0xCCFFFF,
-        0x660066,
-        0xFF8080,
-        0x0066CC,
-        0xCCCCFF,
-        0x000080,
-        0xFF00FF,
-        0xFFFF00,
-        0x00FFFF,
-        0x800080,
-        0x800000,
-        0x008080,
-        0x0000FF,
-        0x00CCFF,
-        0xCCFFFF,
-        0xCCFFCC,
-        0xFFFF99,
-        0x99CCFF,
-        0xFF99CC,
-        0xCC99FF,
-        0xFFCC99,
-        0x3366FF,
-        0x33CCCC,
-        0x99CC00,
-        0xFFCC00,
-        0xFF9900,
-        0xFF6600,
-        0x666699,
-        0x969696,
-        0x003366,
-        0x339966,
-        0x003300,
-        0x333300,
-        0x993300,
-        0x993366,
-        0x333399,
-        0x333333
-    };
+        {
+                0x000000,
+                0xFFFFFF,
+                0xFF0000,
+                0x00FF00,
+                0x0000FF,
+                0xFFFF00,
+                0xFF00FF,
+                0x00FFFF,
+                0x800000,
+                0x008000,
+                0x000080,
+                0x808000,
+                0x800080,
+                0x008080,
+                0xC0C0C0,
+                0x808080,
+                0x9999FF,
+                0x993366,
+                0xFFFFCC,
+                0xCCFFFF,
+                0x660066,
+                0xFF8080,
+                0x0066CC,
+                0xCCCCFF,
+                0x000080,
+                0xFF00FF,
+                0xFFFF00,
+                0x00FFFF,
+                0x800080,
+                0x800000,
+                0x008080,
+                0x0000FF,
+                0x00CCFF,
+                0xCCFFFF,
+                0xCCFFCC,
+                0xFFFF99,
+                0x99CCFF,
+                0xFF99CC,
+                0xCC99FF,
+                0xFFCC99,
+                0x3366FF,
+                0x33CCCC,
+                0x99CC00,
+                0xFFCC00,
+                0xFF9900,
+                0xFF6600,
+                0x666699,
+                0x969696,
+                0x003366,
+                0x339966,
+                0x003300,
+                0x333300,
+                0x993300,
+                0x993366,
+                0x333399,
+                0x333333
+        };
 
 
 // Display string if in debug mode
@@ -152,32 +152,32 @@ struct codepage_entry_t {
 };
 
 static struct codepage_entry_t _codepage_entries[] = {
-    { .code = 874, .name = "WINDOWS-874" },
-    { .code = 932, .name = "SHIFT-JIS" },
-    { .code = 936, .name = "WINDOWS-936" },
-    { .code = 950, .name = "BIG-5" },
-    { .code = 951, .name = "BIG5-HKSCS" },
-    { .code = 1250, .name = "WINDOWS-1250" },
-    { .code = 1251, .name = "WINDOWS-1251" },
-    { .code = 1252, .name = "WINDOWS-1252" },
-    { .code = 1253, .name = "WINDOWS-1253" },
-    { .code = 1254, .name = "WINDOWS-1254" },
-    { .code = 1255, .name = "WINDOWS-1255" },
-    { .code = 1256, .name = "WINDOWS-1256" },
-    { .code = 1257, .name = "WINDOWS-1257" },
-    { .code = 1258, .name = "WINDOWS-1258" },
-    { .code = 10000, .name = "MACROMAN" },
-    { .code = 10004, .name = "MACARABIC" },
-    { .code = 10005, .name = "MACHEBREW" },
-    { .code = 10006, .name = "MACGREEK" },
-    { .code = 10007, .name = "MACCYRILLIC" },
-    { .code = 10010, .name = "MACROMANIA" },
-    { .code = 10017, .name = "MACUKRAINE" },
-    { .code = 10021, .name = "MACTHAI" },
-    { .code = 10029, .name = "MACCENTRALEUROPE" },
-    { .code = 10079, .name = "MACICELAND" },
-    { .code = 10081, .name = "MACTURKISH" },
-    { .code = 10082, .name = "MACCROATIAN" },
+        { .code = 874, .name = "WINDOWS-874" },
+        { .code = 932, .name = "SHIFT-JIS" },
+        { .code = 936, .name = "WINDOWS-936" },
+        { .code = 950, .name = "BIG-5" },
+        { .code = 951, .name = "BIG5-HKSCS" },
+        { .code = 1250, .name = "WINDOWS-1250" },
+        { .code = 1251, .name = "WINDOWS-1251" },
+        { .code = 1252, .name = "WINDOWS-1252" },
+        { .code = 1253, .name = "WINDOWS-1253" },
+        { .code = 1254, .name = "WINDOWS-1254" },
+        { .code = 1255, .name = "WINDOWS-1255" },
+        { .code = 1256, .name = "WINDOWS-1256" },
+        { .code = 1257, .name = "WINDOWS-1257" },
+        { .code = 1258, .name = "WINDOWS-1258" },
+        { .code = 10000, .name = "MACROMAN" },
+        { .code = 10004, .name = "MACARABIC" },
+        { .code = 10005, .name = "MACHEBREW" },
+        { .code = 10006, .name = "MACGREEK" },
+        { .code = 10007, .name = "MACCYRILLIC" },
+        { .code = 10010, .name = "MACROMANIA" },
+        { .code = 10017, .name = "MACUKRAINE" },
+        { .code = 10021, .name = "MACTHAI" },
+        { .code = 10029, .name = "MACCENTRALEUROPE" },
+        { .code = 10079, .name = "MACICELAND" },
+        { .code = 10081, .name = "MACTURKISH" },
+        { .code = 10082, .name = "MACCROATIAN" },
 };
 
 static int codepage_compare(const void *key, const void *value) {
@@ -189,8 +189,8 @@ static int codepage_compare(const void *key, const void *value) {
 static const char *encoding_for_codepage(WORD codepage) {
     struct codepage_entry_t key = { .code = codepage };
     struct codepage_entry_t *result = bsearch(&key, _codepage_entries,
-            sizeof(_codepage_entries)/sizeof(_codepage_entries[0]),
-            sizeof(_codepage_entries[0]), &codepage_compare);
+                                              sizeof(_codepage_entries)/sizeof(_codepage_entries[0]),
+                                              sizeof(_codepage_entries[0]), &codepage_compare);
     if (result) {
         return result->name;
     }
@@ -208,10 +208,10 @@ static char* unicode_decode_iconv(const char *s, size_t len, iconv_t ic) {
         const char* src_ptr = s;
         char* out_ptr = 0;
 
-        size_t st; 
+        size_t st;
         outbuf = malloc(outlen + 1);
 
-		if(outbuf)
+        if(outbuf)
         {
             out_ptr = outbuf;
             while(inlenleft)
@@ -253,7 +253,7 @@ static char* unicode_decode_iconv(const char *s, size_t len, iconv_t ic) {
 
 // Convert UTF-16 to UTF-8 without iconv
 static char *unicode_decode_wcstombs(const char *s, size_t len, xls_locale_t locale) {
-	// Do wcstombs conversion
+    // Do wcstombs conversion
     char *converted = NULL;
     int count, count2;
     size_t i;
@@ -280,7 +280,7 @@ static char *unicode_decode_wcstombs(const char *s, size_t len, xls_locale_t loc
         goto cleanup;
     }
 
-cleanup:
+    cleanup:
     free(w);
     return converted;
 }
@@ -288,16 +288,16 @@ cleanup:
 // Converts Latin-1 to UTF-8 the old-fashioned way
 static char *transcode_latin1_to_utf8(const char *str, DWORD len)
 {
-	int utf8_chars = 0;
-	char *ret = NULL;
+    int utf8_chars = 0;
+    char *ret = NULL;
     DWORD i;
-	
+
     for(i=0; i<len; ++i) {
         if(str[i] & (BYTE)0x80) {
             ++utf8_chars;
         }
     }
-	
+
     char *out = ret = malloc(len+utf8_chars+1);
     // UTF-8 encoding inline
     for(i=0; i<len; ++i) {
@@ -311,7 +311,7 @@ static char *transcode_latin1_to_utf8(const char *str, DWORD len)
     }
     *out = 0;
 
-	return ret;
+    return ret;
 }
 
 // Convert BIFF5 string or compressed BIFF8 string to the encoding desired
@@ -386,16 +386,16 @@ char *get_string(const char *s, size_t len, BYTE is2, xlsWorkBook* pWB)
     BYTE flag = 0;
     const char *str = s;
     char *ret = NULL;
-	
+
     if (is2) {
-		// length is two bytes
+        // length is two bytes
         if (ofs + 2 > len) {
             return NULL;
         }
         ln= ((BYTE*)str)[0] + (((BYTE*)str)[1] << 8);
         ofs+=2;
     } else {
-		// single byte length
+        // single byte length
         if (ofs + 1 > len) {
             return NULL;
         }
@@ -403,21 +403,21 @@ char *get_string(const char *s, size_t len, BYTE is2, xlsWorkBook* pWB)
         ofs++;
     }
 
-	if(!pWB->is5ver) {
-		// unicode strings have a format byte before the string
+    if(!pWB->is5ver) {
+        // unicode strings have a format byte before the string
         if (ofs + 1 > len) {
             return NULL;
         }
-		flag=*(BYTE*)(str+ofs);
-		ofs++;
-	}
+        flag=*(BYTE*)(str+ofs);
+        ofs++;
+    }
     if (flag&0x8) {
-		// WORD rt;
+        // WORD rt;
         // rt=*(WORD*)(str+ofs); // unused
         ofs+=2;
     }
     if (flag&0x4) {
-		// DWORD sz;
+        // DWORD sz;
         // sz=*(DWORD*)(str+ofs); // unused
         ofs+=4;
     }
@@ -434,15 +434,15 @@ char *get_string(const char *s, size_t len, BYTE is2, xlsWorkBook* pWB)
     }
 
 #if 0	// debugging
-	if(xls_debug == 100) {
+    if(xls_debug == 100) {
 		ofs += (flag & 0x1) ? ln*2 : ln;
 
 		printf("ofs=%d ret[0]=%d\n", ofs, *ret);
 		{
 			unsigned char *ptr;
-			
+
 			ptr = ret;
-			
+
 			printf("%x %x %x %x %x %x %x %x\n", ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7] );
 			printf("%s\n", ret);
 		}
@@ -477,24 +477,24 @@ void xls_showBookInfo(xlsWorkBook* pWB)
     printf("    type: %.4X ",pWB->type);
     switch (pWB->type)
     {
-    case 0x5:
-        printf("Workbook globals\n");
-        break;
-    case 0x6:
-        printf("Visual Basic module\n");
-        break;
-    case 0x10:
-        printf("Worksheet\n");
-        break;
-    case 0x20:
-        printf("Chart\n");
-        break;
-    case 0x40:
-        printf("BIFF4 Macro sheet\n");
-        break;
-    case 0x100:
-        printf("BIFF4W Workbook globals\n");
-        break;
+        case 0x5:
+            printf("Workbook globals\n");
+            break;
+        case 0x6:
+            printf("Visual Basic module\n");
+            break;
+        case 0x10:
+            printf("Worksheet\n");
+            break;
+        case 0x20:
+            printf("Chart\n");
+            break;
+        case 0x40:
+            printf("BIFF4 Macro sheet\n");
+            break;
+        case 0x100:
+            printf("BIFF4W Workbook globals\n");
+            break;
     }
     printf("------------------- END BOOK INFO---------------------------\n");
 }
@@ -575,10 +575,10 @@ void xls_showCell(struct st_cell_data* cell)
     printf("   Cell: %c:%u  [%u:%u]\n",cell->col+'A',cell->row+1,cell->col,cell->row);
 //    printf("   Cell: %u:%u\n",cell->col+1,cell->row+1);
     printf("     xf: %i\n",cell->xf);
-	if(cell->id == XLS_RECORD_BLANK) {
-		//printf("BLANK_CELL!\n");
-		return;
-	}
+    if(cell->id == XLS_RECORD_BLANK) {
+        //printf("BLANK_CELL!\n");
+        return;
+    }
     printf(" double: %f\n",cell->d);
     printf("    int: %d\n",cell->l);
     if (cell->str!=NULL)
@@ -616,14 +616,14 @@ typedef struct st_format
 
 void xls_showFormat(struct st_format_data* frmt)
 {
-	printf("    index : %u\n", frmt->index);
+    printf("    index : %u\n", frmt->index);
     printf("     value: %s\n", frmt->value);
 }
 
 void xls_showXF(XF8* xf)
 {
-	static int idx;
-	
+    static int idx;
+
     printf("      Index: %u\n",idx++);
     printf("       Font: %u\n",xf->font);
     printf("     Format: %u\n",xf->format);
@@ -640,7 +640,7 @@ void xls_showXF(XF8* xf)
 char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
 {
     struct st_xf_data *xf = NULL;
-	WORD	len = 0;
+    WORD	len = 0;
     DWORD   offset = 0;
     char	*ret = NULL;
     size_t  retlen = 100;
@@ -650,69 +650,69 @@ char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
 
     switch (cell->id)
     {
-    case XLS_RECORD_LABELSST:
-        offset = label[0] + (label[1] << 8);
-        if(!pWB->is5ver) {
-            offset += ((DWORD)label[2] << 16);
-            offset += ((DWORD)label[3] << 24);
-        }
-        if(offset < pWB->sst.count && pWB->sst.string[offset].str) {
-            ret = strdup(pWB->sst.string[offset].str);
-        }
-        break;
-    case XLS_RECORD_BLANK:
-    case XLS_RECORD_MULBLANK:
-        ret = strdup("");
-        break;
-    case XLS_RECORD_LABEL:
-    case XLS_RECORD_RSTRING:
-        len = label[0] + (label[1] << 8);
-        label += 2;
-        if (pWB->is5ver || (*(label++) & 0x01) == 0) {
-            ret = codepage_decode((char *)label, len, pWB);
-        } else {
-            ret = unicode_decode((char *)label, len*2, pWB);
-        }
-        break;
-    case XLS_RECORD_RK:
-    case XLS_RECORD_NUMBER:
-        ret = malloc(retlen);
-        snprintf(ret, retlen, "%lf", cell->d);
-		break;
-		//		if( RK || MULRK || NUMBER || FORMULA)
-		//		if (cell->id==0x27e || cell->id==0x0BD || cell->id==0x203 || 6 (formula))
-    default:
-        if (xf) {
-            ret = malloc(retlen);
-            switch (xf->format)
-            {
-                case XLS_FORMAT_GENERAL:
-                case XLS_FORMAT_NUMBER1:
-                case XLS_FORMAT_NUMBER3:
-                    snprintf(ret, retlen, "%.0lf", cell->d);
-                    break;
-                case XLS_FORMAT_NUMBER2:
-                case XLS_FORMAT_NUMBER4:
-                    snprintf(ret, retlen, "%.2f", cell->d);
-                    break;
-                case XLS_FORMAT_PERCENT1:
-                    snprintf(ret, retlen, "%.0lf%%", 100 * cell->d);
-                    break;
-                case XLS_FORMAT_PERCENT2:
-                    snprintf(ret, retlen, "%.2lf%%", 100 * cell->d);
-                    break;
-                case XLS_FORMAT_SCIENTIFIC1:
-                    snprintf(ret, retlen, "%.2e", cell->d);
-                    break;
-                case XLS_FORMAT_SCIENTIFIC2:
-                    snprintf(ret, retlen, "%.1e", cell->d);
-                    break;
-                default:
-                    snprintf(ret, retlen, "%.2f", cell->d);
-                    break;
+        case XLS_RECORD_LABELSST:
+            offset = label[0] + (label[1] << 8);
+            if(!pWB->is5ver) {
+                offset += ((DWORD)label[2] << 16);
+                offset += ((DWORD)label[3] << 24);
+            }
+            if(offset < pWB->sst.count && pWB->sst.string[offset].str) {
+                ret = strdup(pWB->sst.string[offset].str);
             }
             break;
-        }
+        case XLS_RECORD_BLANK:
+        case XLS_RECORD_MULBLANK:
+            ret = strdup("");
+            break;
+        case XLS_RECORD_LABEL:
+        case XLS_RECORD_RSTRING:
+            len = label[0] + (label[1] << 8);
+            label += 2;
+            if (pWB->is5ver || (*(label++) & 0x01) == 0) {
+                ret = codepage_decode((char *)label, len, pWB);
+            } else {
+                ret = unicode_decode((char *)label, len*2, pWB);
+            }
+            break;
+        case XLS_RECORD_RK:
+        case XLS_RECORD_NUMBER:
+            ret = malloc(retlen);
+            snprintf(ret, retlen, "%lf", cell->d);
+            break;
+            //		if( RK || MULRK || NUMBER || FORMULA)
+            //		if (cell->id==0x27e || cell->id==0x0BD || cell->id==0x203 || 6 (formula))
+        default:
+            if (xf) {
+                ret = malloc(retlen);
+                switch (xf->format)
+                {
+                    case XLS_FORMAT_GENERAL:
+                    case XLS_FORMAT_NUMBER1:
+                    case XLS_FORMAT_NUMBER3:
+                        snprintf(ret, retlen, "%.0lf", cell->d);
+                        break;
+                    case XLS_FORMAT_NUMBER2:
+                    case XLS_FORMAT_NUMBER4:
+                        snprintf(ret, retlen, "%.2f", cell->d);
+                        break;
+                    case XLS_FORMAT_PERCENT1:
+                        snprintf(ret, retlen, "%.0lf%%", 100 * cell->d);
+                        break;
+                    case XLS_FORMAT_PERCENT2:
+                        snprintf(ret, retlen, "%.2lf%%", 100 * cell->d);
+                        break;
+                    case XLS_FORMAT_SCIENTIFIC1:
+                        snprintf(ret, retlen, "%.2e", cell->d);
+                        break;
+                    case XLS_FORMAT_SCIENTIFIC2:
+                        snprintf(ret, retlen, "%.1e", cell->d);
+                        break;
+                    default:
+                        snprintf(ret, retlen, "%.2f", cell->d);
+                        break;
+                }
+                break;
+            }
     }
 
     return ret;
@@ -739,83 +739,83 @@ char* xls_getCSS(xlsWorkBook* pWB)
     char *ret = malloc(65535);
     size_t buf_len = 4096;
     char *buf = malloc(buf_len);
-	ret[0] = '\0';
+    ret[0] = '\0';
 
     for (i=0;i<pWB->xfs.count;i++)
     {
         xf=&pWB->xfs.xf[i];
         switch ((xf->align & 0x70)>>4)
         {
-        case 0:
-            valign=(char*)"top";
-            break;
-        case 1:
-            valign=(char*)"middle";
-            break;
-        case 2:
-            valign=(char*)"bottom";
-            break;
-            //			case 3: valign=(char*)"right"; break;
-            //			case 4: valign=(char*)"right"; break;
-        default:
-            valign=(char*)"middle";
-            break;
+            case 0:
+                valign=(char*)"top";
+                break;
+            case 1:
+                valign=(char*)"middle";
+                break;
+            case 2:
+                valign=(char*)"bottom";
+                break;
+                //			case 3: valign=(char*)"right"; break;
+                //			case 4: valign=(char*)"right"; break;
+            default:
+                valign=(char*)"middle";
+                break;
         }
 
         switch (xf->align & 0x07)
         {
-        case 1:
-            align=(char*)"left";
-            break;
-        case 2:
-            align=(char*)"center";
-            break;
-        case 3:
-            align=(char*)"right";
-            break;
-        default:
-            align=(char*)"left";
-            break;
+            case 1:
+                align=(char*)"left";
+                break;
+            case 2:
+                align=(char*)"center";
+                break;
+            case 3:
+                align=(char*)"right";
+                break;
+            default:
+                align=(char*)"left";
+                break;
         }
 
         switch (xf->linestyle & 0x0f)
         {
-        case 0:
-            snprintf(borderleft, sizeof(borderleft), "%s", "");
-            break;
-        default:
-            snprintf(borderleft, sizeof(borderleft), "border-left: 1px solid black;");
-            break;
+            case 0:
+                snprintf(borderleft, sizeof(borderleft), "%s", "");
+                break;
+            default:
+                snprintf(borderleft, sizeof(borderleft), "border-left: 1px solid black;");
+                break;
         }
 
         switch (xf->linestyle & 0x0f0)
         {
-        case 0:
-            snprintf(borderright, sizeof(borderright), "%s", "");
-            break;
-        default:
-            snprintf(borderright, sizeof(borderright), "border-right: 1px solid black;");
-            break;
+            case 0:
+                snprintf(borderright, sizeof(borderright), "%s", "");
+                break;
+            default:
+                snprintf(borderright, sizeof(borderright), "border-right: 1px solid black;");
+                break;
         }
 
         switch (xf->linestyle & 0x0f00)
         {
-        case 0:
-            snprintf(bordertop, sizeof(bordertop), "%s", "");
-            break;
-        default:
-            snprintf(bordertop, sizeof(bordertop), "border-top: 1px solid black;");
-            break;
+            case 0:
+                snprintf(bordertop, sizeof(bordertop), "%s", "");
+                break;
+            default:
+                snprintf(bordertop, sizeof(bordertop), "border-top: 1px solid black;");
+                break;
         }
 
         switch (xf->linestyle & 0x0f000)
         {
-        case 0:
-            snprintf(borderbottom, sizeof(borderbottom), "%s", "");
-            break;
-        default:
-            snprintf(borderbottom, sizeof(borderbottom), "border-bottom: 1px solid Black;");
-            break;
+            case 0:
+                snprintf(borderbottom, sizeof(borderbottom), "%s", "");
+                break;
+            default:
+                snprintf(borderbottom, sizeof(borderbottom), "border-bottom: 1px solid Black;");
+                break;
         }
 
         if (xf->font)
@@ -850,12 +850,12 @@ char* xls_getCSS(xlsWorkBook* pWB)
 
         background=xls_getColor((WORD)(xf->groundcolor & 0x7f),1);
         snprintf(buf, buf_len, ".xf%i{ font-size:%ipt;font-family: \"%s\";background:#%.6X;text-align:%s;vertical-align:%s;%s%s%s%s%s%s%s%s}\n",
-                i,size,fontname,background,align,valign,borderleft,borderright,bordertop,borderbottom,color,italic,bold,underline);
+                 i,size,fontname,background,align,valign,borderleft,borderright,bordertop,borderbottom,color,italic,bold,underline);
 
-		strcat(ret,buf);
+        strcat(ret,buf);
     }
-	ret = realloc(ret, strlen(ret)+1);
-	free(buf);
+    ret = realloc(ret, strlen(ret)+1);
+    free(buf);
 
     return ret;
 }

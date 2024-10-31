@@ -13,9 +13,9 @@
 #include "../../include/ioapi/zlib.h"
 #include "../../include/ioapi/ioapi.h"
 #ifdef _WIN32
-   #include <io.h>
+#include <io.h>
 #else
-   #include <sys/stat.h>
+#include <sys/stat.h>
 ZPOS_T _filelength(int fd)
 {
    struct stat st;
@@ -24,7 +24,7 @@ ZPOS_T _filelength(int fd)
 #endif
 /* local: I want to #include "ioapi.c" and 'call' xxxx_file_func inline, with no function call overhead. Troels */
 #ifndef local
-   #define local __inline static
+#define local __inline static
 #endif
 
 
@@ -43,45 +43,45 @@ ZPOS_T _filelength(int fd)
 #endif
 
 local voidpf ZCALLBACK fopen_file_func OF((
-   voidpf opaque,
-   const char* filename,
-   int mode));
+                                                  voidpf opaque,
+                                                  const char* filename,
+                                                  int mode));
 
 local uLong ZCALLBACK fread_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   void* buf,
-   uLong size));
+                                                 voidpf opaque,
+        voidpf stream,
+                                                 void* buf,
+                                                 uLong size));
 
 local uLong ZCALLBACK fwrite_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   const void* buf,
-   uLong size));
+                                                  voidpf opaque,
+        voidpf stream,
+                                                  const void* buf,
+                                                  uLong size));
 
 local ZPOS_T ZCALLBACK ftell_file_func OF((
-   voidpf opaque,
-   voidpf stream));
+                                                  voidpf opaque,
+        voidpf stream));
 
 local long ZCALLBACK fseek_file_func OF((
-   voidpf opaque,
-   voidpf stream,
-   ZOFF_T offset,
-   int origin));
+                                                voidpf opaque,
+        voidpf stream,
+        ZOFF_T offset,
+                                                int origin));
 
 local int ZCALLBACK fclose_file_func OF((
-   voidpf opaque,
-   voidpf stream));
+                                                voidpf opaque,
+        voidpf stream));
 
 local int ZCALLBACK ferror_file_func OF((
-   voidpf opaque,
-   voidpf stream));
+                                                voidpf opaque,
+        voidpf stream));
 
 
 local voidpf ZCALLBACK fopen_file_func (opaque, filename, mode)
-   voidpf opaque;
-   const char* filename;
-   int mode;
+        voidpf opaque;
+        const char* filename;
+        int mode;
 {
     FILE* file = NULL;
     const char* mode_fopen = NULL;
@@ -106,10 +106,10 @@ local voidpf ZCALLBACK fopen_file_func (opaque, filename, mode)
 
 
 local uLong ZCALLBACK fread_file_func (opaque, stream, buf, size)
-   voidpf opaque;
-   voidpf stream;
-   void* buf;
-   uLong size;
+        voidpf opaque;
+        voidpf stream;
+        void* buf;
+        uLong size;
 {
     uLong ret;
     ret = (uLong)fread(buf, 1, (size_t)size, (FILE *)stream);
@@ -118,10 +118,10 @@ local uLong ZCALLBACK fread_file_func (opaque, stream, buf, size)
 
 
 local uLong ZCALLBACK fwrite_file_func (opaque, stream, buf, size)
-   voidpf opaque;
-   voidpf stream;
-   const void* buf;
-   uLong size;
+        voidpf opaque;
+        voidpf stream;
+        const void* buf;
+        uLong size;
 {
     uLong ret;
     ret = (uLong)fwrite(buf, 1, (size_t)size, (FILE *)stream);
@@ -129,8 +129,8 @@ local uLong ZCALLBACK fwrite_file_func (opaque, stream, buf, size)
 }
 
 local ZPOS_T ZCALLBACK ftell_file_func (opaque, stream)
-   voidpf opaque;
-   voidpf stream;
+        voidpf opaque;
+        voidpf stream;
 {
     ZPOS_T ret;
 #if defined(__USE_FILE_OFFSET64) && defined(_WIN32)
@@ -142,10 +142,10 @@ local ZPOS_T ZCALLBACK ftell_file_func (opaque, stream)
 }
 
 local long ZCALLBACK fseek_file_func (opaque, stream, offset, origin)
-   voidpf opaque;
-   voidpf stream;
-   ZOFF_T offset;
-   int origin;
+        voidpf opaque;
+        voidpf stream;
+        ZOFF_T offset;
+        int origin;
 {
     long ret = 0;
 #ifdef xFILESIZE64
@@ -182,16 +182,16 @@ local long ZCALLBACK fseek_file_func (opaque, stream, offset, origin)
     int fseek_origin=0;
     switch (origin)
     {
-    case ZLIB_FILEFUNC_SEEK_CUR :
-        fseek_origin = SEEK_CUR;
-        break;
-    case ZLIB_FILEFUNC_SEEK_END :
-        fseek_origin = SEEK_END;
-        break;
-    case ZLIB_FILEFUNC_SEEK_SET :
-        fseek_origin = SEEK_SET;
-        break;
-    default: return -1;
+        case ZLIB_FILEFUNC_SEEK_CUR :
+            fseek_origin = SEEK_CUR;
+            break;
+        case ZLIB_FILEFUNC_SEEK_END :
+            fseek_origin = SEEK_END;
+            break;
+        case ZLIB_FILEFUNC_SEEK_SET :
+            fseek_origin = SEEK_SET;
+            break;
+        default: return -1;
     }
     ret = fseek((FILE*)stream, offset, fseek_origin) ? -1 : 0;
 #endif
@@ -199,8 +199,8 @@ local long ZCALLBACK fseek_file_func (opaque, stream, offset, origin)
 }
 
 local int ZCALLBACK fclose_file_func (opaque, stream)
-   voidpf opaque;
-   voidpf stream;
+        voidpf opaque;
+        voidpf stream;
 {
     int ret;
     ret = fclose((FILE *)stream);
@@ -208,8 +208,8 @@ local int ZCALLBACK fclose_file_func (opaque, stream)
 }
 
 local int ZCALLBACK ferror_file_func (opaque, stream)
-   voidpf opaque;
-   voidpf stream;
+        voidpf opaque;
+        voidpf stream;
 {
     int ret;
     ret = ferror((FILE *)stream);
@@ -217,7 +217,7 @@ local int ZCALLBACK ferror_file_func (opaque, stream)
 }
 
 void fill_fopen_filefunc (pzlib_filefunc_def)
-  zlib_filefunc_def* pzlib_filefunc_def;
+        zlib_filefunc_def* pzlib_filefunc_def;
 {
     pzlib_filefunc_def->zopen_file = fopen_file_func;
     pzlib_filefunc_def->zread_file = fread_file_func;
