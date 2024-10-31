@@ -6,9 +6,13 @@ using namespace ::csvkit::cli::encoding;
 
 namespace in2csv::detail::fixed {
 
-    void convert_impl(auto & reader, auto const & args) {
+    void convert_impl(auto & reader, auto & args) {
         static_assert(std::is_same_v<std::decay_t<decltype(reader)>, notrimming_reader_type> or
                       std::is_same_v<std::decay_t<decltype(reader)>, skipinitspace_reader_type>);
+
+        // assume skip_lines only for the data file.
+        auto skip_lns = args.skip_lines;
+        args.skip_lines = 0;
 
         skip_lines(reader, args); // args uses neither "file" nor "schema", so that's fine.
         quick_check(reader, args); // args uses neither "file" nor "schema", so that's fine again.
@@ -77,11 +81,18 @@ namespace in2csv::detail::fixed {
             return bytes;
         };
 
-        for (auto const & e : names)
-            std::cout << std::get<0>(e) << (std::addressof(names.back()) != std::addressof(e) ? "," : "");
-        std::cout << '\n';
+        auto print_header = [&] {
+            for (auto const & e : names)
+                std::cout << std::get<0>(e) << (std::addressof(names.back()) != std::addressof(e) ? "," : "");
+            std::cout << '\n';
+        };
+        print_header();
 
-        for (std::string ln; std::getline(f, ln, '\n');) {
+        std::string ln;
+        while (skip_lns--)
+            std::getline(f, ln, '\n');
+
+        for (; std::getline(f, ln, '\n');) {
             // TODO: fixme. If recode_source() is called not once - be sure to reconsider encodings names again.
             auto _ = recode_source(std::move(ln), args);
             for (auto i = 0u; i < names.size(); i++) {
