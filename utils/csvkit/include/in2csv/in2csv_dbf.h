@@ -8,6 +8,7 @@ namespace in2csv::detail {
 
     namespace dbf {
         struct impl_args {
+            bool linenumbers;
             std::string encoding;
             std::filesystem::path file;
         };
@@ -25,7 +26,7 @@ namespace in2csv::detail {
     struct dbf_client final : converter_client {
         explicit dbf_client(Args2 & args) {
             dbf::pimpl = std::make_shared<dbf::impl>
-                (dbf::impl_args(args.encoding, args.file));
+                (dbf::impl_args(args.linenumbers, args.encoding, args.file));
         }
         void convert() override {
             dbf::pimpl->convert();

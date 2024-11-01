@@ -29,6 +29,10 @@ namespace in2csv::detail::dbf {
         std::string header;
         using field_type = int;
         std::vector<field_type> types;
+
+        if (a.linenumbers)
+            std::cout << "line_number,";
+
         for (auto j = 0u; j < cols; j++) {
             dbf_getfield_info (handle, j, &info);
             header += (j ? "," : "") + recode_source(std::string(info.name), a);
@@ -67,6 +71,10 @@ namespace in2csv::detail::dbf {
         }};
 
         for (auto i = 0u; i < rows; i++) {
+            if (a.linenumbers) {
+                static std::size_t linenumber = 0; 
+                std::cout << ++linenumber << ',';
+            }
             std::string line;
             dbf_setposition(handle, i);
             for (auto j = 0u; j < cols; j++) {

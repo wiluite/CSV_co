@@ -110,29 +110,25 @@ static void OutputNumber(auto & oss, const double number) {
 #endif
                 }
                 // display the value of the cell (either numeric or string)
-                if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER) {
+                if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER)
                     OutputNumber(oss, cell->d);
-                } else if (cell->id == XLS_RECORD_FORMULA || cell->id == XLS_RECORD_FORMULA_ALT) {
+                else if (cell->id == XLS_RECORD_FORMULA || cell->id == XLS_RECORD_FORMULA_ALT) {
                     // formula
                     if (cell->l == 0)
                         OutputNumber(oss, cell->d);
                     else if (cell->str) {
                         if (!strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
-                        {
                             OutputString(oss, (int) cell->d ? "true" : "false");
-                        } else if (!strcmp((char *)cell->str, "error")) // formula is in error
-                        {
+                        else
+                        if (!strcmp((char *)cell->str, "error")) // formula is in error
                             OutputString(oss, "*error*");
-                        } else // ... cell->str is valid as the result of a string formula.
-                        {
+                        else // ... cell->str is valid as the result of a string formula.
                             OutputString(oss, (char *)cell->str);
-                        }
                     }
-                } else if (cell->str) {
+                } else if (cell->str)
                     OutputString(oss, (char *)cell->str);
-                } else {
+                else
                     OutputString(oss, "");
-                }
             }
         }
         std::cout << oss.str() << std::endl;

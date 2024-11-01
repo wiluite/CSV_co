@@ -28,6 +28,9 @@ namespace in2csv::detail {
         bool reset_dimensions //Ignore the sheet dimensions provided by the XLSX file.
 #endif
         std::string & encoding_xls = kwarg("encoding-xls","Specify the encoding of the input XLS file.").set_default(std::string{"UTF-8"});
+        std::string & d_xls = kwarg("d_xls","A comma-separated list of columns of the input XLS file, considered as dates, e.g. \"1,id,3-5\".").set_default("none");
+        std::string & dt_xls = kwarg("dt_xls","A comma-separated list of columns of the input XLS file, considered as datetimes, e.g. \"1,id,3-5\".").set_default("none");
+
         bool & no_inference = flag("I,no-inference", "Disable type inference (and --locale, --date-format, --datetime-format, --no-leading-zeroes) when parsing the input.");
         bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
         bool & asap = flag("ASAP","Print result output stream as soon as possible.").set_default(true);

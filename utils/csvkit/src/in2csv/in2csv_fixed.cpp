@@ -91,13 +91,15 @@ namespace in2csv::detail::fixed {
         print_header();
 
         std::string ln;
+        // TODO: process getline result below.
         while (skip_lns--)
             std::getline(f, ln, '\n');
 
-        std::size_t linenumber = 0;
         for (; std::getline(f, ln, '\n');) {
-            if (args.linenumbers)
+            if (args.linenumbers) {
+                static std::size_t linenumber = 0; 
                 std::cout << ++linenumber << ',';
+            }
             // TODO: fixme. If recode_source() is called not once - be sure to reconsider encodings names again.
             auto _ = recode_source(std::move(ln), args);
             for (auto i = 0u; i < names.size(); i++) {
