@@ -214,7 +214,7 @@ namespace in2csv {
         if (filetype == "dbf" and (args.file.empty() or args.file == "_"))
             throw dbf_cannot_be_converted_from_stdin();
 
-        if (!args.file.empty()) {
+        if (!args.file.empty() and args.file != "_") {
             if (!std::filesystem::exists(fs::path{args.file}))
                 throw file_not_found(args.file.string());
         }
