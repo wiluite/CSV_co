@@ -51,10 +51,6 @@ namespace in2csv::detail::fixed {
         if (all.find("length") == all.end())
             throw std::runtime_error("ValueError: A column named \"length\" must exist in the schema file.");
 
-        std::ifstream f(args.file);
-        if (!(f.is_open()))
-           throw std::runtime_error("Error opening the query file: '" + args.file.string() + "'.");
-
         auto & names = all["column"];
         auto & starts = all["start"];
         auto & lengths = all["length"];
@@ -90,12 +86,42 @@ namespace in2csv::detail::fixed {
         };
         print_header();
 
+        std::ifstream file(args.file);
+        if (!(file.is_open()))
+           throw std::runtime_error("Error opening the query file: '" + args.file.string() + "'.");
+
+        auto process = [&](auto & args, auto & istrm) {
+            std::string ln;
+            // TODO: process getline result below.
+            while (skip_lns--)
+                std::getline(istrm, ln, '\n');
+
+            for (; std::getline(istrm, ln, '\n');) {
+                if (args.linenumbers) {
+                    static std::size_t linenumber = 0; 
+                    std::cout << ++linenumber << ',';
+                }
+                // TODO: fixme. If recode_source() is called not once - be sure to reconsider encodings names again.
+                auto _ = recode_source(std::move(ln), args);
+                for (auto i = 0u; i < names.size(); i++) {
+                    auto b = bytes_from(_, 0, std::get<1>(starts[i]));
+                    auto e = bytes_from(_, b, std::get<1>(lengths[i]));
+                    auto piece = std::string(_.begin() + b, _.begin() + e + b);
+                    piece.erase(piece.find_last_not_of(" ") + 1);
+                    std::cout << piece << (i < names.size() - 1 ? "," : "");
+                }
+                std::cout << '\n';
+            }
+
+        };
+        process(args, file);
+#if 0
         std::string ln;
         // TODO: process getline result below.
         while (skip_lns--)
-            std::getline(f, ln, '\n');
+            std::getline(file, ln, '\n');
 
-        for (; std::getline(f, ln, '\n');) {
+        for (; std::getline(file, ln, '\n');) {
             if (args.linenumbers) {
                 static std::size_t linenumber = 0; 
                 std::cout << ++linenumber << ',';
@@ -111,6 +137,7 @@ namespace in2csv::detail::fixed {
             }
             std::cout << '\n';
         }
+#endif
     }
 
     void impl::convert() {

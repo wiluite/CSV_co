@@ -6,6 +6,10 @@
 
 namespace in2csv::detail {
 
+    struct dbf_cannot_be_converted_from_stdin : std::runtime_error {
+        dbf_cannot_be_converted_from_stdin() : std::runtime_error("DBF files can not be converted from stdin. You must pass a filename.") {}
+    };
+
     namespace dbf {
         struct impl_args {
             bool linenumbers;

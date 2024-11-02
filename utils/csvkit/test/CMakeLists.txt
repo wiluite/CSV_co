@@ -631,6 +631,16 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testfixed_schema.csv
         ${CMAKE_CURRENT_BINARY_DIR}/testfixed_schema.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/stdin_select
+        ${CMAKE_CURRENT_BINARY_DIR}/stdin_select)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/foo2.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/foo2.csv)
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xlsreader bz2_connector -lpthread)
 add_test(in2csv_test in2csv_test)

@@ -65,9 +65,6 @@ namespace in2csv::detail {
     struct cannot_use_names_for_non_excels : std::runtime_error {
         cannot_use_names_for_non_excels() : std::runtime_error("in2csv: error: You cannot use the -n or --names options with non-Excel files.") {}
     };
-    struct dbf_cannot_be_converted_from_stdin : std::runtime_error {
-        dbf_cannot_be_converted_from_stdin() : std::runtime_error("DBF files can not be converted from stdin. You must pass a filename.") {}
-    };
 
     std::array<std::string, 8> formats {"csv", "dbf", "fixed", "geojson", "json", "ndjson", "xls", "xlsx" };
 
@@ -214,7 +211,7 @@ namespace in2csv {
             if (!std::filesystem::exists(fs::path{args.schema}))
                 throw schema_file_not_found(args.schema);
         }
-        if (filetype == "dbf" and args.file.empty())
+        if (filetype == "dbf" and (args.file.empty() or args.file == "_"))
             throw dbf_cannot_be_converted_from_stdin();
 
         if (!args.file.empty()) {
