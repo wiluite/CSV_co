@@ -71,18 +71,15 @@ static void OutputNumber(auto & oss, const double number) {
                                 break;
                         }
                         return xls_open_buffer(reinterpret_cast<unsigned char const *>(&*WB.cbegin()), WB.length(), a.encoding_xls.c_str(), &err);
-                    } else {
+                    } else
                         return xls_open_file(a.file.string().c_str(), a.encoding_xls.c_str(), &err);
-                    }
                 }(),
-                [&](xlsWorkBook* descriptor) {
-                    xls_close_WB(descriptor);
-                }
+                [&](xlsWorkBook* descriptor) { xls_close_WB(descriptor); }
             ) {}
             operator xlsWorkBook* () {
                 return ptr.get();
             }
-            xlsWorkBook* operator ->() {
+            xlsWorkBook* operator->() {
                 return ptr.get();
             }
         } pwb(a, error);
@@ -113,21 +110,36 @@ static void OutputNumber(auto & oss, const double number) {
         if (sheet_index == -1)
             throw std::runtime_error(std::string("No sheet named ") + "'" + a.sheet + "'");
 
+        struct pws_holder {
+            std::shared_ptr<xlsWorkSheet> ptr;
+            pws_holder(pwb_holder & pwb, int sheet_index) : ptr (
+                [&pwb, &sheet_index] {
+                    return xls_getWorkSheet(pwb, sheet_index);
+                }(),
+                [&](xlsWorkSheet* descriptor) { xls_close_WS(descriptor); }
+            ) {}
+            operator xlsWorkSheet* () {
+                return ptr.get();
+            }
+            xlsWorkSheet* operator->() {
+                return ptr.get();
+            }
+        } pws(pwb, sheet_index);
+
         // open and parse the sheet
-        auto const pWS = xls_getWorkSheet(pwb, sheet_index);
-        if (xls_parseWorkSheet(pWS) != LIBXLS_OK)
+        if (xls_parseWorkSheet(pws) != LIBXLS_OK)
             throw std::runtime_error("Error parsing the sheet.");
 
         std::ostringstream oss;
         tune_format(oss, "%.15g");
-        for (auto j = a.skip_lines; j <= (unsigned int)pWS->rows.lastrow; ++j) {
+        for (auto j = a.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
             WORD cellRow = (WORD)j;
             if (j)
                 oss << '\n';
 
             WORD cellCol;
-            for (cellCol = 0; cellCol <= pWS->rows.lastcol; cellCol++) {
-                xlsCell *cell = xls_cell(pWS, cellRow, cellCol);
+            for (cellCol = 0; cellCol <= pws->rows.lastcol; cellCol++) {
+                xlsCell *cell = xls_cell(pws, cellRow, cellCol);
                 if (!cell || cell->isHidden)
                     continue;
 
@@ -161,7 +173,6 @@ static void OutputNumber(auto & oss, const double number) {
                     OutputString(oss, "");
             }
         }
-        xls_close_WS(pWS);
         std::cout << oss.str() << std::endl;
     }
 }
