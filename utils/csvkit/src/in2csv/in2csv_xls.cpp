@@ -56,7 +56,20 @@ static void OutputNumber(auto & oss, const double number) {
     void impl::convert() {
         using namespace ::xls;
         xls_error_t error = LIBXLS_OK;
-        auto pWB = xls_open_file(a.file.string().c_str(), a.encoding_xls.c_str(), &error);
+        xlsWorkBook * pWB;
+        if (!a.file.empty() and a.file != "_")
+            pWB = xls_open_file(a.file.string().c_str(), a.encoding_xls.c_str(), &error);
+        else {
+            static std::string WB;
+            _setmode(_fileno(stdin), _O_BINARY);
+            for (;;) {
+                if (auto r = std::cin.get(); r != std::char_traits<char>::eof())
+                    WB += r;
+                else
+                    break;
+            }
+            pWB = xls_open_buffer(reinterpret_cast<unsigned char const *>(&*WB.cbegin()), WB.length(), a.encoding_xls.c_str(), &error);   
+        }
         assert(xls_parseWorkBook(pWB) == 0);
 //        printf("   mode: 0x%x\n", pWB->is5ver);
 //        printf("   mode: 0x%x\n", pWB->is1904);
@@ -104,11 +117,10 @@ static void OutputNumber(auto & oss, const double number) {
                     oss << fieldSeparator;
 
                 // display the colspan as only one cell, but reject rowspans (they can't be converted to CSV)
-                if (cell->rowspan > 1) {
 #if 0
+                if (cell->rowspan > 1)
                     fprintf(stderr, "Warning: %d rows spanned at col=%d row=%d: output will not match the Excel file.\n", cell->rowspan, cellCol+1, cellRow+1);
 #endif
-                }
                 // display the value of the cell (either numeric or string)
                 if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER)
                     OutputNumber(oss, cell->d);
@@ -131,7 +143,8 @@ static void OutputNumber(auto & oss, const double number) {
                     OutputString(oss, "");
             }
         }
+        xls_close_WS(pWS);
+        xls_close_WB(pWB);
         std::cout << oss.str() << std::endl;
-        xls_close(pWB);
     }
 }
