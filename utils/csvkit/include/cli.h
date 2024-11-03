@@ -614,7 +614,8 @@ namespace csvkit::cli {
         std::vector<cell_span_type> column_cells;
         column_cells.reserve(col_num);
         static std::vector<std::string> letter_names (col_num);
-        assert(letter_names.size() >= col_num && "You would better not to call this function twice");
+        if (col_num > letter_names.size())
+            throw std::runtime_error("generate_column_names(): You would better not to call this function twice.");
         unsigned i = 0;
         std::generate(letter_names.begin(), letter_names.end(), [&i] { 
             return letter_name(i++); 

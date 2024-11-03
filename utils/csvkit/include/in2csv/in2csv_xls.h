@@ -14,9 +14,13 @@ namespace in2csv::detail {
             bool no_header;
             unsigned skip_lines;
             bool linenumbers;
-#if 0
-            bool zero;
-#endif
+            std::string num_locale;
+            bool blanks;
+            mutable std::vector<std::string> null_value;
+            std::string date_fmt;
+            std::string datetime_fmt;
+            bool no_leading_zeroes;
+            bool no_inference;
             bool check_integrity;
             bool date_lib_parser;
             bool asap;
@@ -49,6 +53,13 @@ namespace in2csv::detail {
                 , args.no_header
                 , args.skip_lines
                 , args.linenumbers
+                , args.num_locale
+                , args.blanks
+                , args.null_value
+                , args.date_fmt
+                , args.datetime_fmt
+                , args.no_leading_zeroes
+                , args.no_inference
                 , args.check_integrity
                 , args.date_lib_parser
                 , args.asap

@@ -53,6 +53,16 @@ static void OutputNumber(auto & oss, const double number) {
 #endif
 }
 
+    std::vector<std::string> generate_header(unsigned length) {
+        std::vector<std::string> letter_names (length);
+        unsigned i = 0;
+        std::generate(letter_names.begin(), letter_names.end(), [&i] {
+            return letter_name(i++);
+        });
+
+        return letter_names;
+    }
+
     void impl::convert() {
         using namespace ::xls;
         xls_error_t error = LIBXLS_OK;
@@ -131,10 +141,17 @@ static void OutputNumber(auto & oss, const double number) {
             throw std::runtime_error("Error parsing the sheet.");
 
         std::ostringstream oss;
+        if (a.no_header) {
+            auto header = generate_header(pws->rows.lastcol + 1);
+            a.no_header = false;
+            for (auto & e : header)
+                oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
+            oss << '\n';
+        }
         tune_format(oss, "%.15g");
         for (auto j = a.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
             WORD cellRow = (WORD)j;
-            if (j)
+            if (j != a.skip_lines)
                 oss << '\n';
 
             WORD cellCol;
@@ -146,8 +163,9 @@ static void OutputNumber(auto & oss, const double number) {
                 if (cellCol)
                     oss << fieldSeparator;
 
-                // display the colspan as only one cell, but reject rowspans (they can't be converted to CSV)
 #if 0
+                // display the colspan as only one cell, but reject rowspans (they can't be converted to CSV)
+
                 if (cell->rowspan > 1)
                     fprintf(stderr, "Warning: %d rows spanned at col=%d row=%d: output will not match the Excel file.\n", cell->rowspan, cellCol+1, cellRow+1);
 #endif
@@ -173,6 +191,30 @@ static void OutputNumber(auto & oss, const double number) {
                     OutputString(oss, "");
             }
         }
-        std::cout << oss.str() << std::endl;
+
+        a.skip_lines = 0;
+        std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
+
+        if (!a.skip_init_space)
+            variants = notrimming_reader_type(oss.str());
+        else
+            variants = skipinitspace_reader_type(oss.str());
+
+        std::visit([&](auto & arg) {
+            if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
+                auto [types, blanks] = std::get<1>(typify(arg, a, typify_option::typify_without_precisions));
+                for (auto e : types) {
+                    std::cout << static_cast<int>(e) << std::endl;
+                }
+
+                arg.run_rows(
+                    [&](auto rowspan) {
+                    }
+                    ,[&](auto rowspan) {
+                    }
+                );
+            }
+        }, variants);
+
     }
 }

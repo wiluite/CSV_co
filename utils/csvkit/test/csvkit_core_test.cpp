@@ -337,13 +337,30 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
     };
 
     "generate column names"_test = [] {
-        csv_co::reader r("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27\n");
-        auto column_cells = generate_column_names(r);
-        expect(column_cells[0] == "a");
-        expect(column_cells[1] == "b");
-        expect(column_cells[2] == "c");
-        expect(column_cells[25] == "z");
-        expect(column_cells[26] == "aa");
+        { 
+            csv_co::reader r("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27\n");
+            auto column_cells = generate_column_names(r);
+            expect(column_cells[0] == "a");
+            expect(column_cells[2] == "c");
+            expect(column_cells[25] == "z");
+            expect(column_cells[26] == "aa");
+        }
+        { 
+            csv_co::reader r("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26\n");
+            expect(nothrow([&]() {
+                auto column_cells = generate_column_names(r);
+                expect(column_cells[0] == "a");
+                expect(column_cells[2] == "c");
+                expect(column_cells[25] == "z");
+            }));
+        }
+        { 
+            csv_co::reader r("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28\n");
+            expect(throws([&]() {
+                generate_column_names(r);
+            }));
+        }
+
     };
 
     "obtain_header_and_skip"_test = [] {
