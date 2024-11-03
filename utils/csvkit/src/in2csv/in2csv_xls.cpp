@@ -56,38 +56,56 @@ static void OutputNumber(auto & oss, const double number) {
     void impl::convert() {
         using namespace ::xls;
         xls_error_t error = LIBXLS_OK;
-        xlsWorkBook * pWB;
-        if (!a.file.empty() and a.file != "_")
-            pWB = xls_open_file(a.file.string().c_str(), a.encoding_xls.c_str(), &error);
-        else {
-            static std::string WB;
-            _setmode(_fileno(stdin), _O_BINARY);
-            for (;;) {
-                if (auto r = std::cin.get(); r != std::char_traits<char>::eof())
-                    WB += r;
-                else
-                    break;
+
+        struct pwb_holder {
+            std::shared_ptr<xlsWorkBook> ptr;
+            pwb_holder(impl_args const & a, xls_error_t & err) : ptr (
+                [&a, &err] {
+                    if (a.file.empty() or a.file == "_") {
+                        static std::string WB;
+                        _setmode(_fileno(stdin), _O_BINARY);
+                        for (;;) {
+                            if (auto r = std::cin.get(); r != std::char_traits<char>::eof())
+                                WB += r;
+                            else
+                                break;
+                        }
+                        return xls_open_buffer(reinterpret_cast<unsigned char const *>(&*WB.cbegin()), WB.length(), a.encoding_xls.c_str(), &err);
+                    } else {
+                        return xls_open_file(a.file.string().c_str(), a.encoding_xls.c_str(), &err);
+                    }
+                }(),
+                [&](xlsWorkBook* descriptor) {
+                    xls_close_WB(descriptor);
+                }
+            ) {}
+            operator xlsWorkBook* () {
+                return ptr.get();
             }
-            pWB = xls_open_buffer(reinterpret_cast<unsigned char const *>(&*WB.cbegin()), WB.length(), a.encoding_xls.c_str(), &error);   
-        }
-        assert(xls_parseWorkBook(pWB) == 0);
+            xlsWorkBook* operator ->() {
+                return ptr.get();
+            }
+        } pwb(a, error);
+
+        assert(xls_parseWorkBook(pwb) == 0);
 //        printf("   mode: 0x%x\n", pWB->is5ver);
 //        printf("   mode: 0x%x\n", pWB->is1904);
-        if (!pWB)
+        if (!pwb)
             std::runtime_error(std::string(xls_getError(error)));
+
         if (a.names) {
-            for (auto i = 0u; i < pWB->sheets.count; i++)
-                printf("%s\n", pWB->sheets.sheet[i].name ? pWB->sheets.sheet[i].name : "");
+            for (auto i = 0u; i < pwb->sheets.count; i++)
+                printf("%s\n", pwb->sheets.sheet[i].name ? pwb->sheets.sheet[i].name : "");
             return;
         }
         if (a.sheet.empty())
-            a.sheet = pWB->sheets.sheet[0].name;
+            a.sheet = pwb->sheets.sheet[0].name;
 
         auto sheet_index = -1;
-        for (auto i = 0u; i < pWB->sheets.count; i++) {
-            if (!pWB->sheets.sheet[i].name)
+        for (auto i = 0u; i < pwb->sheets.count; i++) {
+            if (!pwb->sheets.sheet[i].name)
                 continue;
-            if (strcmp(a.sheet.c_str(), (char *)pWB->sheets.sheet[i].name) == 0) {
+            if (strcmp(a.sheet.c_str(), (char *)pwb->sheets.sheet[i].name) == 0) {
                 sheet_index = i;
                 break;
             }
@@ -96,7 +114,7 @@ static void OutputNumber(auto & oss, const double number) {
             throw std::runtime_error(std::string("No sheet named ") + "'" + a.sheet + "'");
 
         // open and parse the sheet
-        auto const pWS = xls_getWorkSheet(pWB, sheet_index);
+        auto const pWS = xls_getWorkSheet(pwb, sheet_index);
         if (xls_parseWorkSheet(pWS) != LIBXLS_OK)
             throw std::runtime_error("Error parsing the sheet.");
 
@@ -144,7 +162,6 @@ static void OutputNumber(auto & oss, const double number) {
             }
         }
         xls_close_WS(pWS);
-        xls_close_WB(pWB);
         std::cout << oss.str() << std::endl;
     }
 }
