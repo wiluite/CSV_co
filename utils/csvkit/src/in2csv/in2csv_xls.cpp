@@ -15,44 +15,74 @@ namespace in2csv::detail::xls {
 static char stringSeparator = '\"';
 static char const *fieldSeparator = ",";
 
-static void OutputString(auto & oss, const char *string) {
-    const char *str;
+    std::vector<std::string> header;
+    static unsigned header_cell_index = 0;
 
-    oss << stringSeparator;
-    for (str = string; *str; str++) {
-        if (*str == stringSeparator) {
-            oss << stringSeparator << stringSeparator;
-        } else if (*str == '\\') {
-            oss << "\\\\";
-        } else {
-            oss << *str;
+    static void OutputHeaderString(std::ostringstream & oss, const char *string) {
+        std::ostringstream header_cell;
+        header_cell << stringSeparator;
+        for (const char * str = string; *str; str++) {
+            if (*str == stringSeparator) {
+                header_cell << stringSeparator << stringSeparator;
+            } else if (*str == '\\') {
+                header_cell << "\\\\";
+            } else {
+                header_cell << *str;
+            }
         }
+        header_cell << stringSeparator;
+        if (header_cell.str() == R"("")")
+            header.push_back(letter_name(header_cell_index));
+        else
+            header.push_back(header_cell.str());
+        oss << header.back();
+        ++header_cell_index;
     }
-    oss << stringSeparator;
-}
 
-static std::chrono::system_clock::time_point to_chrono_time_point(double d) {
-    using namespace std::chrono;
-    using namespace date;
-    using ddays = duration<double, date::days::period>;
+    static void OutputString(std::ostringstream & oss, const char *string) {
+        oss << stringSeparator;
+        for (const char *str = string; *str; str++) {
+            if (*str == stringSeparator) {
+                oss << stringSeparator << stringSeparator;
+            } else if (*str == '\\') {
+                oss << "\\\\";
+            } else {
+                oss << *str;
+            }
+        }
+        oss << stringSeparator;
+    }
+
+    static std::chrono::system_clock::time_point to_chrono_time_point(double d) {
+        using namespace std::chrono;
+        using namespace date;
+        using ddays = duration<double, date::days::period>;
 #if 0
-    return date::sys_days{date::December/31/1899} + round<system_clock::duration>(ddays{d});
+        return date::sys_days{date::December/31/1899} + round<system_clock::duration>(ddays{d});
 #endif
-    return date::sys_days{date::January/01/1904} + round<system_clock::duration>(ddays{d});
-}
+        return date::sys_days{date::January/01/1904} + round<system_clock::duration>(ddays{d});
+    }
 
-static bool is1904_and_datetime_header;
-// Output a CSV Number
-static void OutputNumber(auto & oss, const double number) {
+    static bool is1904_and_datetime_header;
+
+    static void OutputHeaderNumber(std::ostringstream & oss, const double number) {
+        std::ostringstream header_cell;
+        header_cell << number;
+        header.push_back(header_cell.str());
+        oss << header.back();
+        ++header_cell_index;
+    }
+
+    static void OutputNumber(std::ostringstream & oss, const double number) {
 #if 1
-    oss << number;
+        oss << number;
 #else
-    //TODO: if is1904 and "date" in header
-    using date::operator<<;
-    std::cout << to_chrono_time_point(number);
+        //TODO: if is1904 and "date" in header
+        using date::operator<<;
+        std::cout << to_chrono_time_point(number);
 #endif
-}
-
+    }
+ 
     std::vector<std::string> generate_header(unsigned length) {
         std::vector<std::string> letter_names (length);
         unsigned i = 0;
@@ -67,8 +97,9 @@ static void OutputNumber(auto & oss, const double number) {
         using namespace ::xls;
         xls_error_t error = LIBXLS_OK;
 
-        struct pwb_holder {
+        class pwb_holder {
             std::shared_ptr<xlsWorkBook> ptr;
+        public:
             pwb_holder(impl_args const & a, xls_error_t & err) : ptr (
                 [&a, &err] {
                     if (a.file.empty() or a.file == "_") {
@@ -95,8 +126,8 @@ static void OutputNumber(auto & oss, const double number) {
         } pwb(a, error);
 
         assert(xls_parseWorkBook(pwb) == 0);
-//        printf("   mode: 0x%x\n", pWB->is5ver);
-//        printf("   mode: 0x%x\n", pWB->is1904);
+        is1904_and_datetime_header = pwb->is1904;
+
         if (!pwb)
             std::runtime_error(std::string(xls_getError(error)));
 
@@ -120,8 +151,9 @@ static void OutputNumber(auto & oss, const double number) {
         if (sheet_index == -1)
             throw std::runtime_error(std::string("No sheet named ") + "'" + a.sheet + "'");
 
-        struct pws_holder {
+        class pws_holder {
             std::shared_ptr<xlsWorkSheet> ptr;
+        public:
             pws_holder(pwb_holder & pwb, int sheet_index) : ptr (
                 [&pwb, &sheet_index] {
                     return xls_getWorkSheet(pwb, sheet_index);
@@ -142,20 +174,29 @@ static void OutputNumber(auto & oss, const double number) {
 
         std::ostringstream oss;
         if (a.no_header) {
-            auto header = generate_header(pws->rows.lastcol + 1);
+            header = generate_header(pws->rows.lastcol + 1);
             a.no_header = false;
             for (auto & e : header)
                 oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
             oss << '\n';
         }
+
         tune_format(oss, "%.15g");
+
         for (auto j = a.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
             WORD cellRow = (WORD)j;
-            if (j != a.skip_lines)
+            if (j != a.skip_lines) {
                 oss << '\n';
+                // should write the header if it is.
+            }
 
-            WORD cellCol;
-            for (cellCol = 0; cellCol <= pws->rows.lastcol; cellCol++) {
+            static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
+            static void (*output_number_func)(std::ostringstream &, const double) = OutputNumber;
+
+            output_string_func = (!a.no_header and j == a.skip_lines) ? OutputHeaderString : OutputString;
+            output_number_func = (!a.no_header and j == a.skip_lines) ? OutputHeaderNumber : OutputNumber;
+
+            for (WORD cellCol = 0; cellCol <= pws->rows.lastcol; cellCol++) {
                 xlsCell *cell = xls_cell(pws, cellRow, cellCol);
                 if (!cell || cell->isHidden)
                     continue;
@@ -171,29 +212,30 @@ static void OutputNumber(auto & oss, const double number) {
 #endif
                 // display the value of the cell (either numeric or string)
                 if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER)
-                    OutputNumber(oss, cell->d);
+                    output_number_func(oss, cell->d);
                 else if (cell->id == XLS_RECORD_FORMULA || cell->id == XLS_RECORD_FORMULA_ALT) {
                     // formula
                     if (cell->l == 0)
-                        OutputNumber(oss, cell->d);
+                        output_number_func(oss, cell->d);
                     else if (cell->str) {
                         if (!strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
-                            OutputString(oss, (int) cell->d ? "true" : "false");
+                            output_string_func(oss, (int) cell->d ? "true" : "false");
                         else
                         if (!strcmp((char *)cell->str, "error")) // formula is in error
-                            OutputString(oss, "*error*");
+                            output_string_func(oss, "*error*");
                         else // ... cell->str is valid as the result of a string formula.
-                            OutputString(oss, (char *)cell->str);
+                            output_string_func(oss, (char *)cell->str);
                     }
                 } else if (cell->str)
-                    OutputString(oss, (char *)cell->str);
+                    output_string_func(oss, (char *)cell->str);
                 else
-                    OutputString(oss, "");
+                    output_string_func(oss, "");
             }
         }
 
         a.skip_lines = 0;
         std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
+
 
         if (!a.skip_init_space)
             variants = notrimming_reader_type(oss.str());

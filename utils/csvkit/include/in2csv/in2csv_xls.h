@@ -21,9 +21,10 @@ namespace in2csv::detail {
             std::string datetime_fmt;
             bool no_leading_zeroes;
             bool no_inference;
-            bool check_integrity;
+            //bool check_integrity;
             bool date_lib_parser;
             bool asap;
+
             bool names; // "Display sheet names from the input Excel file."
             std::string sheet; // "The name of the Excel sheet to operate on."
             std::string write_sheets; // "The names of the Excel sheets to write to files, or \"-\" to write all sheets.
@@ -60,7 +61,7 @@ namespace in2csv::detail {
                 , args.datetime_fmt
                 , args.no_leading_zeroes
                 , args.no_inference
-                , args.check_integrity
+                //, args.check_integrity
                 , args.date_lib_parser
                 , args.asap
                 , args.names
