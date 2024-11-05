@@ -14,6 +14,7 @@ namespace in2csv::detail {
             bool no_header;
             unsigned skip_lines;
             bool linenumbers;
+            bool zero;
             std::string num_locale;
             bool blanks;
             mutable std::vector<std::string> null_value;
@@ -54,6 +55,7 @@ namespace in2csv::detail {
                 , args.no_header
                 , args.skip_lines
                 , args.linenumbers
+                , args.zero
                 , args.num_locale
                 , args.blanks
                 , args.null_value

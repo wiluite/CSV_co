@@ -12,25 +12,29 @@ using namespace ::csvkit::cli;
 
 namespace in2csv::detail::xls {
 
-static char stringSeparator = '\"';
-static char const *fieldSeparator = ",";
+    static char stringSeparator = '\"';
+    static char const *fieldSeparator = ",";
 
     std::vector<std::string> header;
     static unsigned header_cell_index = 0;
 
     static void OutputHeaderString(std::ostringstream & oss, const char *string) {
         std::ostringstream header_cell;
+#if 0
         header_cell << stringSeparator;
+#endif
         for (const char * str = string; *str; str++) {
-            if (*str == stringSeparator) {
+            if (*str == stringSeparator)
                 header_cell << stringSeparator << stringSeparator;
-            } else if (*str == '\\') {
+            else
+            if (*str == '\\')
                 header_cell << "\\\\";
-            } else {
+            else
                 header_cell << *str;
-            }
         }
+#if 0
         header_cell << stringSeparator;
+#endif
         if (header_cell.str() == R"("")")
             header.push_back(letter_name(header_cell_index));
         else
@@ -39,16 +43,27 @@ static char const *fieldSeparator = ",";
         ++header_cell_index;
     }
 
+    static void OutputHeaderNumber(std::ostringstream & oss, const double number) {
+        std::ostringstream header_cell;
+        header_cell << number;
+        header.push_back(header_cell.str());
+        oss << header.back();
+        ++header_cell_index;
+    }
+
+    std::vector<unsigned> dates_ids;
+    std::vector<unsigned> datetimes_ids;
+
     static void OutputString(std::ostringstream & oss, const char *string) {
         oss << stringSeparator;
         for (const char *str = string; *str; str++) {
-            if (*str == stringSeparator) {
+            if (*str == stringSeparator)
                 oss << stringSeparator << stringSeparator;
-            } else if (*str == '\\') {
+            else
+            if (*str == '\\')
                 oss << "\\\\";
-            } else {
+            else
                 oss << *str;
-            }
         }
         oss << stringSeparator;
     }
@@ -64,14 +79,6 @@ static char const *fieldSeparator = ",";
     }
 
     static bool is1904_and_datetime_header;
-
-    static void OutputHeaderNumber(std::ostringstream & oss, const double number) {
-        std::ostringstream header_cell;
-        header_cell << number;
-        header.push_back(header_cell.str());
-        oss << header.back();
-        ++header_cell_index;
-    }
 
     static void OutputNumber(std::ostringstream & oss, const double number) {
 #if 1
@@ -93,7 +100,7 @@ static char const *fieldSeparator = ",";
         return letter_names;
     }
 
-    void impl::convert() {
+    void convert_impl(auto & a) {
         using namespace ::xls;
         xls_error_t error = LIBXLS_OK;
 
@@ -172,6 +179,15 @@ static char const *fieldSeparator = ",";
         if (xls_parseWorkSheet(pws) != LIBXLS_OK)
             throw std::runtime_error("Error parsing the sheet.");
 
+        auto get_date_and_datetime_columns = [&] {
+            a.d_xls = a.d_xls == "none" ? "" : a.d_xls;
+            std::string not_columns;
+            dates_ids = parse_column_identifiers(columns{a.d_xls}, header, get_column_offset(a), excludes{not_columns});
+
+            a.dt_xls = a.dt_xls == "none" ? "" : a.dt_xls;
+            datetimes_ids = parse_column_identifiers(columns{a.dt_xls}, header, get_column_offset(a), excludes{not_columns});
+        };
+
         std::ostringstream oss;
         if (a.no_header) {
             header = generate_header(pws->rows.lastcol + 1);
@@ -179,16 +195,18 @@ static char const *fieldSeparator = ",";
             for (auto & e : header)
                 oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
             oss << '\n';
+            get_date_and_datetime_columns();
         }
 
         tune_format(oss, "%.15g");
 
         for (auto j = a.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
             WORD cellRow = (WORD)j;
-            if (j != a.skip_lines) {
+            if (j != a.skip_lines)
                 oss << '\n';
-                // should write the header if it is.
-            }
+
+            if (j == a.skip_lines + 1 and !a.no_header)
+                get_date_and_datetime_columns();
 
             static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
             static void (*output_number_func)(std::ostringstream &, const double) = OutputNumber;
@@ -233,9 +251,9 @@ static char const *fieldSeparator = ",";
             }
         }
 
+
         a.skip_lines = 0;
         std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
-
 
         if (!a.skip_init_space)
             variants = notrimming_reader_type(oss.str());
@@ -258,5 +276,13 @@ static char const *fieldSeparator = ",";
             }
         }, variants);
 
+    }
+
+    void impl::convert() {
+        try {
+            convert_impl(a);
+        }  catch (ColumnIdentifierError const& e) {
+            std::cout << e.what() << '\n';
+        }
     }
 }
