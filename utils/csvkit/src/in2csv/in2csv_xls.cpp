@@ -8,7 +8,6 @@
 using namespace ::csvkit::cli;
 
 //TODO: do type-aware printing
-//TODO: RAII
 
 namespace in2csv::detail::xls {
 
@@ -17,9 +16,12 @@ namespace in2csv::detail::xls {
 
     std::vector<std::string> header;
     static unsigned header_cell_index = 0;
+    std::vector<unsigned> can_be_dates;
+    std::vector<unsigned> can_be_datetimes;
 
     static void OutputHeaderString(std::ostringstream & oss, const char *string) {
         std::ostringstream header_cell;
+        tune_format(header_cell, "%.15g");
 #if 0
         header_cell << stringSeparator;
 #endif
@@ -35,16 +37,20 @@ namespace in2csv::detail::xls {
 #if 0
         header_cell << stringSeparator;
 #endif
-        if (header_cell.str() == R"("")")
+        if (header_cell.str() == R"()") {
+            std::cerr << "UnnamedColumnWarning: Column " << header_cell_index << " has no name. Using" << '"' << letter_name(header_cell_index) << "\".\n"; 
             header.push_back(letter_name(header_cell_index));
+        }
         else
             header.push_back(header_cell.str());
         oss << header.back();
         ++header_cell_index;
     }
 
-    static void OutputHeaderNumber(std::ostringstream & oss, const double number) {
+    static void OutputHeaderNumber(std::ostringstream & oss, const double number, unsigned) {
         std::ostringstream header_cell;
+        tune_format(header_cell, "%.15g");
+
         header_cell << number;
         header.push_back(header_cell.str());
         oss << header.back();
@@ -54,7 +60,7 @@ namespace in2csv::detail::xls {
     std::vector<unsigned> dates_ids;
     std::vector<unsigned> datetimes_ids;
 
-    static void OutputString(std::ostringstream & oss, const char *string) {
+    inline static void OutputString(std::ostringstream & oss, const char *string) {
         oss << stringSeparator;
         for (const char *str = string; *str; str++) {
             if (*str == stringSeparator)
@@ -68,26 +74,42 @@ namespace in2csv::detail::xls {
         oss << stringSeparator;
     }
 
-    static std::chrono::system_clock::time_point to_chrono_time_point(double d) {
+    static bool is1904;
+
+    inline static std::chrono::system_clock::time_point to_chrono_time_point(double d) {
         using namespace std::chrono;
         using namespace date;
         using ddays = duration<double, date::days::period>;
-#if 0
-        return date::sys_days{date::December/31/1899} + round<system_clock::duration>(ddays{d});
-#endif
-        return date::sys_days{date::January/01/1904} + round<system_clock::duration>(ddays{d});
+        if (is1904)
+            return date::sys_days{date::January/01/1904} + round<system_clock::duration>(ddays{d});
+        else if (d < 60)
+            return date::sys_days{date::December/31/1899} + round<system_clock::duration>(ddays{d});
+        else
+            return date::sys_days{date::December/30/1899} + round<system_clock::duration>(ddays{d});
     }
 
-    static bool is1904_and_datetime_header;
+    inline bool is_date_column(unsigned column) {
+        return std::find(dates_ids.begin(), dates_ids.end(), column) != std::end(dates_ids);
+    }
 
-    static void OutputNumber(std::ostringstream & oss, const double number) {
-#if 1
-        oss << number;
-#else
-        //TODO: if is1904 and "date" in header
-        using date::operator<<;
-        std::cout << to_chrono_time_point(number);
-#endif
+    inline bool is_datetime_column(unsigned column) {
+        return std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
+    }
+
+    inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
+        if (is_date_column(column)) {
+            using date::operator<<;
+            std::ostringstream local_oss;
+            local_oss << to_chrono_time_point(number);
+            auto str = local_oss.str();
+            oss << std::string{str.begin(), str.begin() + 10};
+        } else
+        if (is_datetime_column(column)) {
+            using date::operator<<;
+            std::ostringstream local_oss;
+            oss << to_chrono_time_point(number);
+        } else
+            oss << number;
     }
  
     std::vector<std::string> generate_header(unsigned length) {
@@ -133,7 +155,7 @@ namespace in2csv::detail::xls {
         } pwb(a, error);
 
         assert(xls_parseWorkBook(pwb) == 0);
-        is1904_and_datetime_header = pwb->is1904;
+        is1904 = pwb->is1904;
 
         if (!pwb)
             std::runtime_error(std::string(xls_getError(error)));
@@ -180,12 +202,15 @@ namespace in2csv::detail::xls {
             throw std::runtime_error("Error parsing the sheet.");
 
         auto get_date_and_datetime_columns = [&] {
-            a.d_xls = a.d_xls == "none" ? "" : a.d_xls;
-            std::string not_columns;
-            dates_ids = parse_column_identifiers(columns{a.d_xls}, header, get_column_offset(a), excludes{not_columns});
+            if (a.d_xls != "none") {
+                std::string not_columns;
+                dates_ids = parse_column_identifiers(columns{a.d_xls}, header, get_column_offset(a), excludes{not_columns});
+            }
 
-            a.dt_xls = a.dt_xls == "none" ? "" : a.dt_xls;
-            datetimes_ids = parse_column_identifiers(columns{a.dt_xls}, header, get_column_offset(a), excludes{not_columns});
+            if (a.dt_xls != "none") {
+                std::string not_columns;
+                datetimes_ids = parse_column_identifiers(columns{a.dt_xls}, header, get_column_offset(a), excludes{not_columns});
+            }
         };
 
         std::ostringstream oss;
@@ -209,7 +234,7 @@ namespace in2csv::detail::xls {
                 get_date_and_datetime_columns();
 
             static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
-            static void (*output_number_func)(std::ostringstream &, const double) = OutputNumber;
+            static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;
 
             output_string_func = (!a.no_header and j == a.skip_lines) ? OutputHeaderString : OutputString;
             output_number_func = (!a.no_header and j == a.skip_lines) ? OutputHeaderNumber : OutputNumber;
@@ -230,14 +255,14 @@ namespace in2csv::detail::xls {
 #endif
                 // display the value of the cell (either numeric or string)
                 if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER)
-                    output_number_func(oss, cell->d);
+                    output_number_func(oss, cell->d, cellCol);
                 else if (cell->id == XLS_RECORD_FORMULA || cell->id == XLS_RECORD_FORMULA_ALT) {
                     // formula
                     if (cell->l == 0)
-                        output_number_func(oss, cell->d);
+                        output_number_func(oss, cell->d, cellCol);
                     else if (cell->str) {
                         if (!strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
-                            output_string_func(oss, (int) cell->d ? "true" : "false");
+                            output_string_func(oss, (int) cell->d ? "True" : "False");
                         else
                         if (!strcmp((char *)cell->str, "error")) // formula is in error
                             output_string_func(oss, "*error*");
@@ -250,7 +275,6 @@ namespace in2csv::detail::xls {
                     output_string_func(oss, "");
             }
         }
-
 
         a.skip_lines = 0;
         std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
