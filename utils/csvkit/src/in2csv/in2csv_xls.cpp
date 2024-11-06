@@ -370,7 +370,10 @@ namespace in2csv::detail::xls {
                         std::cout << header.back() << '\n';
                     }
                     ,[&](auto rowspan) {
-
+                        if (a.linenumbers) {
+                            static std::size_t line_nums = 0;
+                            std::cout << ++line_nums << ',';
+                        }
                         auto col = 0u;
                         using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
                         std::for_each(rowspan.begin(), rowspan.end()-1, [&](auto const & e) {
