@@ -18,11 +18,13 @@ namespace in2csv::detail::xls {
     std::vector<unsigned> can_be_number;
 
     static void OutputHeaderString(std::ostringstream & oss, const char *string) {
+        // now we have native header, and so "1" does not influence on the nature of this column
+        can_be_number.push_back(1);
 #if 0
         std::cerr << "OutputHeaderString\n";
 #endif
         std::ostringstream header_cell;
-        tune_format(header_cell, "%.15g");
+        tune_format(header_cell, "%.16g");
 #if 0
         header_cell << stringSeparator;
 #endif
@@ -46,18 +48,19 @@ namespace in2csv::detail::xls {
             header.push_back(header_cell.str());
         oss << header.back();
         ++header_cell_index;
-        can_be_number.push_back(0);
     }
 
     static void OutputHeaderNumber(std::ostringstream & oss, const double number, unsigned) {
+        // now we have native header, and so "1" does not influence on the nature of this column
+        can_be_number.push_back(1);
+
         std::ostringstream header_cell;
-        tune_format(header_cell, "%.15g");
+        tune_format(header_cell, "%.16g");
 
         header_cell << number;
         header.push_back(header_cell.str());
         oss << header.back();
         ++header_cell_index;
-        can_be_number.push_back(1);
     }
 
     std::vector<unsigned> dates_ids;
@@ -65,6 +68,10 @@ namespace in2csv::detail::xls {
 
     inline static void OutputString(std::ostringstream & oss, const char *string) {
         assert(header.size() == 8);
+        // now we have first line of the body, and so "0" really influence on the nature of this column
+        if (can_be_number.size() < header.size())
+            can_be_number.push_back(0);
+
         oss << stringSeparator;
         for (const char *str = string; *str; str++) {
             if (*str == stringSeparator)
@@ -93,15 +100,19 @@ namespace in2csv::detail::xls {
     }
 
     inline bool is_date_column(unsigned column) {
-        return /*can_be_number[column] and */ std::find(dates_ids.begin(), dates_ids.end(), column) != std::end(dates_ids);
+        return can_be_number[column] and std::find(dates_ids.begin(), dates_ids.end(), column) != std::end(dates_ids);
     }
 
     inline bool is_datetime_column(unsigned column) {
-        return /*can_be_number[column] and */ std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
+        return can_be_number[column] and std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
     }
 
     inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
         assert(header.size() == 8);
+        // now we have first line of the body, and so "1" really influence on the nature of this column
+        if (can_be_number.size() < header.size())
+            can_be_number.push_back(1);
+
         if (is_date_column(column)) {
             using date::operator<<;
             std::ostringstream local_oss;
@@ -286,7 +297,7 @@ namespace in2csv::detail::xls {
             get_date_and_datetime_columns();
         }
 
-        tune_format(oss, "%.15g");
+        tune_format(oss, "%.16g");
 
         for (auto j = a.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
             WORD cellRow = (WORD)j;
