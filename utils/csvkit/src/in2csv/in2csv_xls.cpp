@@ -7,8 +7,6 @@
 
 using namespace ::csvkit::cli;
 
-//TODO: do type-aware printing
-
 namespace in2csv::detail::xls {
 
     static char stringSeparator = '\"';
@@ -16,10 +14,13 @@ namespace in2csv::detail::xls {
 
     std::vector<std::string> header;
     static unsigned header_cell_index = 0;
-    std::vector<unsigned> can_be_dates;
-    std::vector<unsigned> can_be_datetimes;
+    // TODO: do not forget to implement
+    std::vector<unsigned> can_be_number;
 
     static void OutputHeaderString(std::ostringstream & oss, const char *string) {
+#if 0
+        std::cerr << "OutputHeaderString\n";
+#endif
         std::ostringstream header_cell;
         tune_format(header_cell, "%.15g");
 #if 0
@@ -38,13 +39,14 @@ namespace in2csv::detail::xls {
         header_cell << stringSeparator;
 #endif
         if (header_cell.str() == R"()") {
-            std::cerr << "UnnamedColumnWarning: Column " << header_cell_index << " has no name. Using" << '"' << letter_name(header_cell_index) << "\".\n"; 
+            std::cerr << "UnnamedColumnWarning: Column " << header_cell_index << " has no name. Using " << '"' << letter_name(header_cell_index) << "\".\n"; 
             header.push_back(letter_name(header_cell_index));
         }
         else
             header.push_back(header_cell.str());
         oss << header.back();
         ++header_cell_index;
+        can_be_number.push_back(0);
     }
 
     static void OutputHeaderNumber(std::ostringstream & oss, const double number, unsigned) {
@@ -55,12 +57,14 @@ namespace in2csv::detail::xls {
         header.push_back(header_cell.str());
         oss << header.back();
         ++header_cell_index;
+        can_be_number.push_back(1);
     }
 
     std::vector<unsigned> dates_ids;
     std::vector<unsigned> datetimes_ids;
 
     inline static void OutputString(std::ostringstream & oss, const char *string) {
+        assert(header.size() == 8);
         oss << stringSeparator;
         for (const char *str = string; *str; str++) {
             if (*str == stringSeparator)
@@ -89,14 +93,15 @@ namespace in2csv::detail::xls {
     }
 
     inline bool is_date_column(unsigned column) {
-        return std::find(dates_ids.begin(), dates_ids.end(), column) != std::end(dates_ids);
+        return /*can_be_number[column] and */ std::find(dates_ids.begin(), dates_ids.end(), column) != std::end(dates_ids);
     }
 
     inline bool is_datetime_column(unsigned column) {
-        return std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
+        return /*can_be_number[column] and */ std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
     }
 
     inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
+        assert(header.size() == 8);
         if (is_date_column(column)) {
             using date::operator<<;
             std::ostringstream local_oss;
@@ -120,6 +125,65 @@ namespace in2csv::detail::xls {
         });
 
         return letter_names;
+    }
+
+    void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args) {
+        using elem_type = std::decay_t<decltype(elem)>;
+        auto & [types, blanks] = types_n_blanks;
+        bool const is_null = elem.is_null();
+        if (types[col] == column_type::text_t or (!args.blanks and is_null)) {
+            auto compose_text = [&](auto const & e) -> std::string {
+                typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
+                std::string unquoted = another_rep.str();
+                return unquoted.find(',') == std::string::npos ? unquoted : another_rep; // another_rep casts to original string by default
+            };
+            std::cout << (!args.blanks && is_null ? "" : compose_text(elem));
+            return;
+        }
+        assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
+
+        using func_type = std::function<std::string(elem_type const &, std::any const &)>;
+
+        // TODO: FIXME. Clang sanitizers complains for this in unittests.
+        //  Although it seems neither false positives nor bloat code here.
+#if !defined(BOOST_UT_DISABLE_MODULE)
+        static
+#endif
+        std::array<func_type, static_cast<std::size_t>(column_type::sz)> type2func {
+                compose_bool<elem_type>
+                , [&](elem_type const & e, std::any const & info) {
+                    assert(!e.is_null());
+
+                    static std::ostringstream ss;
+                    ss.str({});
+
+                    // Surprisingly, csvkit represents a number from file without distortion:
+                    // knowing, that it is a valid number in any locale, it simply removes
+                    // the thousands separators and replaces the decimal point with its
+                    // C-locale equivalent. Thus, the number actually written to the file
+                    // is output. and we have to do some tricks.
+                    typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
+                    auto const value = another_rep.num();
+
+                    if (std::isnan(value))
+                        ss << "NaN";
+                    else if (std::isinf(value))
+                        ss << (value > 0 ? "Infinity" : "-Infinity");
+                    else {
+                        if (args.num_locale != "C") {
+                            std::string s = another_rep.str();
+                            another_rep.to_C_locale(s);
+                            ss << s;
+                        } else
+                            ss << another_rep.str();
+                    }
+                    return ss.str();
+                }
+                , compose_datetime<elem_type>
+                , compose_date<elem_type>
+        };
+        auto const type_index = static_cast<std::size_t>(types[col]) - 1;
+        std::cout << type2func[type_index](elem, std::any{});
     }
 
     void convert_impl(auto & a) {
@@ -216,7 +280,6 @@ namespace in2csv::detail::xls {
         std::ostringstream oss;
         if (a.no_header) {
             header = generate_header(pws->rows.lastcol + 1);
-            a.no_header = false;
             for (auto & e : header)
                 oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
             oss << '\n';
@@ -230,8 +293,10 @@ namespace in2csv::detail::xls {
             if (j != a.skip_lines)
                 oss << '\n';
 
-            if (j == a.skip_lines + 1 and !a.no_header)
+            if (j == a.skip_lines + 1 and !a.no_header) { // now we have really the native header
                 get_date_and_datetime_columns();
+                assert(header.size() == 8);
+            }
 
             static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
             static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;
@@ -276,7 +341,9 @@ namespace in2csv::detail::xls {
             }
         }
 
+        //std::cout << oss.str() << std::endl;
         a.skip_lines = 0;
+        a.no_header = false;
         std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
 
         if (!a.skip_init_space)
@@ -286,15 +353,32 @@ namespace in2csv::detail::xls {
 
         std::visit([&](auto & arg) {
             if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
-                auto [types, blanks] = std::get<1>(typify(arg, a, typify_option::typify_without_precisions));
-                for (auto e : types) {
+                auto types_and_blanks = std::get<1>(typify(arg, a, typify_option::typify_without_precisions));
+#if 0
+                for (auto e : std::get<0>(types_and_blanks))
                     std::cout << static_cast<int>(e) << std::endl;
-                }
-
+#endif
                 arg.run_rows(
-                    [&](auto rowspan) {
+                    [&](auto) {
+                        if (a.linenumbers)
+                            std::cout << "line_number,";
+
+                        std::for_each(header.begin(), header.end() - 1, [&](auto const & elem) {
+                            std::cout << elem << ',';
+                        });
+
+                        std::cout << header.back() << '\n';
                     }
                     ,[&](auto rowspan) {
+
+                        auto col = 0u;
+                        using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
+                        std::for_each(rowspan.begin(), rowspan.end()-1, [&](auto const & e) {
+                            print_func(elem_type{e}, col++, types_and_blanks, a);
+                            std::cout << ',';
+                        });
+                        print_func(elem_type{rowspan.back()}, col, types_and_blanks, a);
+                        std::cout << '\n';
                     }
                 );
             }
