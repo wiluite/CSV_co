@@ -15,9 +15,9 @@
 #include <numeric>
 #include "encoding.h"
 
+#include <fcntl.h>
 #if !defined(_MSC_VER)
   #include <unistd.h>
-  #include <fcntl.h>
 #else
   #include <io.h>
   #define STDIN_FILENO 0

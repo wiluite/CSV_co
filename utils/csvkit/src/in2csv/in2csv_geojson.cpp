@@ -10,9 +10,9 @@ namespace in2csv::detail::geojson {
     namespace detail {
         std::vector<std::string> build_header(geojson_t & geojson) {
             std::vector<std::string> header;
-            header.push_back("id");
+            header.emplace_back("id");
             for (auto & el : geojson.m_feature)
-                for (auto prop : el.props)
+                for (auto & prop : el.props)
                     if (std::find(header.begin(), header.end(), prop.name) == header.end())
                         header.push_back(prop.name);
             header.insert(header.end(), {"geojson", "type", "longitude", "latitude"});
@@ -80,7 +80,7 @@ namespace in2csv::detail::geojson {
         assert(geojson_it != header.cend());
         for (auto & feature : geojson.m_feature) {
             //print properties
-            auto h_count = header.size();
+            //auto h_count = header.size();
             std::for_each(header.cbegin(), geojson_it, [&](auto & field) {
                 for (auto & prop : feature.props) {
                     if (field == prop.name) {

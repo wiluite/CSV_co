@@ -34,9 +34,8 @@ namespace in2csv::detail::fixed {
                 for (auto e : rowspan) {
                    auto et {elem_type{e}};
                    if (et.is_num())
-                       all[columns[col]].push_back(static_cast<unsigned>(et.num()));
-                   else
-                   if (et.is_str())
+                       all[columns[col]].emplace_back(static_cast<unsigned>(et.num()));
+                   else if (et.is_str())
                        all[columns[col]].push_back(et.operator csv_co::unquoted_cell_string());
                    else
                       throw std::runtime_error("A value of unsupported type or a null value is in the schema file.");
@@ -103,7 +102,7 @@ namespace in2csv::detail::fixed {
                     auto b = bytes_from(_, 0, std::get<1>(starts[i]));
                     auto e = bytes_from(_, b, std::get<1>(lengths[i]));
                     auto piece = std::string(_.begin() + b, _.begin() + e + b);
-                    piece.erase(piece.find_last_not_of(" ") + 1);
+                    piece.erase(piece.find_last_not_of(' ') + 1);
                     std::cout << piece << (i < names.size() - 1 ? "," : "");
                 }
                 std::cout << '\n';

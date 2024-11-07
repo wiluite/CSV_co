@@ -1,8 +1,6 @@
 #include "../../include/in2csv/in2csv_dbf.h"
 #include <cli.h>
-#include <stdio.h>
-#include <time.h>
-#include <stdlib.h>
+#include <ctime>
 
 #include "../../external/dbf_lib/include/bool.h"
 #include "../../external/dbf_lib/include/dbf.h"

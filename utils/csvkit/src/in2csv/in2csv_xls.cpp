@@ -1,9 +1,7 @@
 #include "../../include/in2csv/in2csv_xls.h"
 #include <cli.h>
 #include "../../external/libxls/include/xls.h"
-#include "../../external/date/date.h"
 #include <iostream>
-#include <sstream>
 
 using namespace ::csvkit::cli;
 
