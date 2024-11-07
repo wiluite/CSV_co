@@ -11,8 +11,4 @@ else()
   add_definitions(-Wno-implicit-fallthrough)
 endif(MSVC)
 
-#include_directories(gason/src)
 add_library(geojson STATIC geojson.cc gason/src/gason.cpp)
-
-#add_executable(parser parser.cc)
-#target_link_libraries(parser geojson)

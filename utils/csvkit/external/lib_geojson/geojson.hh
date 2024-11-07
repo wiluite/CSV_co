@@ -87,7 +87,8 @@ public:
   geojson_t()
   {
   }
-  int convert(const char* file_name);
+  void convert_file(const char* file_name);
+  void convert_stream(std::string const &);
 
   //storage is a list of features 
   std::vector<feature_t> m_feature;

@@ -9,23 +9,20 @@
 //geojson_t::convert
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int geojson_t::convert(const char* file_name)
+void geojson_t::convert_file(const char* file_name)
 {
-  char *buf = 0;
   size_t length;
-  FILE *f;
 
-  f = fopen(file_name, "rb");
+  auto f = fopen(file_name, "rb");
   if (!f)
   {
-    std::cout << "cannot open " << file_name << std::endl;
-    return -1;
+    throw std::runtime_error(std::string("Error opening the file: '") + file_name + "'.");
   }
 
   fseek(f, 0, SEEK_END);
   length = ftell(f);
   fseek(f, 0, SEEK_SET);
-  buf = (char*)malloc(length);
+  auto buf = (char*)malloc(length);
   if (buf)
   {
     size_t nbr = fread(buf, 1, length, f);
@@ -38,15 +35,26 @@ int geojson_t::convert(const char* file_name)
   int rc = jsonParse(buf, &endptr, &value, allocator);
   if (rc != JSON_OK)
   {
-    std::cout << "invalid JSON format for " << buf << std::endl;
-    return -1;
+    free(buf);
+    throw std::runtime_error("geojson: invalid JSON format.");
   }
 
   parse_root(value);
   free(buf);
-  return 0;
 }
 
+void geojson_t::convert_stream(std::string const & s) {
+  char *endptr;
+  JsonValue value;
+  JsonAllocator allocator;
+  int rc = jsonParse(const_cast<char*>(s.data()), &endptr, &value, allocator);
+  if (rc != JSON_OK)
+  {
+    throw std::runtime_error("geojson: invalid JSON format.");
+  }
+
+  parse_root(value);
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //geojson_t::parse_root

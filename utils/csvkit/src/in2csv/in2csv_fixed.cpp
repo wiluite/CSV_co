@@ -117,7 +117,7 @@ namespace in2csv::detail::fixed {
         } else {
             std::ifstream file(args.file);
             if (!(file.is_open()))
-                throw std::runtime_error("Error opening the query file: '" + args.file.string() + "'.");
+                throw std::runtime_error("Error opening the file: '" + args.file.string() + "'.");
             process(args, file);
         }
     }

@@ -66,7 +66,6 @@ namespace in2csv::detail::xls {
     std::vector<unsigned> datetimes_ids;
 
     inline static void OutputString(std::ostringstream & oss, const char *string) {
-        assert(header.size() == 8);
         // now we have first line of the body, and so "0" really influence on the nature of this column
         if (can_be_number.size() < header.size())
             can_be_number.push_back(0);
@@ -107,7 +106,6 @@ namespace in2csv::detail::xls {
     }
 
     inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
-        assert(header.size() == 8);
         // now we have first line of the body, and so "1" really influence on the nature of this column
         if (can_be_number.size() < header.size())
             can_be_number.push_back(1);
@@ -228,7 +226,8 @@ namespace in2csv::detail::xls {
             }
         } pwb(a, error);
 
-        assert(xls_parseWorkBook(pwb) == 0);
+        if (xls_parseWorkBook(pwb) != 0)
+            throw std::runtime_error("Error parsing the XLS workbook source.");
         is1904 = pwb->is1904;
 
         if (!pwb)
@@ -303,10 +302,8 @@ namespace in2csv::detail::xls {
             if (j != a.skip_lines)
                 oss << '\n';
 
-            if (j == a.skip_lines + 1 and !a.no_header) { // now we have really the native header
+            if (j == a.skip_lines + 1 and !a.no_header) // now we have really the native header
                 get_date_and_datetime_columns();
-                assert(header.size() == 8);
-            }
 
             static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
             static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;
