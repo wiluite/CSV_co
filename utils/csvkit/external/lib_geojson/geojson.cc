@@ -43,11 +43,11 @@ void geojson_t::convert_file(const char* file_name)
   free(buf);
 }
 
-void geojson_t::convert_stream(std::string const & s) {
+void geojson_t::convert_stream(std::string & s) {
   char *endptr;
   JsonValue value;
   JsonAllocator allocator;
-  int rc = jsonParse(const_cast<char*>(s.data()), &endptr, &value, allocator);
+  int rc = jsonParse(s.data(), &endptr, &value, allocator);
   if (rc != JSON_OK)
   {
     throw std::runtime_error("geojson: invalid JSON format.");
