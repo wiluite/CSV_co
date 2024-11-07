@@ -5,6 +5,7 @@
 #include "include/in2csv/in2csv_fixed.h"
 #include "include/in2csv/in2csv_dbf.h"
 #include "include/in2csv/in2csv_xls.h"
+#include "include/in2csv/in2csv_geojson.h"
 
 using namespace ::csvkit::cli;
 
@@ -88,19 +89,6 @@ namespace in2csv::detail {
         }
         static std::shared_ptr<converter_client> create(Args2 & args) {
             return std::make_shared<csv_client>(args);
-        }
-    private:
-        Args2 & args;
-    };
-
-    template <class Args2>
-    struct geojson_client : converter_client {
-        explicit geojson_client(Args2 & args) : args(args) {
-        }
-        void convert() override {
-        }
-        static std::shared_ptr<converter_client> create(Args2 & args) {
-            return std::make_shared<geojson_client>(args);
         }
     private:
         Args2 & args;

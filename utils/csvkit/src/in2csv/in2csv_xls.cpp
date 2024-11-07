@@ -14,7 +14,6 @@ namespace in2csv::detail::xls {
 
     std::vector<std::string> header;
     static unsigned header_cell_index = 0;
-    // TODO: do not forget to implement
     std::vector<unsigned> can_be_number;
 
     static void OutputHeaderString(std::ostringstream & oss, const char *string) {
@@ -352,7 +351,6 @@ namespace in2csv::detail::xls {
             }
         }
 
-        //std::cout << oss.str() << std::endl;
         a.skip_lines = 0;
         a.no_header = false;
         std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;

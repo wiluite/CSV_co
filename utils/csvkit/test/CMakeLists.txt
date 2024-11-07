@@ -624,7 +624,8 @@ if (IO_CSVKIT_UTILS)
 
   endif()
 
-add_executable(in2csv_test in2csv_test.cpp ../src/in2csv/in2csv_fixed.cpp ../src/in2csv/in2csv_dbf.cpp ../src/in2csv/in2csv_xls.cpp)
+add_executable(in2csv_test in2csv_test.cpp ../src/in2csv/in2csv_fixed.cpp ../src/in2csv/in2csv_dbf.cpp ../src/in2csv/in2csv_xls.cpp
+        ../src/in2csv/in2csv_geojson.cpp)
 
 add_custom_command(
         TARGET in2csv_test POST_BUILD
@@ -642,7 +643,7 @@ add_custom_command(
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/foo2.csv
         ${CMAKE_CURRENT_BINARY_DIR}/foo2.csv)
 
-target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xlsreader bz2_connector -lpthread)
+target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson bz2_connector -lpthread)
 add_test(in2csv_test in2csv_test)
 
 endif()
