@@ -41,7 +41,7 @@ namespace in2csv::detail {
         }
     };
     struct empty_file_and_no_piping_now : std::runtime_error {
-        empty_file_and_no_piping_now() : std::runtime_error("sql2csv: error: You must provide an input file or piped data.") {}
+        empty_file_and_no_piping_now() : std::runtime_error("in2csv: error: You must provide an input file or piped data.") {}
     };
     struct no_format_specified_on_piping : std::runtime_error {
         no_format_specified_on_piping() : std::runtime_error("in2csv: error: You must specify a format when providing input as piped data via STDIN.") {}

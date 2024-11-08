@@ -11,7 +11,7 @@ namespace in2csv::detail::xls {
     static char const *fieldSeparator = ",";
 
     std::vector<std::string> header;
-    static unsigned header_cell_index = 0;
+    unsigned header_cell_index = 0;
     std::vector<unsigned> can_be_number;
 
     static void OutputHeaderString(std::ostringstream & oss, const char *string) {
@@ -37,7 +37,7 @@ namespace in2csv::detail::xls {
 #if 0
         header_cell << stringSeparator;
 #endif
-        if (header_cell.str() == R"()") {
+        if (header_cell.str().empty()) {
             std::cerr << "UnnamedColumnWarning: Column " << header_cell_index << " has no name. Using " << '"' << letter_name(header_cell_index) << "\".\n"; 
             header.push_back(letter_name(header_cell_index));
         }
@@ -133,7 +133,7 @@ namespace in2csv::detail::xls {
         return letter_names;
     }
 
-    void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args) {
+    void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
         using elem_type = std::decay_t<decltype(elem)>;
         auto & [types, blanks] = types_n_blanks;
         bool const is_null = elem.is_null();
@@ -143,7 +143,7 @@ namespace in2csv::detail::xls {
                 std::string unquoted = another_rep.str();
                 return unquoted.find(',') == std::string::npos ? unquoted : another_rep; // another_rep casts to original string by default
             };
-            std::cout << (!args.blanks && is_null ? "" : compose_text(elem));
+            os << (!args.blanks && is_null ? "" : compose_text(elem));
             return;
         }
         assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
@@ -189,10 +189,10 @@ namespace in2csv::detail::xls {
                 , compose_date<elem_type>
         };
         auto const type_index = static_cast<std::size_t>(types[col]) - 1;
-        std::cout << type2func[type_index](elem, std::any{});
+        os << type2func[type_index](elem, std::any{});
     }
 
-    void convert_impl(auto & a) {
+    void convert_impl(impl_args & a) {
         using namespace ::xls;
         xls_error_t error = LIBXLS_OK;
 
@@ -206,7 +206,7 @@ namespace in2csv::detail::xls {
                         _setmode(_fileno(stdin), _O_BINARY);
                         for (;;) {
                             if (auto r = std::cin.get(); r != std::char_traits<char>::eof())
-                                WB += r;
+                                WB += static_cast<char>(r);
                             else
                                 break;
                         }
@@ -229,7 +229,7 @@ namespace in2csv::detail::xls {
         is1904 = pwb->is1904;
 
         if (!pwb)
-            std::runtime_error(std::string(xls_getError(error)));
+            throw std::runtime_error(std::string(xls_getError(error)));
 
         if (a.names) {
             for (auto i = 0u; i < pwb->sheets.count; i++)
@@ -244,153 +244,162 @@ namespace in2csv::detail::xls {
             if (!pwb->sheets.sheet[i].name)
                 continue;
             if (strcmp(a.sheet.c_str(), (char *)pwb->sheets.sheet[i].name) == 0) {
-                sheet_index = i;
+                sheet_index = static_cast<int>(i);
                 break;
             }
         }
         if (sheet_index == -1)
             throw std::runtime_error(std::string("No sheet named ") + "'" + a.sheet + "'");
 
-        class pws_holder {
-            std::shared_ptr<xlsWorkSheet> ptr;
-        public:
-            pws_holder(pwb_holder & pwb, int sheet_index) : ptr (
-                [&pwb, &sheet_index] {
-                    return xls_getWorkSheet(pwb, sheet_index);
-                }(),
-                [&](xlsWorkSheet* descriptor) { xls_close_WS(descriptor); }
-            ) {}
-            operator xlsWorkSheet* () {
-                return ptr.get();
-            }
-            xlsWorkSheet* operator->() {
-                return ptr.get();
-            }
-        } pws(pwb, sheet_index);
+        auto print_sheet = [&pwb](int sheet_idx, std::ostream & os, impl_args arguments, bool use_d_dt_xls) {
+            auto args (std::move(arguments));
+            header.clear();
+            header_cell_index = 0;
+            can_be_number.clear();
+            dates_ids.clear();
+            datetimes_ids.clear();
+            class pws_holder {
+                std::shared_ptr<xlsWorkSheet> ptr;
+            public:
+                pws_holder(pwb_holder & pwb, int sheet_index) : ptr (
+                        [&pwb, &sheet_index] {
+                            return xls_getWorkSheet(pwb, sheet_index);
+                        }(),
+                        [&](xlsWorkSheet* descriptor) { xls_close_WS(descriptor); }
+                ) {}
+                operator xlsWorkSheet* () {
+                    return ptr.get();
+                }
+                xlsWorkSheet* operator->() {
+                    return ptr.get();
+                }
+            } pws(pwb, sheet_idx);
 
-        // open and parse the sheet
-        if (xls_parseWorkSheet(pws) != LIBXLS_OK)
-            throw std::runtime_error("Error parsing the sheet.");
+            // open and parse the sheet
+            if (xls_parseWorkSheet(pws) != LIBXLS_OK)
+                throw std::runtime_error("Error parsing the sheet. Index: " + std::to_string(sheet_idx));
 
-        auto get_date_and_datetime_columns = [&] {
-            if (a.d_xls != "none") {
-                std::string not_columns;
-                dates_ids = parse_column_identifiers(columns{a.d_xls}, header, get_column_offset(a), excludes{not_columns});
-            }
+            auto get_date_and_datetime_columns = [&] {
+                if (!use_d_dt_xls)
+                    return;
 
-            if (a.dt_xls != "none") {
-                std::string not_columns;
-                datetimes_ids = parse_column_identifiers(columns{a.dt_xls}, header, get_column_offset(a), excludes{not_columns});
-            }
-        };
+                if (args.d_xls != "none") {
+                    std::string not_columns;
+                    dates_ids = parse_column_identifiers(columns{args.d_xls}, header, get_column_offset(args), excludes{not_columns});
+                }
 
-        std::ostringstream oss;
-        if (a.no_header) {
-            header = generate_header(pws->rows.lastcol + 1);
-            for (auto & e : header)
-                oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
-            oss << '\n';
-            get_date_and_datetime_columns();
-        }
-
-        tune_format(oss, "%.16g");
-
-        for (auto j = a.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
-            WORD cellRow = (WORD)j;
-            if (j != a.skip_lines)
+                if (args.dt_xls != "none") {
+                    std::string not_columns;
+                    datetimes_ids = parse_column_identifiers(columns{args.dt_xls}, header, get_column_offset(args), excludes{not_columns});
+                }
+            };
+            std::ostringstream oss;
+            if (args.no_header) {
+                header = generate_header(pws->rows.lastcol + 1);
+                for (auto & e : header)
+                    oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
                 oss << '\n';
-
-            if (j == a.skip_lines + 1 and !a.no_header) // now we have really the native header
                 get_date_and_datetime_columns();
+            }
 
-            static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
-            static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;
+            tune_format(oss, "%.16g");
 
-            output_string_func = (!a.no_header and j == a.skip_lines) ? OutputHeaderString : OutputString;
-            output_number_func = (!a.no_header and j == a.skip_lines) ? OutputHeaderNumber : OutputNumber;
+            for (auto j = args.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
+                WORD cellRow = (WORD)j;
+                if (j != args.skip_lines)
+                    oss << '\n';
 
-            for (WORD cellCol = 0; cellCol <= pws->rows.lastcol; cellCol++) {
-                xlsCell *cell = xls_cell(pws, cellRow, cellCol);
-                if (!cell || cell->isHidden)
-                    continue;
+                if (j == args.skip_lines + 1 and !args.no_header) // now we have really the native header
+                    get_date_and_datetime_columns();
 
-                if (cellCol)
-                    oss << fieldSeparator;
+                static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
+                static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;
+
+                output_string_func = (!args.no_header and j == args.skip_lines) ? OutputHeaderString : OutputString;
+                output_number_func = (!args.no_header and j == args.skip_lines) ? OutputHeaderNumber : OutputNumber;
+
+                for (WORD cellCol = 0; cellCol <= pws->rows.lastcol; cellCol++) {
+                    xlsCell *cell = xls_cell(pws, cellRow, cellCol);
+                    if (!cell || cell->isHidden)
+                        continue;
+
+                    if (cellCol)
+                        oss << fieldSeparator;
 
 #if 0
-                // display the colspan as only one cell, but reject rowspans (they can't be converted to CSV)
+                    // display the colspan as only one cell, but reject rowspans (they can't be converted to CSV)
 
                 if (cell->rowspan > 1)
                     fprintf(stderr, "Warning: %d rows spanned at col=%d row=%d: output will not match the Excel file.\n", cell->rowspan, cellCol+1, cellRow+1);
 #endif
-                // display the value of the cell (either numeric or string)
-                if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER)
-                    output_number_func(oss, cell->d, cellCol);
-                else if (cell->id == XLS_RECORD_FORMULA || cell->id == XLS_RECORD_FORMULA_ALT) {
-                    // formula
-                    if (cell->l == 0)
+                    // display the value of the cell (either numeric or string)
+                    if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER)
                         output_number_func(oss, cell->d, cellCol);
-                    else if (cell->str) {
-                        if (!strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
-                            output_string_func(oss, (int) cell->d ? "True" : "False");
-                        else
-                        if (!strcmp((char *)cell->str, "error")) // formula is in error
-                            output_string_func(oss, "*error*");
-                        else // ... cell->str is valid as the result of a string formula.
-                            output_string_func(oss, (char *)cell->str);
-                    }
-                } else if (cell->str)
-                    output_string_func(oss, (char *)cell->str);
-                else
-                    output_string_func(oss, "");
-            }
-        }
-
-        a.skip_lines = 0;
-        a.no_header = false;
-        std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
-
-        if (!a.skip_init_space)
-            variants = notrimming_reader_type(oss.str());
-        else
-            variants = skipinitspace_reader_type(oss.str());
-
-        std::visit([&](auto & arg) {
-            if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
-                auto types_and_blanks = std::get<1>(typify(arg, a, typify_option::typify_without_precisions));
-#if 0
-                for (auto e : std::get<0>(types_and_blanks))
-                    std::cout << static_cast<int>(e) << std::endl;
-#endif
-                arg.run_rows(
-                    [&](auto) {
-                        if (a.linenumbers)
-                            std::cout << "line_number,";
-
-                        std::for_each(header.begin(), header.end() - 1, [&](auto const & elem) {
-                            std::cout << elem << ',';
-                        });
-
-                        std::cout << header.back() << '\n';
-                    }
-                    ,[&](auto rowspan) {
-                        if (a.linenumbers) {
-                            static std::size_t line_nums = 0;
-                            std::cout << ++line_nums << ',';
+                    else if (cell->id == XLS_RECORD_FORMULA || cell->id == XLS_RECORD_FORMULA_ALT) {
+                        // formula
+                        if (cell->l == 0)
+                            output_number_func(oss, cell->d, cellCol);
+                        else if (cell->str) {
+                            if (!strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
+                                output_string_func(oss, (int) cell->d ? "True" : "False");
+                            else
+                            if (!strcmp((char *)cell->str, "error")) // formula is in error
+                                output_string_func(oss, "*error*");
+                            else // ... cell->str is valid as the result of a string formula.
+                                output_string_func(oss, (char *)cell->str);
                         }
-                        auto col = 0u;
-                        using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
-                        std::for_each(rowspan.begin(), rowspan.end()-1, [&](auto const & e) {
-                            print_func(elem_type{e}, col++, types_and_blanks, a);
-                            std::cout << ',';
-                        });
-                        print_func(elem_type{rowspan.back()}, col, types_and_blanks, a);
-                        std::cout << '\n';
-                    }
-                );
+                    } else if (cell->str)
+                        output_string_func(oss, (char *)cell->str);
+                    else
+                        output_string_func(oss, "");
+                }
             }
-        }, variants);
+            args.skip_lines = 0;
+            args.no_header = false;
+            std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
 
+            if (!args.skip_init_space)
+                variants = notrimming_reader_type(oss.str());
+            else
+                variants = skipinitspace_reader_type(oss.str());
+
+            std::visit([&](auto & arg) {
+                if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
+                    auto types_and_blanks = std::get<1>(typify(arg, args, typify_option::typify_without_precisions));
+                    arg.run_rows(
+                            [&](auto) {
+                                if (args.linenumbers)
+                                    os << "line_number,";
+
+                                std::for_each(header.begin(), header.end() - 1, [&](auto const & elem) {
+                                    os << elem << ',';
+                                });
+
+                                os << header.back() << '\n';
+                            }
+                            ,[&](auto rowspan) {
+                                if (args.linenumbers) {
+                                    static std::size_t line_nums = 0;
+                                    os << ++line_nums << ',';
+                                }
+                                auto col = 0u;
+                                using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
+                                std::for_each(rowspan.begin(), rowspan.end()-1, [&](auto const & e) {
+                                    print_func(elem_type{e}, col++, types_and_blanks, args, os);
+                                    os << ',';
+                                });
+                                print_func(elem_type{rowspan.back()}, col, types_and_blanks, args, os);
+                                os << '\n';
+                            }
+                    );
+                }
+            }, variants);
+
+        };
+        print_sheet(sheet_index, std::cout, a, true);
+        if (!a.write_sheets.empty()) {
+
+        }
     }
 
     void impl::convert() {
