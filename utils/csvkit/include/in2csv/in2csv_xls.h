@@ -3,6 +3,7 @@
 #include "converter_client.h"
 #include <memory>
 #include <filesystem>
+#include <vector>
 
 namespace in2csv::detail {
 
@@ -36,7 +37,7 @@ namespace in2csv::detail {
         };
 
         struct impl {
-            impl(impl_args a) : a(std::move(a)) {}
+            explicit impl(impl_args a) : a(std::move(a)) {}
             void convert();
         private:
             impl_args a;

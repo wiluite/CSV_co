@@ -20,6 +20,9 @@
 #include "../include/ioapi/zlib.h"
 #include "../include/ioapi/ioapi.h"
 #include "../include/stdint-ms.h"
+#ifdef __linux__
+#include <limits.h>
+#endif
 
 #define _max(a,b) ((a)>(b)?(a):(b))
 #define _min(a,b) ((a)<(b)?(a):(b))
@@ -32,18 +35,20 @@
 #define snprintf snprintf
 #endif
 #ifndef PATH_MAX
-#define PATH_MAX _MAX_PATH
+  #ifndef __linux__
+  #define PATH_MAX _MAX_PATH
+  #endif
 #endif
 #ifndef _countof
 #define _countof(array) (sizeof(array)/sizeof((array)[0]))
 #endif
 #define C_ASSERT_(n,e) typedef char __C_ASSERT__##n[(e)?1:-1]
 #ifndef offsetof
-#define offsetof(s,m)   (size_t)&(((s *)0)->m)
+#define offsetof(s,m)   ((size_t)&(((s *)0)->m))
 #endif
 
 #define CPM_TEXT_TERMINATOR 0x1A
-#define NOT_FOUND -1
+#define NOT_FOUND (-1)
 #define TIME_ERR ((time_t)-1)
 /* M        */
 #define MAGIC_DBASE3      0x03   /* 00000011 */

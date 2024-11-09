@@ -19,7 +19,7 @@
  */
 
 #ifndef OCILIB_TIMESTAMP_H_INCLUDED
-#define OCILIB_TIMESTAMP_INCLUDED
+#define OCILIB_TIMESTAMP_H_INCLUDED
 
 #include "types.h"
 

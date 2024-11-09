@@ -32,7 +32,7 @@ namespace ocilib_client_ns {
         static inline auto fill_date_time = [](date::sys_time<std::chrono::seconds> tp, Timestamp & tstamp) {
             auto const day_point = floor<date::days>(tp);
             date::year_month_day ymd = day_point;
-            std::chrono::hh_mm_ss tod {tp - day_point};
+            date::hh_mm_ss tod {tp - day_point};
             tstamp.SetDateTime(int(ymd.year()), static_cast<int>(static_cast<unsigned>(ymd.month()))
                 , static_cast<int>(static_cast<unsigned>(ymd.day())), static_cast<int>(tod.hours().count())
                 , static_cast<int>(tod.minutes().count()), static_cast<int>(tod.seconds().count()), 0);

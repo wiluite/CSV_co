@@ -1036,11 +1036,18 @@ namespace csvkit::cli {
         if (ids().empty() && excl().empty())
             return iota_range(column_names);
         std::vector<unsigned> columns;
+
+        auto trim_string = [](std::string & s) {
+            s.erase(0, s.find_first_not_of(' '));
+            s.erase(s.find_last_not_of(' ') + 1);
+        };
+
         if (!ids().empty()) {
             for (auto c = strtok(ids().data(),","); c != nullptr; c = strtok(nullptr, ",")) {
                 std::string column {c};
-                static char constexpr chars[] = " ";
-                csv_co::string_functions::trim_string<chars>(column);
+                //static char constexpr chars[] = " ";
+                //csv_co::string_functions::trim_string<chars>(column);
+                trim_string(column);
                 try {
                     columns.emplace_back(match_column_identifier(column_names, column.c_str(), column_offset));
                 }
@@ -1055,8 +1062,9 @@ namespace csvkit::cli {
         if (!excl().empty()) {
             for (auto c = strtok(excl().data(),","); c != nullptr; c = strtok(nullptr, ",")) {
                 std::string column {c};
-                static char constexpr chars[] = " ";
-                csv_co::string_functions::trim_string<chars>(column);
+                //static char const chars[] = " ";
+                //csv_co::string_functions::trim_string<chars>(column);
+                trim_string(column);
                 try {
                     not_columns.insert(match_column_identifier(column_names, column.c_str(), column_offset));
                 } catch (ColumnIdentifierError const &) {

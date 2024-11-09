@@ -203,7 +203,9 @@ namespace in2csv::detail::xls {
                 [&a, &err] {
                     if (a.file.empty() or a.file == "_") {
                         static std::string WB;
+#ifndef __linux__
                         _setmode(_fileno(stdin), _O_BINARY);
+#endif
                         for (;;) {
                             if (auto r = std::cin.get(); r != std::char_traits<char>::eof())
                                 WB += static_cast<char>(r);
@@ -293,6 +295,7 @@ namespace in2csv::detail::xls {
                     datetimes_ids = parse_column_identifiers(columns{args.dt_xls}, header, get_column_offset(args), excludes{not_columns});
                 }
             };
+
             std::ostringstream oss;
             if (args.no_header) {
                 header = generate_header(pws->rows.lastcol + 1);
@@ -301,7 +304,7 @@ namespace in2csv::detail::xls {
                 oss << '\n';
                 get_date_and_datetime_columns();
             }
-
+#if 0
             tune_format(oss, "%.16g");
 
             for (auto j = args.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
@@ -326,12 +329,6 @@ namespace in2csv::detail::xls {
                     if (cellCol)
                         oss << fieldSeparator;
 
-#if 0
-                    // display the colspan as only one cell, but reject rowspans (they can't be converted to CSV)
-
-                if (cell->rowspan > 1)
-                    fprintf(stderr, "Warning: %d rows spanned at col=%d row=%d: output will not match the Excel file.\n", cell->rowspan, cellCol+1, cellRow+1);
-#endif
                     // display the value of the cell (either numeric or string)
                     if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER)
                         output_number_func(oss, cell->d, cellCol);
@@ -354,6 +351,7 @@ namespace in2csv::detail::xls {
                         output_string_func(oss, "");
                 }
             }
+
             args.skip_lines = 0;
             args.no_header = false;
             std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
@@ -394,7 +392,7 @@ namespace in2csv::detail::xls {
                     );
                 }
             }, variants);
-
+#endif
         };
         print_sheet(sheet_index, std::cout, a, true);
         if (!a.write_sheets.empty()) {

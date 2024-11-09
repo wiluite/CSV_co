@@ -1,4 +1,4 @@
-# Copyright (2022-2023) wiluite (additions)
+# Copyright (2022-2024) wiluite (additions)
 # Copyright (c) Andreas Fertig.
 # SPDX-License-Identifier: MIT
 

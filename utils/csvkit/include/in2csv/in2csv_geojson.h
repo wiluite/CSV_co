@@ -3,6 +3,9 @@
 #include "converter_client.h"
 #include <memory>
 #include <filesystem>
+#if 0
+#include <vector>
+#endif
 
 namespace in2csv::detail {
 
@@ -11,6 +14,7 @@ namespace in2csv::detail {
             unsigned maxfieldsize;
             std::string encoding; // always UTF-8
             bool skip_init_space;
+#if 0
             bool no_header;
             unsigned skip_lines;
             bool linenumbers;
@@ -24,12 +28,12 @@ namespace in2csv::detail {
             bool no_inference;
             bool date_lib_parser;
             bool asap;
-
+#endif
             std::filesystem::path file;
         };
 
         struct impl {
-            impl(impl_args a) : a(std::move(a)) {}
+            explicit impl(impl_args a) : a(std::move(a)) {}
             void convert();
         private:
             impl_args a;
@@ -44,6 +48,7 @@ namespace in2csv::detail {
                 args.maxfieldsize
                 , args.encoding
                 , args.skip_init_space
+#if 0
                 , args.no_header
                 , args.skip_lines
                 , args.linenumbers
@@ -57,7 +62,7 @@ namespace in2csv::detail {
                 , args.no_inference
                 , args.date_lib_parser
                 , args.asap
-
+#endif
                 , args.file));
         }
         void convert() override {

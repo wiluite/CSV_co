@@ -128,7 +128,7 @@ add_subdirectory(external/dbf_lib)
 add_subdirectory(external/lib_geojson)
 add_executable(in2csv in2csv.cpp src/in2csv/in2csv_fixed.cpp src/in2csv/in2csv_dbf.cpp src/in2csv/in2csv_xls.cpp
         src/in2csv/in2csv_geojson.cpp)
-target_link_libraries(in2csv libcppp-reiconv.static simdutf dbf xls geojson bz2_connector)
+target_link_libraries(in2csv libcppp-reiconv.static simdutf dbf xls geojson bz2_connector -lpthread)
 
 endif()
 

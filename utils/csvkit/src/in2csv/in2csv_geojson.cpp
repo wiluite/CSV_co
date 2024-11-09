@@ -56,10 +56,12 @@ namespace in2csv::detail::geojson {
         geojson_t geojson;
         if (a.file.empty() or a.file == "_") {
             std::string stream;
+#ifndef __linux__
             _setmode(_fileno(stdin), _O_BINARY);
+#endif
             for (;;) {
                 if (auto r = std::cin.get(); r != std::char_traits<char>::eof())
-                    stream += r;
+                    stream += static_cast<char>(r);
                 else
                     break;
             }

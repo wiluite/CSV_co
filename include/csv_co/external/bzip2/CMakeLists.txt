@@ -121,6 +121,7 @@ if(NOT HAVE_DECL_INITGROUPS AND HAVE_UNISTD_H)
     endif()
 endif()
 
+set(CLANGWARNFLAGS -Wno-missing-noreturn -Wno-cast-align)
 set(WARNCFLAGS)
 if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
     if(ENABLE_WERROR)
@@ -177,6 +178,7 @@ else()
         -Wno-format-nonliteral              # This is required because we pass format string as "const char*.
         -Wno-implicit-fallthrough
         -Wno-suggest-attribute=noreturn
+        ${CLANGWARNFLAGS}
     )
 endif()
 
