@@ -108,6 +108,11 @@ namespace in2csv::detail::xls {
         if (can_be_number.size() < header.size())
             can_be_number.push_back(1);
 
+        if (number == 1.0) {
+            oss << "1.0";
+            return;
+        }
+
         if (is_date_column(column)) {
             using date::operator<<;
             std::ostringstream local_oss;
@@ -245,11 +250,21 @@ namespace in2csv::detail::xls {
             for (auto i = 0u; i < pwb->sheets.count; i++) {
                 if (!pwb->sheets.sheet[i].name)
                     continue;
-                if (strcmp(name.c_str(), (char *)pwb->sheets.sheet[i].name) == 0) {
+                if (strcmp(name.c_str(), (char *)pwb->sheets.sheet[i].name) == 0)
                     return static_cast<int>(i);
-                }
             }
             throw std::runtime_error(std::string("No sheet named ") + "'" + name + "'");
+        };
+
+        auto is_number = [](std::string const & name) {
+            return std::all_of(name.begin(), name.end(), [](auto c) {return std::isdigit(c);});
+        };
+
+        auto sheet_name_by_index = [&pwb](std::string const & index) {
+            unsigned idx = std::atoi(index.c_str());
+            if (idx >= pwb->sheets.count)
+                throw std::runtime_error("List index out of range");
+            return pwb->sheets.sheet[idx].name;
         };
 
         auto sheet_index = sheet_index_by_name(a.sheet);
@@ -407,8 +422,12 @@ namespace in2csv::detail::xls {
                 if (a.write_sheets != "-") {
                     std::istringstream stream(a.write_sheets);
                     for (std::string word; std::getline(stream, word, ',');) {
-                        sheet_index_by_name(word);
-                        result.push_back(word);
+                        if (is_number(word)) {
+                            result.push_back(sheet_name_by_index(word));
+                        } else {
+                            sheet_index_by_name(word);
+                            result.push_back(word);
+                        }
                     }
                 } else {
                     for (auto i = 0u; i < pwb->sheets.count; i++) {
