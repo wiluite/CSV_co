@@ -241,19 +241,24 @@ namespace in2csv::detail::xls {
         if (a.sheet.empty())
             a.sheet = pwb->sheets.sheet[0].name;
 
-        auto sheet_index = -1;
-        for (auto i = 0u; i < pwb->sheets.count; i++) {
-            if (!pwb->sheets.sheet[i].name)
-                continue;
-            if (strcmp(a.sheet.c_str(), (char *)pwb->sheets.sheet[i].name) == 0) {
-                sheet_index = static_cast<int>(i);
-                break;
+        auto sheet_index_by_name = [&pwb](std::string const & name) {
+            for (auto i = 0u; i < pwb->sheets.count; i++) {
+                if (!pwb->sheets.sheet[i].name)
+                    continue;
+                if (strcmp(name.c_str(), (char *)pwb->sheets.sheet[i].name) == 0) {
+                    return static_cast<int>(i);
+                }
             }
-        }
-        if (sheet_index == -1)
-            throw std::runtime_error(std::string("No sheet named ") + "'" + a.sheet + "'");
+            throw std::runtime_error(std::string("No sheet named ") + "'" + name + "'");
+        };
 
-        auto print_sheet = [&pwb](int sheet_idx, std::ostream & os, impl_args arguments, bool use_d_dt_xls) {
+        auto sheet_index = sheet_index_by_name(a.sheet);
+
+        enum use_date_datetime_xls {
+            yes,
+            no
+        };
+        auto print_sheet = [&pwb](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_xls use_d_dt_xls) {
             auto args (std::move(arguments));
             header.clear();
             header_cell_index = 0;
@@ -282,7 +287,7 @@ namespace in2csv::detail::xls {
                 throw std::runtime_error("Error parsing the sheet. Index: " + std::to_string(sheet_idx));
 
             auto get_date_and_datetime_columns = [&] {
-                if (!use_d_dt_xls)
+                if (use_d_dt_xls == use_date_datetime_xls::no)
                     return;
 
                 if (args.d_xls != "none") {
@@ -304,7 +309,7 @@ namespace in2csv::detail::xls {
                 oss << '\n';
                 get_date_and_datetime_columns();
             }
-#if 0
+
             tune_format(oss, "%.16g");
 
             for (auto j = args.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
@@ -364,6 +369,7 @@ namespace in2csv::detail::xls {
             std::visit([&](auto & arg) {
                 if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
                     auto types_and_blanks = std::get<1>(typify(arg, args, typify_option::typify_without_precisions));
+                    std::size_t line_nums = 0;
                     arg.run_rows(
                             [&](auto) {
                                 if (args.linenumbers)
@@ -376,10 +382,9 @@ namespace in2csv::detail::xls {
                                 os << header.back() << '\n';
                             }
                             ,[&](auto rowspan) {
-                                if (args.linenumbers) {
-                                    static std::size_t line_nums = 0;
+                                if (args.linenumbers)
                                     os << ++line_nums << ',';
-                                }
+
                                 auto col = 0u;
                                 using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
                                 std::for_each(rowspan.begin(), rowspan.end()-1, [&](auto const & e) {
@@ -392,11 +397,41 @@ namespace in2csv::detail::xls {
                     );
                 }
             }, variants);
-#endif
         };
-        print_sheet(sheet_index, std::cout, a, true);
-        if (!a.write_sheets.empty()) {
 
+        print_sheet(sheet_index, std::cout, a, use_date_datetime_xls::yes);
+
+        if (!a.write_sheets.empty()) {
+            std::vector<std::string> sheet_names = [&] {
+                std::vector<std::string> result;
+                if (a.write_sheets != "-") {
+                    std::istringstream stream(a.write_sheets);
+                    for (std::string word; std::getline(stream, word, ',');) {
+                        sheet_index_by_name(word);
+                        result.push_back(word);
+                    }
+                } else {
+                    for (auto i = 0u; i < pwb->sheets.count; i++) {
+                        if (!pwb->sheets.sheet[i].name)
+                            continue;
+                        result.push_back(pwb->sheets.sheet[i].name);
+                    }
+                }
+                return result;
+            }();
+
+            std::vector<std::string> sheet_filenames (sheet_names.size());
+            int cursor = 0;
+            for (auto const & e : sheet_names) {
+                auto const filename = "sheets_" + (a.use_sheet_names ? e : std::to_string(cursor)) + ".csv";
+                std::ofstream ofs(filename);
+                try {
+                    print_sheet(sheet_index_by_name(e), ofs, a, use_date_datetime_xls::no);
+                } catch(std::exception const & ex) {
+                    std::cerr << ex.what() << std::endl;
+                } 
+                cursor++;                 
+            } 
         }
     }
 
