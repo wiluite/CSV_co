@@ -99,7 +99,10 @@ namespace csvsort {
                 bool const is_null = unquoted_elem.is_null();
                 if (types[col] == column_type::text_t or (!args.blanks && is_null)) {
                     auto compose_text = [&]() -> std::string {
-                        return unquoted_elem.raw_string_view().find(',') == std::string_view::npos ? unquoted_elem.str() : unquoted_elem; // unquoted_elem casts to original string by default
+                        if (unquoted_elem.raw_string_view().find(',') != std::string_view::npos)
+                            return unquoted_elem;
+                        else
+                            return unquoted_elem.str();
                     };
                     os << (!args.blanks && is_null ? "" : compose_text());
                     return;
