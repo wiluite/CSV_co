@@ -139,7 +139,7 @@ namespace csvsort {
                         , compose_date<UElemType>
                         , [](UElemType const & e, std::any const &) {
                             auto const str = std::get<1>(e.timedelta_tuple());
-                            return str.find(',') != std::string::npos ? "\"" + str +'"' : str;
+                            return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
                         }
                 };
 

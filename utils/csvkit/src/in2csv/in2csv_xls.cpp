@@ -144,6 +144,7 @@ namespace in2csv::detail::xls {
         bool const is_null = elem.is_null();
         if (types[col] == column_type::text_t or (!args.blanks and is_null)) {
             auto compose_text = [&](auto const & e) -> std::string {
+                // TODO: use string_view as in other places.
                 typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
                 std::string unquoted = another_rep.str();
                 return unquoted.find(',') == std::string::npos ? unquoted : another_rep; // another_rep casts to original string by default
