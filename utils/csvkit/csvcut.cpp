@@ -46,21 +46,36 @@ namespace csvcut {
         static char delim = std::decay_t<decltype(reader)>::delimiter_type::value;
 
         try {
-            auto ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes(args.not_columns));
+            auto const ids = parse_column_identifiers(columns{args.columns}, header, get_column_offset(args), excludes(args.not_columns));
             std::ostringstream oss;
-            std::ostream & oss_ = args.asap ? std::cout : oss;
+            std::ostream & os = args.asap ? std::cout : oss;
             auto print_container = [&] (auto & row_span, auto const & args) {
                 if (args.linenumbers) {
-                    static auto line = 0ul;
-                    if (line)
-                        oss_ << line << delim;
-                    line++;
+                    if (args.no_header) {
+                        if constexpr(!std::is_same_v<typename std::decay_t<decltype(reader)>::row_span, std::decay_t<decltype(row_span)>>) {
+                            static auto line = 0ul;
+                            if (line)
+                                os << line << delim;
+                            line++;
+                        } else {
+                            static auto line = 1ul;
+                            if (line)
+                                os << line << delim;
+                            line++;
+                        }
+                    } else {
+                        if constexpr(std::is_same_v<typename std::decay_t<decltype(reader)>::row_span, std::decay_t<decltype(row_span)>>) {
+                            static auto line = 0ul;
+                            if (line)
+                                os << line << delim;
+                            line++;
+                        }
+                    }
                 }
-                oss_ << optional_quote(row_span[ids.front()]);
-                for (auto it = ids.cbegin() + 1; it != ids.cend(); ++it) {
-                    oss_ << delim << optional_quote(row_span[*it]);
-                }
-                oss_ <<'\n';
+                os << optional_quote(row_span[ids.front()]);
+                for (auto it = ids.cbegin() + 1; it != ids.cend(); ++it)
+                    os << delim << optional_quote(row_span[*it]);
+                os << '\n';
             };
 
             struct say_ln {
@@ -72,14 +87,14 @@ namespace csvcut {
             
             if (args.no_header) {
                 check_max_size(reader, args, header, init_row{1});
-                static say_ln ln (args, oss_);
+                static say_ln ln (args, os);
                 print_container(header, args);
             }
 
             reader.run_rows([&] (auto & row_span) {
                 static_assert(std::is_same_v<typename std::decay_t<decltype(reader)>::row_span, std::decay_t<decltype(row_span)>>);
                 if (!args.no_header)
-                    static say_ln ln (args, oss_);
+                    static say_ln ln (args, os);
                 static_assert(!std::is_same_v<std::decay_t<decltype(row_span)>, std::decay_t<decltype(header)>>);
 
                 check_max_size(reader, args, row_span, init_row{1});
