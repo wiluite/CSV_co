@@ -175,8 +175,8 @@ namespace csvsort {
                 });
                 os << printable.back();
                 print_LF(os);
-            } else {
-            }
+            } else
+                assert(false);
         }
 
     };

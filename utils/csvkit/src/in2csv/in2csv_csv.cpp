@@ -6,7 +6,6 @@ using namespace ::csvkit::cli;
 
 namespace in2csv::detail::csv {
     namespace detail {
-        //std::vector<std::string> header;
         std::vector<unsigned> dates_ids;
         std::vector<unsigned> datetimes_ids;
 
@@ -74,10 +73,13 @@ namespace in2csv::detail::csv {
         void convert_impl(auto & reader, impl_args & args) {
             skip_lines(reader, args);
             quick_check(reader, args);
-            auto const header = obtain_header_and_<no_skip_header>(reader, args);
+
+            auto types_and_blanks = std::get<1>(typify(reader, args, typify_option::typify_without_precisions));
+
+            skip_lines(reader, args);
+            auto const header = obtain_header_and_<skip_header>(reader, args);
 
             auto get_date_and_datetime_columns = [&] {
-
                 if (args.d_xls != "none") {
                     std::string not_columns;
                     dates_ids = parse_column_identifiers(columns{args.d_xls}, header, get_column_offset(args), excludes{not_columns});
@@ -89,10 +91,28 @@ namespace in2csv::detail::csv {
                 }
             };
 
-            auto types_and_blanks = std::get<1>(typify(reader, args, typify_option::typify_without_precisions));
-            std::size_t line_nums = 0;
+            std::vector<std::string> string_header(header.size());
+            std::transform(header.cbegin(), header.cend(), string_header.begin(), [&](auto & elem) {
+                return optional_quote(elem);
+            });
+
             std::ostream & os = std::cout;
+
+            auto write_header = [&string_header, &args] {
+                if (args.linenumbers)
+                    os << "line_number,";
+
+                std::for_each(string_header.begin(), string_header.end() - 1, [&](auto const & elem) {
+                    os << elem << ',';
+                });
+                os << string_header.back() << '\n';
+            };
+
+            write_header();
+
+            std::size_t line_nums = 0;
             reader.run_rows(
+#if 0
                     [&](auto) {
                         if (args.linenumbers)
                             os << "line_number,";
@@ -103,7 +123,9 @@ namespace in2csv::detail::csv {
 
                         os << header.back().operator csv_co::unquoted_cell_string() << '\n';
                     }
-                    ,[&](auto rowspan) {
+                    ,
+#endif
+                    [&](auto rowspan) {
                         if (args.linenumbers)
                             os << ++line_nums << ',';
 

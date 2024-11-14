@@ -28,6 +28,7 @@ namespace in2csv::detail {
             bool asap;
             std::string d_xls;
             std::string dt_xls;
+            bool is1904;
             std::filesystem::path file;
         };
 
@@ -63,6 +64,7 @@ namespace in2csv::detail {
                     , args.asap
                     , args.d_xls
                     , args.dt_xls
+                    , args.is1904
                     , args.file));
         }
         void convert() override {

@@ -311,18 +311,17 @@ namespace csvjoin::detail {
                     os << ++line_nums << ',';
                 }
                 auto col = 0u;
+                using elem_type = typename std::decay_t<decltype(span.back())>::reader_type::template typed_span<csv_co::unquoted>;   
                 std::for_each(span.begin(), span.end()-1, [&](auto const & e) {
                     if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>) {
-                        using elem_type = typename std::decay_t<decltype(e)>::reader_type::template typed_span<csv_co::unquoted>;
                         print_func(elem_type{e}, col++, types_n_blanks, args);
                         os << ',';
                     } else
                         os << e.operator csv_co::cell_string() << ',';
                 });
-                if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>) {
-                    using elem_type = typename std::decay_t<decltype(span.back())>::reader_type::template typed_span<csv_co::unquoted>;
+                if constexpr (std::is_same_v<std::decay_t<decltype(types_n_blanks)>,ts_n_blanks_type>)
                     print_func(elem_type{span.back()}, col, types_n_blanks, args);
-                } else   
+                else
                     os << (span.back()).operator csv_co::cell_string();
                 print_LF(os);
             });

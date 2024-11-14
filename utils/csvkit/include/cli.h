@@ -1045,8 +1045,6 @@ namespace csvkit::cli {
         if (!ids().empty()) {
             for (auto c = strtok(ids().data(),","); c != nullptr; c = strtok(nullptr, ",")) {
                 std::string column {c};
-                //static char constexpr chars[] = " ";
-                //csv_co::string_functions::trim_string<chars>(column);
                 trim_string(column);
                 try {
                     columns.emplace_back(match_column_identifier(column_names, column.c_str(), column_offset));
@@ -1062,8 +1060,6 @@ namespace csvkit::cli {
         if (!excl().empty()) {
             for (auto c = strtok(excl().data(),","); c != nullptr; c = strtok(nullptr, ",")) {
                 std::string column {c};
-                //static char const chars[] = " ";
-                //csv_co::string_functions::trim_string<chars>(column);
                 trim_string(column);
                 try {
                     not_columns.insert(match_column_identifier(column_names, column.c_str(), column_offset));

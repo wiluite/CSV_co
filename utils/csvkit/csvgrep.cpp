@@ -46,6 +46,7 @@ namespace csvgrep {
                 os << printable.back();
                 print_LF(os);
             } else {
+                assert(false);
             }
         }
 
