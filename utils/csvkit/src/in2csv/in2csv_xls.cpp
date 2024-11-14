@@ -194,6 +194,10 @@ namespace in2csv::detail::xls {
                 }
                 , compose_datetime<elem_type>
                 , compose_date<elem_type>
+                , [](elem_type const & e, std::any const &) {
+                    auto str = std::get<1>(e.timedelta_tuple());
+                    return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
+                }
         };
         auto const type_index = static_cast<std::size_t>(types[col]) - 1;
         os << type2func[type_index](elem, std::any{});
