@@ -2,6 +2,7 @@
 #include <cli.h>
 #include "../../external/libxls/include/xls.h"
 #include <iostream>
+#include "common_functions.h"
 
 using namespace ::csvkit::cli;
 
@@ -60,9 +61,6 @@ namespace in2csv::detail::xls {
         ++header_cell_index;
     }
 
-    std::vector<unsigned> dates_ids;
-    std::vector<unsigned> datetimes_ids;
-
     inline static void OutputString(std::ostringstream & oss, const char *string) {
         // now we have first line of the body, and so "0" really influence on the nature of this column
         if (can_be_number.size() < header.size())
@@ -79,20 +77,6 @@ namespace in2csv::detail::xls {
                 oss << *str;
         }
         oss << stringSeparator;
-    }
-
-    static bool is1904;
-
-    inline static std::chrono::system_clock::time_point to_chrono_time_point(double d) {
-        using namespace std::chrono;
-        using namespace date;
-        using ddays = duration<double, date::days::period>;
-        if (is1904)
-            return date::sys_days{date::January/01/1904} + round<system_clock::duration>(ddays{d});
-        else if (d < 60)
-            return date::sys_days{date::December/31/1899} + round<system_clock::duration>(ddays{d});
-        else
-            return date::sys_days{date::December/30/1899} + round<system_clock::duration>(ddays{d});
     }
 
     inline bool is_date_column(unsigned column) {
@@ -275,10 +259,6 @@ namespace in2csv::detail::xls {
 
         auto sheet_index = sheet_index_by_name(a.sheet);
 
-        enum use_date_datetime_xls {
-            yes,
-            no
-        };
         auto print_sheet = [&pwb](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_xls use_d_dt_xls) {
             auto args (std::move(arguments));
             header.clear();
@@ -307,28 +287,14 @@ namespace in2csv::detail::xls {
             if (xls_parseWorkSheet(pws) != LIBXLS_OK)
                 throw std::runtime_error("Error parsing the sheet. Index: " + std::to_string(sheet_idx));
 
-            auto get_date_and_datetime_columns = [&] {
-                if (use_d_dt_xls == use_date_datetime_xls::no)
-                    return;
-
-                if (args.d_xls != "none") {
-                    std::string not_columns;
-                    dates_ids = parse_column_identifiers(columns{args.d_xls}, header, get_column_offset(args), excludes{not_columns});
-                }
-
-                if (args.dt_xls != "none") {
-                    std::string not_columns;
-                    datetimes_ids = parse_column_identifiers(columns{args.dt_xls}, header, get_column_offset(args), excludes{not_columns});
-                }
-            };
-
             std::ostringstream oss;
+
             if (args.no_header) {
                 header = generate_header(pws->rows.lastcol + 1);
                 for (auto & e : header)
                     oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
                 oss << '\n';
-                get_date_and_datetime_columns();
+                get_date_and_datetime_columns(args, header, use_d_dt_xls);
             }
 
             tune_format(oss, "%.16g");
@@ -339,7 +305,7 @@ namespace in2csv::detail::xls {
                     oss << '\n';
 
                 if (j == args.skip_lines + 1 and !args.no_header) // now we have really the native header
-                    get_date_and_datetime_columns();
+                    get_date_and_datetime_columns(args, header, use_d_dt_xls);
 
                 static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
                 static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;

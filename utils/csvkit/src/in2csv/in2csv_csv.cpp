@@ -1,13 +1,19 @@
 #include "../../include/in2csv/in2csv_csv.h"
 #include <cli.h>
 #include <iostream>
+#include "common_functions.h"
 
 using namespace ::csvkit::cli;
 
 namespace in2csv::detail::csv {
     namespace detail {
-        std::vector<unsigned> dates_ids;
-        std::vector<unsigned> datetimes_ids;
+        inline bool is_date_column(unsigned column) {
+            return std::find(dates_ids.begin(), dates_ids.end(), column) != std::end(dates_ids);
+        }
+
+        inline bool is_datetime_column(unsigned column) {
+            return std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
+        }
 
         void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
             using elem_type = std::decay_t<decltype(elem)>;
@@ -58,8 +64,22 @@ namespace in2csv::detail::csv {
                                 std::string s = another_rep.str();
                                 another_rep.to_C_locale(s);
                                 ss << s;
-                            } else
+                            } else {
+                                auto c = std::any_cast<std::size_t const>(info); 
+                                if (is_date_column(c)) {
+                                    using date::operator<<;
+                                    std::ostringstream local_oss;
+                                    local_oss << to_chrono_time_point(value);
+                                    auto str = local_oss.str();
+                                    ss << std::string{str.begin(), str.begin() + 10};
+                                } else
+                                if (is_datetime_column(c)) {
+                                    using date::operator<<;
+                                    std::ostringstream local_oss;
+                                    ss << to_chrono_time_point(value);
+                                } else
                                 ss << another_rep.str();
+                            }
                         }
                         return ss.str();
                     }
@@ -72,7 +92,7 @@ namespace in2csv::detail::csv {
 
             };
             auto const type_index = static_cast<std::size_t>(types[col]) - 1;
-            os << type2func[type_index](elem, std::any{});
+            os << type2func[type_index](elem, col);
         }
 
         void convert_impl(auto & reader, impl_args & args) {
@@ -84,22 +104,12 @@ namespace in2csv::detail::csv {
             skip_lines(reader, args);
             auto const header = obtain_header_and_<skip_header>(reader, args);
 
-            auto get_date_and_datetime_columns = [&] {
-                if (args.d_xls != "none") {
-                    std::string not_columns;
-                    dates_ids = parse_column_identifiers(columns{args.d_xls}, header, get_column_offset(args), excludes{not_columns});
-                }
-
-                if (args.dt_xls != "none") {
-                    std::string not_columns;
-                    datetimes_ids = parse_column_identifiers(columns{args.dt_xls}, header, get_column_offset(args), excludes{not_columns});
-                }
-            };
-
             std::vector<std::string> string_header(header.size());
             std::transform(header.cbegin(), header.cend(), string_header.begin(), [&](auto & elem) {
                 return optional_quote(elem);
             });
+
+            get_date_and_datetime_columns(args, header, use_date_datetime_xls::yes);
 
             std::ostream & os = std::cout;
 
@@ -117,19 +127,6 @@ namespace in2csv::detail::csv {
 
             std::size_t line_nums = 0;
             reader.run_rows(
-#if 0
-                    [&](auto) {
-                        if (args.linenumbers)
-                            os << "line_number,";
-
-                        std::for_each(header.begin(), header.end() - 1, [&](auto const & elem) {
-                            os << elem.operator csv_co::unquoted_cell_string() << ',';
-                        });
-
-                        os << header.back().operator csv_co::unquoted_cell_string() << '\n';
-                    }
-                    ,
-#endif
                     [&](auto rowspan) {
                         if (args.linenumbers)
                             os << ++line_nums << ',';
@@ -151,7 +148,6 @@ namespace in2csv::detail::csv {
         try {
             impl_args args = a;
             basic_reader_configurator_and_runner(read_standard_input, detail::convert_impl)
-            //detail::convert_impl(a);
         }  catch (ColumnIdentifierError const& e) {
             std::cout << e.what() << '\n';
         }
