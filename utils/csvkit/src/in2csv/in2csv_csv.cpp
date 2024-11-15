@@ -146,7 +146,7 @@ namespace in2csv::detail::csv {
     }
     void impl::convert() {
         try {
-            impl_args args = a;
+            impl_args args = a; // basic_reader_configurator_and_runner macro's requirement
             basic_reader_configurator_and_runner(read_standard_input, detail::convert_impl)
         }  catch (ColumnIdentifierError const& e) {
             std::cout << e.what() << '\n';
