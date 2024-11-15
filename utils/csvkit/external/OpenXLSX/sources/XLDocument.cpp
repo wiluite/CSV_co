@@ -519,7 +519,9 @@ void XLDocument::open(const std::string& fileName)
                                     /* xmlType   */ item.type());
             }
             else {
+#if 0
                 std::cout << "ignoring currently unhandled workbook item " << item.path() << std::endl;
+#endif
             }
         }
         else if (!isWorkbookPath || !workbookAdded) { // do not re-add workbook if it was previously added via m_docRelationships

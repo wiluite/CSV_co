@@ -2382,7 +2382,9 @@ XLStyles::XLStyles(XLXmlData* xmlData, std::string stylesPrefix)
             case XLStylesFormats:     [[fallthrough]];
             case XLStylesTableStyles: [[fallthrough]];
             case XLStylesExtLst:
+#if 0
                 std::cout << "XLStyles: Ignoring currently unsupported <" << XLStylesEntryTypeToString(e) + "> node" << std::endl;
+#endif
                 break;
             case XLStylesInvalid: [[fallthrough]];
             default:
