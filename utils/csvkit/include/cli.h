@@ -447,7 +447,7 @@ namespace csvkit::cli {
     }
 
     /// Tunes an output stream with a decimal format like %.3f, %.4e, %.15g
-    void tune_format(auto & os, char const * fmt) {
+    static void tune_format(std::ostream & os, char const * fmt) {
         int prec;
         char float_type;
 #if defined (_MSC)

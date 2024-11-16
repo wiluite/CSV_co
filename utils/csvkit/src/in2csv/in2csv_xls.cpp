@@ -9,11 +9,6 @@ using namespace ::csvkit::cli;
 namespace in2csv::detail::xls {
 
     static char stringSeparator = '\"';
-    static char const *fieldSeparator = ",";
-
-    std::vector<std::string> header;
-    unsigned header_cell_index = 0;
-    std::vector<unsigned> can_be_number;
 
     static void OutputHeaderString(std::ostringstream & oss, const char *string) {
         // now we have native header, and so "1" does not influence on the nature of this column
@@ -48,19 +43,6 @@ namespace in2csv::detail::xls {
         ++header_cell_index;
     }
 
-    static void OutputHeaderNumber(std::ostringstream & oss, const double number, unsigned) {
-        // now we have native header, and so "1" does not influence on the nature of this column
-        can_be_number.push_back(1);
-
-        std::ostringstream header_cell;
-        tune_format(header_cell, "%.16g");
-
-        header_cell << number;
-        header.push_back(header_cell.str());
-        oss << header.back();
-        ++header_cell_index;
-    }
-
     inline static void OutputString(std::ostringstream & oss, const char *string) {
         // now we have first line of the body, and so "0" really influence on the nature of this column
         if (can_be_number.size() < header.size())
@@ -79,39 +61,6 @@ namespace in2csv::detail::xls {
         oss << stringSeparator;
     }
 
-    inline bool is_date_column(unsigned column) {
-        return can_be_number[column] and std::find(dates_ids.begin(), dates_ids.end(), column) != std::end(dates_ids);
-    }
-
-    inline bool is_datetime_column(unsigned column) {
-        return can_be_number[column] and std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
-    }
-
-    inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
-        // now we have first line of the body, and so "1" really influence on the nature of this column
-        if (can_be_number.size() < header.size())
-            can_be_number.push_back(1);
-
-        if (number == 1.0) {
-            oss << "1.0";
-            return;
-        }
-
-        if (is_date_column(column)) {
-            using date::operator<<;
-            std::ostringstream local_oss;
-            local_oss << to_chrono_time_point(number);
-            auto str = local_oss.str();
-            oss << std::string{str.begin(), str.begin() + 10};
-        } else
-        if (is_datetime_column(column)) {
-            using date::operator<<;
-            std::ostringstream local_oss;
-            oss << to_chrono_time_point(number);
-        } else
-            oss << number;
-    }
- 
     std::vector<std::string> generate_header(unsigned length) {
         std::vector<std::string> letter_names (length);
         unsigned i = 0;
@@ -246,17 +195,6 @@ namespace in2csv::detail::xls {
             throw std::runtime_error(std::string("No sheet named ") + "'" + name + "'");
         };
 
-        auto is_number = [](std::string const & name) {
-            return std::all_of(name.begin(), name.end(), [](auto c) {return std::isdigit(c);});
-        };
-
-        auto sheet_name_by_index = [&pwb](std::string const & index) {
-            unsigned idx = std::atoi(index.c_str());
-            if (idx >= pwb->sheets.count)
-                throw std::runtime_error("List index out of range");
-            return pwb->sheets.sheet[idx].name;
-        };
-
         auto sheet_index = sheet_index_by_name(a.sheet);
 
         auto print_sheet = [&pwb](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_xls use_d_dt_xls) {
@@ -319,7 +257,7 @@ namespace in2csv::detail::xls {
                         continue;
 
                     if (cellCol)
-                        oss << fieldSeparator;
+                        oss << ',';
 
                     // display the value of the cell (either numeric or string)
                     if (cell->id == XLS_RECORD_RK || cell->id == XLS_RECORD_MULRK || cell->id == XLS_RECORD_NUMBER)
@@ -387,6 +325,13 @@ namespace in2csv::detail::xls {
         };
 
         print_sheet(sheet_index, std::cout, a, use_date_datetime_xls::yes);
+
+        auto sheet_name_by_index = [&pwb](std::string const & index) {
+            unsigned idx = std::atoi(index.c_str());
+            if (idx >= pwb->sheets.count)
+                throw std::runtime_error("List index out of range");
+            return pwb->sheets.sheet[idx].name;
+        };
 
         if (!a.write_sheets.empty()) {
             std::vector<std::string> sheet_names = [&] {
