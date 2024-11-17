@@ -36,8 +36,8 @@ int main() {
         std::string write_sheets;
         bool use_sheet_names = false;
         std::string encoding_xls = "UTF-8";
-        std::string d_xls;
-        std::string dt_xls;
+        std::string d_excel;
+        std::string dt_excel;
     };
 
     "exceptions"_test = [] {

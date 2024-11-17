@@ -1,8 +1,10 @@
 #pragma once
 
 namespace csvkit::cli {
-    void tune_format(std::ostream & os, char const * fmt);
+    //void tune_format(std::ostream & os, char const * fmt);
+    std::string letter_name(std::size_t column);
 }
+
 namespace {
     static bool is1904;
 
@@ -18,7 +20,7 @@ namespace {
             return date::sys_days{date::December/30/1899} + round<system_clock::duration>(ddays{d});
     }
 
-    enum use_date_datetime_xls {
+    enum use_date_datetime_excel {
         yes,
         no
     };
@@ -26,19 +28,19 @@ namespace {
     static std::vector<unsigned> dates_ids;
     static std::vector<unsigned> datetimes_ids;
 
-    auto get_date_and_datetime_columns(auto && args, auto && header, use_date_datetime_xls use_d_dt_xls) {
+    auto get_date_and_datetime_columns(auto && args, auto && header, use_date_datetime_excel use_d_dt) {
         using namespace ::csvkit::cli;
-        if (use_d_dt_xls == use_date_datetime_xls::no)
+        if (use_d_dt == use_date_datetime_excel::no)
             return;
 
-        if (args.d_xls != "none") {
+        if (args.d_excel != "none") {
             std::string not_columns;
-            dates_ids = parse_column_identifiers(columns{args.d_xls}, header, get_column_offset(args), excludes{not_columns});
+            dates_ids = parse_column_identifiers(columns{args.d_excel}, header, get_column_offset(args), excludes{not_columns});
         }
 
-        if (args.dt_xls != "none") {
+        if (args.dt_excel != "none") {
             std::string not_columns;
-            datetimes_ids = parse_column_identifiers(columns{args.dt_xls}, header, get_column_offset(args), excludes{not_columns});
+            datetimes_ids = parse_column_identifiers(columns{args.dt_excel}, header, get_column_offset(args), excludes{not_columns});
         }
     };
 
@@ -95,5 +97,16 @@ namespace {
         } else
             oss << number;
     }
+
+    std::vector<std::string> generate_header(unsigned length) {
+        std::vector<std::string> letter_names (length);
+        unsigned i = 0;
+        std::generate(letter_names.begin(), letter_names.end(), [&i] {
+            return csvkit::cli::letter_name(i++);
+        });
+
+        return letter_names;
+    }
+
 
 }

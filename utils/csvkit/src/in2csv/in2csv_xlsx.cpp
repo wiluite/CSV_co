@@ -107,7 +107,12 @@ namespace in2csv::detail::xlsx {
             unsigned idx = std::atoi(index.c_str()); 
             return static_cast<XLDocument&>(doc).workbook().worksheet(idx + 1).name();
         };
-
+#if 0
+        auto sheet_name_by_index = [&doc](std::string const & index) {
+            unsigned idx = std::atoi(index.c_str());
+            return static_cast<XLDocument&>(doc).workbook().worksheet(idx).name();
+        };
+#endif
         if (a.sheet.empty())
             a.sheet = sheet_name_by_zero_based_index("0");
 
@@ -117,13 +122,28 @@ namespace in2csv::detail::xlsx {
 
         auto sheet_index = sheet_index_by_name(a.sheet);
 
-        auto print_sheet = [&doc](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_xls use_d_dt_xls) {
+        auto print_sheet = [&](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_excel use_d_dt) {
             auto args (std::move(arguments));
+
+            auto wks = static_cast<XLDocument&>(doc).workbook().worksheet(sheet_name_by_zero_based_index(std::to_string(sheet_idx)));
             header.clear();
             header_cell_index = 0;
             can_be_number.clear();
             dates_ids.clear();
             datetimes_ids.clear();
+
+            std::ostringstream oss;
+
+            if (args.no_header) {
+                header = generate_header(wks.columnCount());
+                for (auto & e : header)
+                    oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
+                oss << '\n';
+                get_date_and_datetime_columns(args, header, use_d_dt);
+            }
+
+            tune_format(oss, "%.16g");
+
         };
 
 #if 0

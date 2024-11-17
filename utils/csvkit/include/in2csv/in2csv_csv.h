@@ -26,9 +26,10 @@ namespace in2csv::detail {
             bool no_inference;
             bool date_lib_parser;
             bool asap;
-            std::string d_xls;
-            std::string dt_xls;
+            std::string d_excel;
+            std::string dt_excel;
             bool is1904;
+            bool xlscsv;
             std::filesystem::path file;
         };
 
@@ -62,9 +63,10 @@ namespace in2csv::detail {
                     , args.no_inference
                     , args.date_lib_parser
                     , args.asap
-                    , args.d_xls
-                    , args.dt_xls
+                    , args.d_excel
+                    , args.dt_excel
                     , args.is1904
+                    , args.xlscsv
                     , args.file));
         }
         void convert() override {

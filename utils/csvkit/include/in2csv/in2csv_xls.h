@@ -31,8 +31,8 @@ namespace in2csv::detail {
             std::string write_sheets; // "The names of the Excel sheets to write to files, or \"-\" to write all sheets.
             bool use_sheet_names; // "Use the sheet names as file names when --write-sheets is set."
             std::string encoding_xls;
-            std::string d_xls;
-            std::string dt_xls;
+            std::string d_excel;
+            std::string dt_excel;
             std::filesystem::path file;
         };
 
@@ -71,8 +71,8 @@ namespace in2csv::detail {
                 , args.write_sheets
                 , args.use_sheet_names
                 , args.encoding_xls
-                , args.d_xls
-                , args.dt_xls
+                , args.d_excel
+                , args.dt_excel
                 , args.file));
         }
         void convert() override {

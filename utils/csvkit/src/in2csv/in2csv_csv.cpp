@@ -34,8 +34,6 @@ namespace in2csv::detail::csv {
 
             using func_type = std::function<std::string(elem_type const &, std::any const &)>;
 
-            // TODO: FIXME. Clang sanitizers complains for this in unittests.
-            //  Although it seems neither false positives nor bloat code here.
 #if !defined(BOOST_UT_DISABLE_MODULE)
             static
 #endif
@@ -47,11 +45,6 @@ namespace in2csv::detail::csv {
                         static std::ostringstream ss;
                         ss.str({});
 
-                        // Surprisingly, csvkit represents a number from file without distortion:
-                        // knowing, that it is a valid number in any locale, it simply removes
-                        // the thousands separators and replaces the decimal point with its
-                        // C-locale equivalent. Thus, the number actually written to the file
-                        // is output. and we have to do some tricks.
                         typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
                         auto const value = another_rep.num();
 
@@ -69,16 +62,18 @@ namespace in2csv::detail::csv {
                                 if (is_date_column(c)) {
                                     using date::operator<<;
                                     std::ostringstream local_oss;
-                                    local_oss << to_chrono_time_point(value);
+                                    if (args.xlscsv)
+                                        local_oss << to_chrono_time_point(value);
                                     auto str = local_oss.str();
                                     ss << std::string{str.begin(), str.begin() + 10};
                                 } else
                                 if (is_datetime_column(c)) {
                                     using date::operator<<;
                                     std::ostringstream local_oss;
-                                    ss << to_chrono_time_point(value);
+                                    if (args.xlscsv)
+                                        ss << to_chrono_time_point(value);
                                 } else
-                                ss << another_rep.str();
+                                    ss << another_rep.str();
                             }
                         }
                         return ss.str();
@@ -109,7 +104,7 @@ namespace in2csv::detail::csv {
                 return optional_quote(elem);
             });
 
-            get_date_and_datetime_columns(args, header, use_date_datetime_xls::yes);
+            get_date_and_datetime_columns(args, header, use_date_datetime_excel::yes);
 
             std::ostream & os = std::cout;
 

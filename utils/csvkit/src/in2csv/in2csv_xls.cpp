@@ -61,16 +61,6 @@ namespace in2csv::detail::xls {
         oss << stringSeparator;
     }
 
-    std::vector<std::string> generate_header(unsigned length) {
-        std::vector<std::string> letter_names (length);
-        unsigned i = 0;
-        std::generate(letter_names.begin(), letter_names.end(), [&i] {
-            return letter_name(i++);
-        });
-
-        return letter_names;
-    }
-
     void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
         using elem_type = std::decay_t<decltype(elem)>;
         auto & [types, blanks] = types_n_blanks;
@@ -197,7 +187,7 @@ namespace in2csv::detail::xls {
 
         auto sheet_index = sheet_index_by_name(a.sheet);
 
-        auto print_sheet = [&pwb](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_xls use_d_dt_xls) {
+        auto print_sheet = [&pwb](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_excel use_d_dt) {
             auto args (std::move(arguments));
             header.clear();
             header_cell_index = 0;
@@ -232,7 +222,7 @@ namespace in2csv::detail::xls {
                 for (auto & e : header)
                     oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
                 oss << '\n';
-                get_date_and_datetime_columns(args, header, use_d_dt_xls);
+                get_date_and_datetime_columns(args, header, use_d_dt);
             }
 
             tune_format(oss, "%.16g");
@@ -243,7 +233,7 @@ namespace in2csv::detail::xls {
                     oss << '\n';
 
                 if (j == args.skip_lines + 1 and !args.no_header) // now we have really the native header
-                    get_date_and_datetime_columns(args, header, use_d_dt_xls);
+                    get_date_and_datetime_columns(args, header, use_d_dt);
 
                 static void (*output_string_func)(std::ostringstream &, const char *) = OutputString;
                 static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;
@@ -324,7 +314,7 @@ namespace in2csv::detail::xls {
             }, variants);
         };
 
-        print_sheet(sheet_index, std::cout, a, use_date_datetime_xls::yes);
+        print_sheet(sheet_index, std::cout, a, use_date_datetime_excel::yes);
 
         auto sheet_name_by_index = [&pwb](std::string const & index) {
             unsigned idx = std::atoi(index.c_str());
@@ -362,7 +352,7 @@ namespace in2csv::detail::xls {
                 auto const filename = "sheets_" + (a.use_sheet_names ? e : std::to_string(cursor)) + ".csv";
                 std::ofstream ofs(filename);
                 try {
-                    print_sheet(sheet_index_by_name(e), ofs, a, use_date_datetime_xls::no);
+                    print_sheet(sheet_index_by_name(e), ofs, a, use_date_datetime_excel::no);
                 } catch(std::exception const & ex) {
                     std::cerr << ex.what() << std::endl;
                 } 
