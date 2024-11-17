@@ -53,6 +53,89 @@ namespace in2csv::detail::xlsx {
         oss << stringSeparator;
     }
 
+    inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
+        // now we have first line of the body, and so "1" really influence on the nature of this column
+        if (can_be_number.size() < header.size())
+            can_be_number.push_back(1);
+
+        if (number == 1.0) {
+            oss << "1.0";
+            return;
+        }
+
+        if (is_date_column(column)) {
+            using date::operator<<;
+            std::ostringstream local_oss;
+            local_oss << to_chrono_time_point(number);
+            auto str = local_oss.str();
+            oss << std::string{str.begin(), str.begin() + 10};
+        } else
+        if (is_datetime_column(column)) {
+            using date::operator<<;
+            std::ostringstream local_oss;
+            oss << to_chrono_time_point(number);
+        } else
+            oss << number;
+    }
+
+    void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
+        using elem_type = std::decay_t<decltype(elem)>;
+        auto & [types, blanks] = types_n_blanks;
+        bool const is_null = elem.is_null();
+        if (types[col] == column_type::text_t or (!args.blanks and is_null)) {
+            auto compose_text = [&](auto const & e) -> std::string {
+                typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
+                if (another_rep.raw_string_view().find(',') != std::string_view::npos)
+                    return another_rep;
+                else
+                    return another_rep.str();
+            };
+            os << (!args.blanks && is_null ? "" : compose_text(elem));
+            return;
+        }
+        assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
+
+        using func_type = std::function<std::string(elem_type const &, std::any const &)>;
+
+#if !defined(BOOST_UT_DISABLE_MODULE)
+        static
+#endif
+        std::array<func_type, static_cast<std::size_t>(column_type::sz)> type2func {
+                compose_bool<elem_type>
+                , [&](elem_type const & e, std::any const & info) {
+                    assert(!e.is_null());
+
+                    static std::ostringstream ss;
+                    ss.str({});
+
+                    typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
+                    auto const value = another_rep.num();
+
+                    if (std::isnan(value))
+                        ss << "NaN";
+                    else if (std::isinf(value))
+                        ss << (value > 0 ? "Infinity" : "-Infinity");
+                    else {
+                        if (args.num_locale != "C") {
+                            std::string s = another_rep.str();
+                            another_rep.to_C_locale(s);
+                            ss << s;
+                        } else
+                            ss << another_rep.str();
+                    }
+                    return ss.str();
+                }
+                , compose_datetime<elem_type>
+                , compose_date<elem_type>
+                , [](elem_type const & e, std::any const &) {
+                    auto str = std::get<1>(e.timedelta_tuple());
+                    return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
+                }
+        };
+        auto const type_index = static_cast<std::size_t>(types[col]) - 1;
+        os << type2func[type_index](elem, std::any{});
+    }
+
     void convert_impl(impl_args & a) {
         using namespace OpenXLSX;
 
@@ -107,25 +190,20 @@ namespace in2csv::detail::xlsx {
             unsigned idx = std::atoi(index.c_str()); 
             return static_cast<XLDocument&>(doc).workbook().worksheet(idx + 1).name();
         };
-#if 0
-        auto sheet_name_by_index = [&doc](std::string const & index) {
-            unsigned idx = std::atoi(index.c_str());
-            return static_cast<XLDocument&>(doc).workbook().worksheet(idx).name();
-        };
-#endif
+
         if (a.sheet.empty())
-            a.sheet = sheet_name_by_zero_based_index("0");
+            a.sheet = sheet_name_by_zero_based_index("0"); // "ʤ"
 
-        auto sheet_index_by_name = [&doc](std::string const & name) {
-            return static_cast<XLDocument&>(doc).workbook().indexOfSheet(name);
+        auto zero_based_sheet_index_by_name = [&doc](std::string const & name) {
+            return static_cast<XLDocument&>(doc).workbook().indexOfSheet(name) - 1;
         };
 
-        auto sheet_index = sheet_index_by_name(a.sheet);
-
+        auto sheet_index = zero_based_sheet_index_by_name(a.sheet);
         auto print_sheet = [&](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_excel use_d_dt) {
             auto args (std::move(arguments));
 
             auto wks = static_cast<XLDocument&>(doc).workbook().worksheet(sheet_name_by_zero_based_index(std::to_string(sheet_idx)));
+
             header.clear();
             header_cell_index = 0;
             can_be_number.clear();
@@ -134,37 +212,108 @@ namespace in2csv::detail::xlsx {
 
             std::ostringstream oss;
 
-            if (args.no_header) {
-                header = generate_header(wks.columnCount());
-                for (auto & e : header)
-                    oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
-                oss << '\n';
-                get_date_and_datetime_columns(args, header, use_d_dt);
-            }
+            auto const column_count = wks.columnCount();
+            if (!column_count)
+                throw std::runtime_error("Column count in this particular sheet is 0.");
+
+            generate_and_print_header(oss, args, column_count, use_d_dt);
 
             tune_format(oss, "%.16g");
 
+            std::size_t j = 0;
+            std::vector<XLCellValue> readValues;
+            for (auto& row : wks.rows()) {
+                if (j < args.skip_lines) {
+                    ++j;
+                    continue;
+                }
+                if (j != args.skip_lines)
+                    oss << '\n';
+
+                if (j == args.skip_lines + 1 and !args.no_header) // now we have really the native header
+                    get_date_and_datetime_columns(args, header, use_d_dt);
+
+                static void (*output_string_func)(std::ostringstream &, std::string const &) = OutputString;
+                static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;
+
+                output_string_func = (!args.no_header and j == args.skip_lines) ? OutputHeaderString : OutputString;
+                output_number_func = (!args.no_header and j == args.skip_lines) ? OutputHeaderNumber : OutputNumber;
+
+                readValues = row.values();
+                if (readValues.size() != column_count)
+                    readValues.resize(column_count);
+                auto col = 0u;
+                for (auto & value : readValues) {
+                   if (std::addressof(value) != std::addressof(readValues.front()))
+                       oss << ',';
+
+                   switch (value.type()) {
+                       case XLValueType::Empty:
+                           output_string_func(oss, "");
+                           break;
+                       case XLValueType::Boolean:
+                           output_string_func(oss, (value.get<bool>() == true ? "True" : "False"));
+                           break;
+                       case XLValueType::Integer:
+                           output_number_func(oss, value.get<int64_t>(), col);
+                           break;
+                       case XLValueType::Float:
+                           output_number_func(oss, value.get<double>(), col);
+                           break;
+                       case XLValueType::String:
+                           output_string_func(oss, value.getString());
+                           break;
+                       default:
+                           output_string_func(oss, "*error*");
+                   }
+                   col++;
+                }
+
+                j++;
+            }
+
+            args.skip_lines = 0;
+            args.no_header = false;
+            std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
+            if (!args.skip_init_space)
+                variants = notrimming_reader_type(oss.str());
+            else
+                variants = skipinitspace_reader_type(oss.str());
+
+            std::visit([&](auto & arg) {
+                if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
+                    auto types_and_blanks = std::get<1>(typify(arg, args, typify_option::typify_without_precisions));
+                    std::size_t line_nums = 0;
+                    arg.run_rows(
+                            [&](auto) {
+                                if (args.linenumbers)
+                                    os << "line_number,";
+
+                                std::for_each(header.begin(), header.end() - 1, [&](auto const & elem) {
+                                    os << elem << ',';
+                                });
+
+                                os << header.back() << '\n';
+                            }
+                            ,[&](auto rowspan) {
+                                if (args.linenumbers)
+                                    os << ++line_nums << ',';
+
+                                auto col = 0u;
+                                using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
+                                std::for_each(rowspan.begin(), rowspan.end()-1, [&](auto const & e) {
+                                    print_func(elem_type{e}, col++, types_and_blanks, args, os);
+                                    os << ',';
+                                });
+                                print_func(elem_type{rowspan.back()}, col, types_and_blanks, args, os);
+                                os << '\n';
+                            }
+                    );
+                }
+            }, variants);
         };
 
-#if 0
-        std::vector<XLCellValue> readValues;
-        auto wks = static_cast<XLDocument&>(doc).workbook().worksheet("data");
-        auto const col_cnt = wks.columnCount();
-        tune_format(std::cout, "%.16g");
-        for (auto& row : wks.rows()) {
-            readValues = row.values();
-            if (readValues.size() != col_cnt)
-                readValues.resize(col_cnt); 
-
-            std::cout << readValues.front();
-            std::for_each (readValues.begin() + 1, readValues.end(), [](auto & elem) {
-                //std::cout << ',' << elem.getString();
-                std::cout << ',' << elem;
-            });
-                
-            std::cout << '\n'; 
-        }
-#endif
+        print_sheet(sheet_index, std::cout, a, use_date_datetime_excel::yes);
     }
 
     void impl::convert() {

@@ -61,6 +61,31 @@ namespace in2csv::detail::xls {
         oss << stringSeparator;
     }
 
+    inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
+        // now we have first line of the body, and so "1" really influence on the nature of this column
+        if (can_be_number.size() < header.size())
+            can_be_number.push_back(1);
+
+        if (number == 1.0) {
+            oss << "1.0";
+            return;
+        }
+
+        if (is_date_column(column)) {
+            using date::operator<<;
+            std::ostringstream local_oss;
+            local_oss << to_chrono_time_point(number);
+            auto str = local_oss.str();
+            oss << std::string{str.begin(), str.begin() + 10};
+        } else
+        if (is_datetime_column(column)) {
+            using date::operator<<;
+            std::ostringstream local_oss;
+            oss << to_chrono_time_point(number);
+        } else
+            oss << number;
+    }
+
     void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
         using elem_type = std::decay_t<decltype(elem)>;
         auto & [types, blanks] = types_n_blanks;
@@ -217,18 +242,12 @@ namespace in2csv::detail::xls {
 
             std::ostringstream oss;
 
-            if (args.no_header) {
-                header = generate_header(pws->rows.lastcol + 1);
-                for (auto & e : header)
-                    oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
-                oss << '\n';
-                get_date_and_datetime_columns(args, header, use_d_dt);
-            }
+            generate_and_print_header(oss, args, pws->rows.lastcol + 1, use_d_dt);
 
             tune_format(oss, "%.16g");
 
             for (auto j = args.skip_lines; j <= (unsigned int)pws->rows.lastrow; ++j) {
-                WORD cellRow = (WORD)j;
+                auto cellRow = (unsigned int)j;
                 if (j != args.skip_lines)
                     oss << '\n';
 
