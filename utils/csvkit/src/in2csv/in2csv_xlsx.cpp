@@ -4,6 +4,7 @@
 #include <iostream>
 #include "common_datetime_excel.h"
 #include "common_excel.h"
+#include "common_xls.h"
 
 using namespace ::csvkit::cli;
 
@@ -55,6 +56,7 @@ namespace in2csv::detail::xlsx {
     }
 
     inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
+        using namespace OpenXLSX;
         // now we have first line of the body, and so "1" really influence on the nature of this column
         if (can_be_number.size() < header.size())
             can_be_number.push_back(1);
@@ -68,7 +70,7 @@ namespace in2csv::detail::xlsx {
             using date::operator<<;
             std::ostringstream local_oss;
 #if 0
-            local_oss << to_chrono_time_point(number);
+            local_oss << to_chrono_time_point(24472.0);
 #endif
             auto str = local_oss.str();
 #if 0

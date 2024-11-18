@@ -46,14 +46,11 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #ifndef OPENXLSX_XLDOCUMENT_HPP
 #define OPENXLSX_XLDOCUMENT_HPP
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunknown-pragmas" // disable warning about below #pragma warning being unknown
-#ifdef _MSC_VER                                    // additional condition because the previous line does not work on gcc 12.2
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
 #   pragma warning(push)
 #   pragma warning(disable : 4251)
 #   pragma warning(disable : 4275)
 #endif // _MSC_VER
-#pragma GCC diagnostic pop
 
 // ===== External Includes ===== //
 #include <algorithm> // std::find_if
@@ -166,6 +163,16 @@ namespace OpenXLSX
          * @return
          */
         XLDocument& operator=(XLDocument&& other) noexcept = default;
+
+        /**
+         * @brief ensure that warnings are shown (default setting)
+         */
+        void showWarnings();
+
+        /**
+         * @brief ensure that warnings are suppressed where this parameter is supported (currently only XLStyles)
+         */
+        void suppressWarnings();
 
         /**
          * @brief Open the .xlsx file with the given path
@@ -343,6 +350,8 @@ namespace OpenXLSX
         //----------------------------------------------------------------------------------------------------------------------
 
     private:
+        bool m_suppressWarnings {true};       /**< If true, will suppress output of warnings where supported */
+
         std::string m_filePath {}; /**< The path to the original file*/
         std::string m_realPath {}; /**<  */
 
@@ -364,11 +373,8 @@ namespace OpenXLSX
 
 }    // namespace OpenXLSX
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunknown-pragmas" // disable warning about below #pragma warning being unknown
-#ifdef _MSC_VER                                    // additional condition because the previous line does not work on gcc 12.2
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
 #   pragma warning(pop)
 #endif // _MSC_VER
-#pragma GCC diagnostic pop
 
 #endif    // OPENXLSX_XLDOCUMENT_HPP

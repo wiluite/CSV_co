@@ -46,14 +46,11 @@ YM      M9  MM    MM MM       MM    MM   d'  `MM.    MM            MM   d'  `MM.
 #ifndef OPENXLSX_XLSTYLES_HPP
 #define OPENXLSX_XLSTYLES_HPP
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunknown-pragmas" // disable warning about below #pragma warning being unknown
-#ifdef _MSC_VER                                    // additional condition because the previous line does not work on gcc 12.2
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
 #   pragma warning(push)
 #   pragma warning(disable : 4251)
 #   pragma warning(disable : 4275)
 #endif // _MSC_VER
-#pragma GCC diagnostic pop
 
 // ===== External Includes ===== //
 #include <cstdint>   // uint32_t etc
@@ -238,7 +235,7 @@ namespace OpenXLSX
     // ================================================================================
     // XLNumberFormats Class
     // ================================================================================
-    
+
     /**
      * @brief An encapsulation of a number format (numFmt) item
      */
@@ -423,7 +420,7 @@ namespace OpenXLSX
     // ================================================================================
     // XLFonts Class
     // ================================================================================
-    
+
     /**
      * @brief An encapsulation of a font item
      */
@@ -1158,7 +1155,7 @@ namespace OpenXLSX
     // ================================================================================
     // XLBorders Class
     // ================================================================================
-    
+
     /**
      * @brief An encapsulation of a line item
      */
@@ -1886,7 +1883,7 @@ namespace OpenXLSX
     // ================================================================================
     // XLCellStyles Class
     // ================================================================================
-    
+
     /**
      * @brief An encapsulation of a cell style item
      */
@@ -2097,7 +2094,7 @@ namespace OpenXLSX
     // ================================================================================
     // XLStyles Class
     // ================================================================================
-    
+
     /**
      * @brief An encapsulation of the styles file (xl/styles.xml) in an Excel document package.
      */
@@ -2108,45 +2105,46 @@ namespace OpenXLSX
          * @brief
          */
         XLStyles() = default;
-    
+
         /**
          * @brief
          * @param xmlData
+         * @param suppressWarnings if true (SUPRESS_WARNINGS), messages such as "XLStyles: Ignoring currently unsupported <dxfs> node" will be silenced
          * @param stylesPrefix Prefix any newly created root style nodes with this text as pugi::node_pcdata
          */
-        explicit XLStyles(XLXmlData* xmlData, std::string stylesPrefix = XLDefaultStylesPrefix);
-    
+        explicit XLStyles(XLXmlData* xmlData, bool suppressWarnings = false, std::string stylesPrefix = XLDefaultStylesPrefix);
+
         /**
          * @brief Destructor
          */
         ~XLStyles();
-    
+
         /**
          * @brief
          * @param other
          */
         XLStyles(const XLStyles& other) = default;
-    
+
         /**
          * @brief
          * @param other
          */
         XLStyles(XLStyles&& other) noexcept = default;
-    
+
         /**
          * @brief
          * @param other
          * @return
          */
         XLStyles& operator=(const XLStyles& other) = default;
-    
+
         /**
          * @brief
          * @param other
          * @return
          */
         XLStyles& operator=(XLStyles&& other) noexcept = default;
-    
+
         /**
          * @brief Get the number formats object
          * @return An XLNumberFormats object
@@ -2191,6 +2189,7 @@ namespace OpenXLSX
 
         // ---------- Protected Member Functions ---------- //
     private:
+        bool                                m_suppressWarnings; // if true, will suppress output of warnings where supported
         std::unique_ptr<XLNumberFormats>    m_numberFormats;    // handle to the underlying number formats
         std::unique_ptr<XLFonts>            m_fonts;            // handle to the underlying fonts
         std::unique_ptr<XLFills>            m_fills;            // handle to the underlying fills
@@ -2201,11 +2200,8 @@ namespace OpenXLSX
     };
 }    // namespace OpenXLSX
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunknown-pragmas" // disable warning about below #pragma warning being unknown
-#ifdef _MSC_VER                                    // additional condition because the previous line does not work on gcc 12.2
+#ifdef _MSC_VER    // conditionally enable MSVC specific pragmas to avoid other compilers warning about unknown pragmas
 #   pragma warning(pop)
 #endif // _MSC_VER
-#pragma GCC diagnostic pop
 
 #endif    // OPENXLSX_XLSTYLES_HPP

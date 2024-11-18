@@ -37,3 +37,4 @@ build*
 exe
 *.bat
 msbuild_
+*.ignore
