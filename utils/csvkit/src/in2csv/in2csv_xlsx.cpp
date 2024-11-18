@@ -314,6 +314,45 @@ namespace in2csv::detail::xlsx {
         };
 
         print_sheet(sheet_index, std::cout, a, use_date_datetime_excel::yes);
+
+        if (!a.write_sheets.empty()) {
+            std::vector<std::string> sheet_names = [&] {
+                std::vector<std::string> result;
+                if (a.write_sheets != "-") {
+                    std::istringstream stream(a.write_sheets);
+                    for (std::string word; std::getline(stream, word, ',');) {
+                        if (is_number(word)) {
+                            result.push_back(sheet_name_by_zero_based_index(word));
+                        } else {
+                            zero_based_sheet_index_by_name(word);
+                            result.push_back(word);
+                        }
+                    }
+                } else {
+                    for (auto & name : static_cast<XLDocument&>(doc).workbook().sheetNames()) {
+                        if (name.empty())
+                            continue;
+                        result.push_back(name);
+                    }
+                }
+                return result;
+            }();
+
+            std::vector<std::string> sheet_filenames (sheet_names.size());
+            int cursor = 0;
+            for (auto const & e : sheet_names) {
+                //TODO: encode filename according to activepage in Windows.
+                auto const filename = "sheets_" + (a.use_sheet_names ? e : std::to_string(cursor)) + ".csv";
+                std::ofstream ofs(filename);
+                try {
+                    print_sheet(zero_based_sheet_index_by_name(e), ofs, a, use_date_datetime_excel::no);
+                } catch(std::exception const & ex) {
+                    std::cerr << ex.what() << std::endl;
+                }
+                cursor++;
+            }
+        }
+
     }
 
     void impl::convert() {
