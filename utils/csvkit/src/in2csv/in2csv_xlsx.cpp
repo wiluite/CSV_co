@@ -2,7 +2,8 @@
 #include <cli.h>
 #include <OpenXLSX.hpp>
 #include <iostream>
-#include "common_functions.h"
+#include "common_datetime_excel.h"
+#include "common_excel.h"
 
 using namespace ::csvkit::cli;
 
@@ -66,14 +67,20 @@ namespace in2csv::detail::xlsx {
         if (is_date_column(column)) {
             using date::operator<<;
             std::ostringstream local_oss;
+#if 0
             local_oss << to_chrono_time_point(number);
+#endif
             auto str = local_oss.str();
+#if 0
             oss << std::string{str.begin(), str.begin() + 10};
+#endif
         } else
         if (is_datetime_column(column)) {
             using date::operator<<;
             std::ostringstream local_oss;
+#if 0
             oss << to_chrono_time_point(number);
+#endif
         } else
             oss << number;
     }

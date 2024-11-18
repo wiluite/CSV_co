@@ -1,7 +1,8 @@
 #include "../../include/in2csv/in2csv_csv.h"
 #include <cli.h>
 #include <iostream>
-#include "common_functions.h"
+#include "common_datetime_excel.h"
+#include "common_xls.h"
 
 using namespace ::csvkit::cli;
 
