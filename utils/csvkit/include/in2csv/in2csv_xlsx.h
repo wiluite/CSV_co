@@ -32,6 +32,7 @@ namespace in2csv::detail {
             bool use_sheet_names; // "Use the sheet names as file names when --write-sheets is set."
             std::string d_excel;
             std::string dt_excel;
+            bool is1904;
             std::filesystem::path file;
         };
 
@@ -71,6 +72,7 @@ namespace in2csv::detail {
                 , args.use_sheet_names
                 , args.d_excel
                 , args.dt_excel
+                , args.is1904
                 , args.file));
         }
         void convert() override {

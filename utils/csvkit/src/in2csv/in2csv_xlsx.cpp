@@ -289,6 +289,8 @@ namespace in2csv::detail::xlsx {
             else
                 variants = skipinitspace_reader_type(oss.str());
 
+            is1904 = args.is1904;
+
             std::visit([&](auto & arg) {
                 if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
                     auto types_and_blanks = std::get<1>(typify(arg, args, typify_option::typify_without_precisions));
