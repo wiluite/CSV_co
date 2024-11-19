@@ -30,6 +30,31 @@ namespace {
         return can_be_number[column] and std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
     }
 
+    inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
+        // now we have first line of the body, and so "1" really influence on the nature of this column
+        if (can_be_number.size() < header.size())
+            can_be_number.push_back(1);
+
+        if (number == 1.0) {
+            oss << "1.0";
+            return;
+        }
+
+        if (is_date_column(column)) {
+            using date::operator<<;
+            std::ostringstream local_oss;
+            local_oss << to_chrono_time_point(number);
+            auto str = local_oss.str();
+            oss << std::string{str.begin(), str.begin() + 10};
+        } else
+        if (is_datetime_column(column)) {
+            using date::operator<<;
+            std::ostringstream local_oss;
+            oss << to_chrono_time_point(number);
+        } else
+            oss << number;
+    }
+
     std::vector<std::string> generate_header(unsigned length) {
         std::vector<std::string> letter_names (length);
         unsigned i = 0;

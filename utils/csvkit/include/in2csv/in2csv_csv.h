@@ -29,7 +29,6 @@ namespace in2csv::detail {
             std::string d_excel;
             std::string dt_excel;
             bool is1904;
-            bool xlscsv;
             std::filesystem::path file;
         };
 
@@ -66,7 +65,6 @@ namespace in2csv::detail {
                     , args.d_excel
                     , args.dt_excel
                     , args.is1904
-                    , args.xlscsv
                     , args.file));
         }
         void convert() override {

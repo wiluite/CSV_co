@@ -3,8 +3,8 @@
 #include <OpenXLSX.hpp>
 #include <iostream>
 #include "common_datetime_excel.h"
+#include "common_time_point.h"
 #include "common_excel.h"
-#include "common_xls.h"
 
 using namespace ::csvkit::cli;
 
@@ -53,38 +53,6 @@ namespace in2csv::detail::xlsx {
         }
      
         oss << stringSeparator;
-    }
-
-    inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
-        using namespace OpenXLSX;
-        // now we have first line of the body, and so "1" really influence on the nature of this column
-        if (can_be_number.size() < header.size())
-            can_be_number.push_back(1);
-
-        if (number == 1.0) {
-            oss << "1.0";
-            return;
-        }
-
-        if (is_date_column(column)) {
-            using date::operator<<;
-            std::ostringstream local_oss;
-#if 0
-            local_oss << to_chrono_time_point(24472.0);
-#endif
-            auto str = local_oss.str();
-#if 0
-            oss << std::string{str.begin(), str.begin() + 10};
-#endif
-        } else
-        if (is_datetime_column(column)) {
-            using date::operator<<;
-            std::ostringstream local_oss;
-#if 0
-            oss << to_chrono_time_point(number);
-#endif
-        } else
-            oss << number;
     }
 
     void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
@@ -208,6 +176,9 @@ namespace in2csv::detail::xlsx {
         };
 
         auto sheet_index = zero_based_sheet_index_by_name(a.sheet);
+
+        is1904 = a.is1904;
+
         auto print_sheet = [&](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_excel use_d_dt) {
             auto args (std::move(arguments));
 
@@ -288,8 +259,6 @@ namespace in2csv::detail::xlsx {
                 variants = notrimming_reader_type(oss.str());
             else
                 variants = skipinitspace_reader_type(oss.str());
-
-            is1904 = args.is1904;
 
             std::visit([&](auto & arg) {
                 if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {

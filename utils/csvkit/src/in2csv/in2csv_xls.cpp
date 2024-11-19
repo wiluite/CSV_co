@@ -3,8 +3,8 @@
 #include "../../external/libxls/include/xls.h"
 #include <iostream>
 #include "common_datetime_excel.h"
+#include "common_time_point.h"
 #include "common_excel.h"
-#include "common_xls.h"
 
 using namespace ::csvkit::cli;
 
@@ -61,31 +61,6 @@ namespace in2csv::detail::xls {
                 oss << *str;
         }
         oss << stringSeparator;
-    }
-
-    inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
-        // now we have first line of the body, and so "1" really influence on the nature of this column
-        if (can_be_number.size() < header.size())
-            can_be_number.push_back(1);
-
-        if (number == 1.0) {
-            oss << "1.0";
-            return;
-        }
-
-        if (is_date_column(column)) {
-            using date::operator<<;
-            std::ostringstream local_oss;
-            local_oss << to_chrono_time_point(number);
-            auto str = local_oss.str();
-            oss << std::string{str.begin(), str.begin() + 10};
-        } else
-        if (is_datetime_column(column)) {
-            using date::operator<<;
-            std::ostringstream local_oss;
-            oss << to_chrono_time_point(number);
-        } else
-            oss << number;
     }
 
     void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {

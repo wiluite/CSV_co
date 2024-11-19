@@ -35,7 +35,6 @@ namespace in2csv::detail {
         std::string & dt_excel = kwarg("dt-excel","A comma-separated list of numeric columns of the input XLS/XLSX/CSV source, considered as datetimes, e.g. \"1,id,3-5\".").set_default("none");
 
         bool & is1904 = flag("is1904", "Epoch based on the 1900/1904 datemode for input XLSX source, or for the input CSV source, converted from XLS/XLSX.").set_default(true);
-        bool & xlscsv = flag("xlscsv", "Specify that the CSV source was XLS-conveted").set_default(false);
 
         bool & no_inference = flag("I,no-inference", "Disable type inference (and --locale, --date-format, --datetime-format, --no-leading-zeroes) when parsing the input.");
         bool & date_lib_parser = flag("date-lib-parser", "Use date library as Dates and DateTimes parser backend instead compiler-supported").set_default(true);
