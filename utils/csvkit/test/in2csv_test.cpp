@@ -38,6 +38,7 @@ int main() {
         std::string encoding_xls = "UTF-8";
         std::string d_excel;
         std::string dt_excel;
+        bool is1904;
     };
 
     "exceptions"_test = [] {
