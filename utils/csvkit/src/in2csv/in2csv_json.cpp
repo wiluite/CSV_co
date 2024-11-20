@@ -7,6 +7,7 @@
 using namespace ::csvkit::cli;
 
 namespace in2csv::detail::json {
+
     void impl::convert() {
         using namespace jsoncons;
 
@@ -28,9 +29,8 @@ namespace in2csv::detail::json {
                         }
 
                         return new ojson(ojson::parse(foo));
-                    } else {
+                    } else
                         return new ojson;
-                    }
                 }(),
                 [&](ojson* descriptor) {
                     delete descriptor;  
@@ -48,8 +48,18 @@ namespace in2csv::detail::json {
                 csv::csv_stream_encoder encoder(os);
                 ptr->dump(encoder);
             }
+            void dump_csv(std::ostream & os, std::string const & key) {
+                csv::csv_stream_encoder encoder(os);
+                ojson w = ptr->at(key);
+                w.dump(encoder);
+            }
         } doc(a);
 
-        doc.dump_csv(std::cout);
+        std::ostringstream oss;
+        if (a.key.empty())
+            doc.dump_csv(oss);
+        else
+            doc.dump_csv(oss, a.key);
+        std::cout << oss.str() << std::endl;
     }
 }
