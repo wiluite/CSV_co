@@ -75,5 +75,64 @@ namespace {
         }
     }
 
+    void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
+        using namespace csvkit::cli;
+        using elem_type = std::decay_t<decltype(elem)>;
+        auto & [types, blanks] = types_n_blanks;
+        bool const is_null = elem.is_null();
+        if (types[col] == column_type::text_t or (!args.blanks and is_null)) {
+            auto compose_text = [&](auto const & e) -> std::string {
+                typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
+                if (another_rep.raw_string_view().find(',') != std::string_view::npos)
+                    return another_rep;
+                else
+                    return another_rep.str();
+            };
+            os << (!args.blanks && is_null ? "" : compose_text(elem));
+            return;
+        }
+        assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
+
+        using func_type = std::function<std::string(elem_type const &, std::any const &)>;
+
+#if !defined(BOOST_UT_DISABLE_MODULE)
+        static
+#endif
+        std::array<func_type, static_cast<std::size_t>(column_type::sz)> type2func {
+                compose_bool<elem_type>
+                , [&](elem_type const & e, std::any const & info) {
+                    assert(!e.is_null());
+
+                    static std::ostringstream ss;
+                    ss.str({});
+
+                    typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
+                    auto const value = another_rep.num();
+
+                    if (std::isnan(value))
+                        ss << "NaN";
+                    else if (std::isinf(value))
+                        ss << (value > 0 ? "Infinity" : "-Infinity");
+                    else {
+                        if (args.num_locale != "C") {
+                            std::string s = another_rep.str();
+                            another_rep.to_C_locale(s);
+                            ss << s;
+                        } else
+                            ss << another_rep.str();
+                    }
+                    return ss.str();
+                }
+                , compose_datetime<elem_type>
+                , compose_date<elem_type>
+                , [](elem_type const & e, std::any const &) {
+                    auto str = std::get<1>(e.timedelta_tuple());
+                    return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
+                }
+        };
+        auto const type_index = static_cast<std::size_t>(types[col]) - 1;
+        os << type2func[type_index](elem, std::any{});
+    }
+
 }
 
