@@ -86,6 +86,7 @@ namespace in2csv::detail::xlsx {
                     descriptor->close();
                     if (a.file.empty() or a.file == "_")
                         std::remove(tmp_file.c_str());
+                    delete descriptor;
                 }
             ) {}
             operator XLDocument& () {

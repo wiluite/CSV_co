@@ -130,6 +130,10 @@ add_subdirectory(external/openXLSX)
 add_executable(in2csv in2csv.cpp src/in2csv/in2csv_fixed.cpp src/in2csv/in2csv_dbf.cpp src/in2csv/in2csv_xls.cpp
         src/in2csv/in2csv_geojson.cpp src/in2csv/in2csv_csv.cpp src/in2csv/in2csv_xlsx.cpp src/in2csv/in2csv_json.cpp)
 target_link_libraries(in2csv libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
+target_include_directories(in2csv
+        PRIVATE
+        external/jsoncons/include
+)
 
 endif()
 

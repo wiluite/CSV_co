@@ -644,6 +644,11 @@ add_custom_command(
         ${CMAKE_CURRENT_BINARY_DIR}/foo2.csv)
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
+target_include_directories(in2csv_test
+        PRIVATE
+        ../external/jsoncons/include
+)
+
 
 add_test(in2csv_test in2csv_test)
 
