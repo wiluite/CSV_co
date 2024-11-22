@@ -104,11 +104,23 @@ namespace in2csv::detail::xls {
         if (!pwb)
             throw std::runtime_error(std::string(xls_getError(error)));
 
+        auto fill_sheets = [&] {
+            std::vector<std::string> result;
+            for (auto i = 0u; i < pwb->sheets.count; i++) {
+                if (!pwb->sheets.sheet[i].name)
+                    continue;
+                result.push_back(pwb->sheets.sheet[i].name);
+            }
+            return result;
+        };
+
         if (a.names) {
-            for (auto i = 0u; i < pwb->sheets.count; i++)
-                printf("%s\n", pwb->sheets.sheet[i].name ? pwb->sheets.sheet[i].name : "");
+            auto v = fill_sheets();
+            for (auto const & e : v)
+                printf("%s\n", e.c_str());
             return;
         }
+
         if (a.sheet.empty())
             a.sheet = pwb->sheets.sheet[0].name;
 
@@ -228,13 +240,9 @@ namespace in2csv::detail::xls {
                             result.push_back(word);
                         }
                     }
-                } else {
-                    for (auto i = 0u; i < pwb->sheets.count; i++) {
-                        if (!pwb->sheets.sheet[i].name)
-                            continue;
-                        result.push_back(pwb->sheets.sheet[i].name);
-                    }
-                }
+                } else
+                    result = fill_sheets();
+
                 return result;
             }();
 
