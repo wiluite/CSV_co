@@ -177,5 +177,42 @@ namespace {
             }
         }, variants);
     }
+
+    void print_sheets(auto const & a, auto sheet_name_fun, auto sheet_index_fun, auto fill_sheets_fun, auto print_sheet_fun) {
+        if (!a.write_sheets.empty()) {
+            std::vector<std::string> sheet_names = [&] {
+                std::vector<std::string> result;
+                if (a.write_sheets != "-") {
+                    std::istringstream stream(a.write_sheets);
+                    for (std::string word; std::getline(stream, word, ',');) {
+                        if (is_number(word))
+                            result.push_back(sheet_name_fun(word));
+                        else {
+                            sheet_index_fun(word);
+                            result.push_back(word);
+                        }
+                    }
+                } else
+                    result = fill_sheets_fun();
+
+                return result;
+            }();
+
+            std::vector<std::string> sheet_filenames (sheet_names.size());
+            int cursor = 0;
+            for (auto const & e : sheet_names) {
+                //TODO: encode filename according to activepage in Windows.
+                auto const filename = "sheets_" + (a.use_sheet_names ? e : std::to_string(cursor)) + ".csv";
+                std::ofstream ofs(filename);
+                try {
+                    print_sheet_fun(sheet_index_fun(e), ofs, a, use_date_datetime_excel::no);
+                } catch(std::exception const & ex) {
+                    std::cerr << ex.what() << std::endl;
+                }
+                cursor++;
+            }
+
+        }
+    }
 }
 
