@@ -117,9 +117,9 @@ namespace in2csv::detail::csv {
                 os << string_header.back() << '\n';
             };
 
-            is1904 = args.is1904;
-
             write_header();
+
+            is1904 = args.is1904;
 
             std::size_t line_nums = 0;
             reader.run_rows(

@@ -260,9 +260,9 @@ namespace in2csv::detail::xls {
                 if (a.write_sheets != "-") {
                     std::istringstream stream(a.write_sheets);
                     for (std::string word; std::getline(stream, word, ',');) {
-                        if (is_number(word)) {
+                        if (is_number(word))
                             result.push_back(sheet_name_by_index(word));
-                        } else {
+                        else {
                             sheet_index_by_name(word);
                             result.push_back(word);
                         }

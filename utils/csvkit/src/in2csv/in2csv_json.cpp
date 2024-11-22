@@ -8,6 +8,64 @@ using namespace ::csvkit::cli;
 
 namespace in2csv::detail::json {
 
+    void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
+        using elem_type = std::decay_t<decltype(elem)>;
+        auto & [types, blanks] = types_n_blanks;
+        bool const is_null = elem.is_null();
+        if (types[col] == column_type::text_t or (!args.blanks and is_null)) {
+            auto compose_text = [&](auto const & e) -> std::string {
+                typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
+                if (another_rep.raw_string_view().find(',') != std::string_view::npos)
+                    return another_rep;
+                else
+                    return another_rep.str();
+            };
+            os << (!args.blanks && is_null ? "" : compose_text(elem));
+            return;
+        }
+        assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
+
+        using func_type = std::function<std::string(elem_type const &, std::any const &)>;
+
+#if !defined(BOOST_UT_DISABLE_MODULE)
+        static
+#endif
+        std::array<func_type, static_cast<std::size_t>(column_type::sz)> type2func {
+                compose_bool<elem_type>
+                , [&](elem_type const & e, std::any const & info = std::any{}) {
+                    assert(!e.is_null());
+
+                    static std::ostringstream ss;
+                    ss.str({});
+
+                    typename elem_type::template rebind<csv_co::unquoted>::other const & another_rep = e;
+                    auto const value = another_rep.num();
+
+                    if (std::isnan(value))
+                        ss << "NaN";
+                    else if (std::isinf(value))
+                        ss << (value > 0 ? "Infinity" : "-Infinity");
+                    else {
+                        if (args.num_locale != "C") {
+                            std::string s = another_rep.str();
+                            another_rep.to_C_locale(s);
+                            ss << s;
+                        } else
+                            ss << another_rep.str();
+                    }
+                    return ss.str();
+                }
+                , compose_datetime<elem_type>
+                , compose_date<elem_type>
+                , [](elem_type const & e, std::any const &) {
+                    auto str = std::get<1>(e.timedelta_tuple());
+                    return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
+                }
+        };
+        auto const type_index = static_cast<std::size_t>(types[col]) - 1;
+        os << type2func[type_index](elem, std::any{});
+    }
+
     void impl::convert() {
         using namespace jsoncons;
 
@@ -41,14 +99,12 @@ namespace in2csv::detail::json {
                     is >> *ptr;
                 }
             }
-            operator ojson& () {
-                return *ptr;
-            }
-            void dump_csv(std::ostream & os) {
+            void obtain_csv(std::ostream & os) {
                 csv::csv_stream_encoder encoder(os);
                 ptr->dump(encoder);
+
             }
-            void dump_csv(std::ostream & os, std::string const & key) {
+            void obtain_csv(std::ostream & os, std::string const & key) {
                 csv::csv_stream_encoder encoder(os);
                 ojson w = ptr->at(key);
                 w.dump(encoder);
@@ -57,9 +113,65 @@ namespace in2csv::detail::json {
 
         std::ostringstream oss;
         if (a.key.empty())
-            doc.dump_csv(oss);
+            doc.obtain_csv(oss);
         else
-            doc.dump_csv(oss, a.key);
-        std::cout << oss.str() << std::endl;
+            doc.obtain_csv(oss, a.key);
+
+        a.skip_lines = 0;
+        a.no_header = false;
+        std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
+        if (!a.skip_init_space)
+            variants = notrimming_reader_type(recode_source(oss.str(), a));
+        else
+            variants = skipinitspace_reader_type(recode_source(oss.str(), a));
+
+        std::visit([&](auto & reader) {
+            if constexpr(!std::is_same_v<std::decay_t<decltype(reader)>, std::monostate>) {
+                skip_lines(reader, a);
+
+                auto types_and_blanks = std::get<1>(typify(reader, a, typify_option::typify_without_precisions));
+
+                skip_lines(reader, a);
+                auto const header = obtain_header_and_<skip_header>(reader, a);
+
+                std::vector<std::string> string_header(header.size());
+                std::transform(header.cbegin(), header.cend(), string_header.begin(), [&](auto & elem) {
+                    return optional_quote(elem);
+                });
+
+                std::ostream & os = std::cout;
+ 
+                auto write_header = [&]() {
+                    if (a.linenumbers)
+                        os << "line_number,";
+
+                    std::for_each(string_header.begin(), string_header.end() - 1, [&](auto const & elem) {
+                        os << elem << ',';
+                    });
+                    os << string_header.back() << '\n';
+                };
+
+                write_header();
+
+                std::size_t line_nums = 0;
+                reader.run_rows(
+                    [&](auto rowspan) {
+                        if (a.linenumbers)
+                            os << ++line_nums << ',';
+
+                        auto col = 0u;
+                        using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
+                        std::for_each(rowspan.begin(), rowspan.end() - 1, [&](auto const & e) {
+                            print_func(elem_type{e}, col++, types_and_blanks, a, os);
+                            os << ',';
+                        });
+                        print_func(elem_type{rowspan.back()}, col, types_and_blanks, a, os);
+                        os << '\n';
+                    }
+                );
+
+            }
+        }, variants);
+
     }
 }
