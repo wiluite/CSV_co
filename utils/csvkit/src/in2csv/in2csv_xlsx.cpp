@@ -106,26 +106,26 @@ namespace in2csv::detail::xlsx {
         }
 
         // note: all indices in OpenXLSX is 1-based, this function is for --write-sheets option
-        auto sheet_name_by_zero_based_index = [&doc](std::string const & index) { 
+        auto sheet_name_by_index = [&doc](std::string const & index) {
             unsigned idx = std::atoi(index.c_str()); 
             return static_cast<XLDocument&>(doc).workbook().worksheet(idx + 1).name();
         };
 
         if (a.sheet.empty())
-            a.sheet = sheet_name_by_zero_based_index("0"); // "ʤ"
+            a.sheet = sheet_name_by_index("0"); // "ʤ"
 
-        auto zero_based_sheet_index_by_name = [&doc](std::string const & name) {
+        auto sheet_index_by_name = [&doc](std::string const & name) {
             return static_cast<XLDocument&>(doc).workbook().indexOfSheet(name) - 1;
         };
 
-        auto sheet_index = zero_based_sheet_index_by_name(a.sheet);
+        auto sheet_index = sheet_index_by_name(a.sheet);
 
         is1904 = a.is1904;
 
         auto print_sheet = [&](int sheet_idx, std::ostream & os, impl_args arguments, use_date_datetime_excel use_d_dt) {
             auto args (std::move(arguments));
 
-            auto wks = static_cast<XLDocument&>(doc).workbook().worksheet(sheet_name_by_zero_based_index(std::to_string(sheet_idx)));
+            auto wks = static_cast<XLDocument&>(doc).workbook().worksheet(sheet_name_by_index(std::to_string(sheet_idx)));
 
             header.clear();
             header_cell_index = 0;
@@ -195,45 +195,7 @@ namespace in2csv::detail::xlsx {
                 j++;
             }
 
-            args.skip_lines = 0;
-            args.no_header = false;
-            std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
-            if (!args.skip_init_space)
-                variants = notrimming_reader_type(oss.str());
-            else
-                variants = skipinitspace_reader_type(oss.str());
-
-            std::visit([&](auto & arg) {
-                if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
-                    auto types_and_blanks = std::get<1>(typify(arg, args, typify_option::typify_without_precisions));
-                    std::size_t line_nums = 0;
-                    arg.run_rows(
-                            [&](auto) {
-                                if (args.linenumbers)
-                                    os << "line_number,";
-
-                                std::for_each(header.begin(), header.end() - 1, [&](auto const & elem) {
-                                    os << elem << ',';
-                                });
-
-                                os << header.back() << '\n';
-                            }
-                            ,[&](auto rowspan) {
-                                if (args.linenumbers)
-                                    os << ++line_nums << ',';
-
-                                auto col = 0u;
-                                using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
-                                std::for_each(rowspan.begin(), rowspan.end()-1, [&](auto const & e) {
-                                    print_func(elem_type{e}, col++, types_and_blanks, args, os);
-                                    os << ',';
-                                });
-                                print_func(elem_type{rowspan.back()}, col, types_and_blanks, args, os);
-                                os << '\n';
-                            }
-                    );
-                }
-            }, variants);
+            transform_csv(args, oss, os);
         };
 
         print_sheet(sheet_index, std::cout, a, use_date_datetime_excel::yes);
@@ -245,9 +207,9 @@ namespace in2csv::detail::xlsx {
                     std::istringstream stream(a.write_sheets);
                     for (std::string word; std::getline(stream, word, ',');) {
                         if (is_number(word))
-                            result.push_back(sheet_name_by_zero_based_index(word));
+                            result.push_back(sheet_name_by_index(word));
                         else {
-                            zero_based_sheet_index_by_name(word);
+                            sheet_index_by_name(word);
                             result.push_back(word);
                         }
                     }
@@ -268,7 +230,7 @@ namespace in2csv::detail::xlsx {
                 auto const filename = "sheets_" + (a.use_sheet_names ? e : std::to_string(cursor)) + ".csv";
                 std::ofstream ofs(filename);
                 try {
-                    print_sheet(zero_based_sheet_index_by_name(e), ofs, a, use_date_datetime_excel::no);
+                    print_sheet(sheet_index_by_name(e), ofs, a, use_date_datetime_excel::no);
                 } catch(std::exception const & ex) {
                     std::cerr << ex.what() << std::endl;
                 }

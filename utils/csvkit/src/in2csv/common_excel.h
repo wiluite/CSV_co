@@ -134,5 +134,48 @@ namespace {
         os << type2func[type_index](elem, std::any{});
     }
 
+    void transform_csv(auto & args, std::ostringstream & from, std::ostream & to) {
+        using namespace csvkit::cli;
+        args.skip_lines = 0;
+        args.no_header = false;
+        std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
+
+        if (!args.skip_init_space)
+            variants = notrimming_reader_type(from.str());
+        else
+            variants = skipinitspace_reader_type(from.str());
+
+        std::visit([&](auto & arg) {
+            if constexpr(!std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
+                auto types_and_blanks = std::get<1>(typify(arg, args, typify_option::typify_without_precisions));
+                std::size_t line_nums = 0;
+                arg.run_rows(
+                        [&](auto) {
+                            if (args.linenumbers)
+                                to << "line_number,";
+
+                            std::for_each(header.begin(), header.end() - 1, [&](auto const & elem) {
+                                to << elem << ',';
+                            });
+
+                            to << header.back() << '\n';
+                        }
+                        ,[&](auto rowspan) {
+                            if (args.linenumbers)
+                                to << ++line_nums << ',';
+
+                            auto col = 0u;
+                            using elem_type = typename std::decay_t<decltype(rowspan.back())>::reader_type::template typed_span<csv_co::unquoted>;
+                            std::for_each(rowspan.begin(), rowspan.end()-1, [&](auto const & e) {
+                                print_func(elem_type{e}, col++, types_and_blanks, args, to);
+                                to << ',';
+                            });
+                            print_func(elem_type{rowspan.back()}, col, types_and_blanks, args, to);
+                            to << '\n';
+                        }
+                );
+            }
+        }, variants);
+    }
 }
 
