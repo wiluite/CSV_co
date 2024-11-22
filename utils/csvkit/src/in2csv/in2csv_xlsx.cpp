@@ -94,14 +94,20 @@ namespace in2csv::detail::xlsx {
             }
         } doc(a);
 
-        auto print_sheets = [](const XLDocument& d) {
-            auto const & wb = d.workbook(); 
-            for (const auto& name : wb.worksheetNames())
-                std::cout << name << std::endl;
+        auto fill_sheets = [&] {
+            std::vector<std::string> result;
+            for (auto & name : static_cast<XLDocument&>(doc).workbook().sheetNames()) {
+                if (name.empty())
+                    continue;
+                result.push_back(name);
+            }
+            return result;
         };
 
         if (a.names) {
-            print_sheets(doc);
+            auto v = fill_sheets();
+            for (auto const & e : v)
+                std::cout << e << '\n';
             return;
         }
 
@@ -213,13 +219,9 @@ namespace in2csv::detail::xlsx {
                             result.push_back(word);
                         }
                     }
-                } else {
-                    for (auto & name : static_cast<XLDocument&>(doc).workbook().sheetNames()) {
-                        if (name.empty())
-                            continue;
-                        result.push_back(name);
-                    }
-                }
+                } else
+                    result = fill_sheets();
+
                 return result;
             }();
 
