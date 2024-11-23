@@ -9,6 +9,7 @@
 #include "include/in2csv/in2csv_csv.h"
 #include "include/in2csv/in2csv_xlsx.h"
 #include "include/in2csv/in2csv_json.h"
+#include "include/in2csv/in2csv_ndjson.h"
 
 using namespace ::csvkit::cli;
 
@@ -85,19 +86,6 @@ namespace in2csv::detail {
         }
         return {};
     }
-
-    template <class Args2>
-    struct ndjson_client : converter_client {
-        explicit ndjson_client(Args2 & args) : args(args) {
-        }
-        void convert() override {
-        }
-        static std::shared_ptr<converter_client> create(Args2 & args) {
-            return std::make_shared<ndjson_client>(args);
-        }
-    private:
-        Args2 & args;
-    };
 
     template <class Args2>
     class dbms_client_factory

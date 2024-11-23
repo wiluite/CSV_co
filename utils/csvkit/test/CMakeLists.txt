@@ -625,7 +625,8 @@ if (IO_CSVKIT_UTILS)
   endif()
 
 add_executable(in2csv_test in2csv_test.cpp ../src/in2csv/in2csv_fixed.cpp ../src/in2csv/in2csv_dbf.cpp ../src/in2csv/in2csv_xls.cpp
-        ../src/in2csv/in2csv_geojson.cpp ../src/in2csv/in2csv_csv.cpp ../src/in2csv/in2csv_xlsx.cpp ../src/in2csv/in2csv_json.cpp)
+        ../src/in2csv/in2csv_geojson.cpp ../src/in2csv/in2csv_csv.cpp ../src/in2csv/in2csv_xlsx.cpp ../src/in2csv/in2csv_json.cpp
+        ../src/in2csv/in2csv_ndjson.cpp)
 
 add_custom_command(
         TARGET in2csv_test POST_BUILD
