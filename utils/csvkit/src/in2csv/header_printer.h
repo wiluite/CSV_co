@@ -11,12 +11,6 @@ namespace {
     }
     
     void print_head(auto const & args, auto const & header, std::ostream & os) {
-#if 0
-        std::vector<std::string> string_header(header.size());
-        std::transform(header.cbegin(), header.cend(), string_header.begin(), [&](auto & elem) {
-            return csvkit::cli::optional_quote(elem);
-        });
-#endif
         auto s_hdr = string_header(header);  
         auto write_header = [&s_hdr, &args, &os] {
             if (args.linenumbers)

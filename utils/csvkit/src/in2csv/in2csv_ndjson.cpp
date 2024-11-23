@@ -3,6 +3,7 @@
 #include <iostream>
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/csv/csv.hpp>
+#include "header_printer.h"
 
 using namespace ::csvkit::cli;
 
@@ -10,6 +11,7 @@ namespace in2csv::detail::ndjson {
 
     void impl::convert() {
         using namespace jsoncons;
+
         class holder {
             json_decoder<ojson> decoder_;
             std::shared_ptr<json_stream_reader> reader_ptr;
@@ -47,19 +49,58 @@ namespace in2csv::detail::ndjson {
             }
         } doc(a);
 
+        std::vector<std::string> result_header;
+        auto update_result_header = [&result_header](auto const & new_header) {
+            for (auto & e : new_header)
+                if (std::find(result_header.cbegin(), result_header.cend(), e) == result_header.cend())
+                    result_header.push_back(e);
+        };
+
         while (!doc.reader().eof())
         {
             doc.reader().read_next();
 
             if (!doc.reader().eof())
             {
-                ojson j = doc.decoder().get_result();
+                ojson _ = doc.decoder().get_result();
                 std::ostringstream oss;
-                oss << '[' << print(j) << ']';
-                ojson jj = ojson::parse(oss.str());
-                csv::csv_stream_encoder encoder(std::cout);
-                jj.dump(encoder);
+                oss << '[' << print(_) << ']';
+                ojson next_csv = ojson::parse(oss.str());
+                oss.str({});
+                csv::csv_stream_encoder encoder(oss);
+                next_csv.dump(encoder);
+
+                a.skip_lines = 0;
+                a.no_header = false;
+                std::variant<std::monostate, notrimming_reader_type, skipinitspace_reader_type> variants;
+                if (!a.skip_init_space)
+                    variants = notrimming_reader_type(recode_source(oss.str(), a));
+                else
+                    variants = skipinitspace_reader_type(recode_source(oss.str(), a));
+
+                std::visit([&](auto & reader) {
+                    if constexpr(!std::is_same_v<std::decay_t<decltype(reader)>, std::monostate>) {
+                        // no skip_lines() needed
+                        auto types_and_blanks = std::get<1>(typify(reader, a, typify_option::typify_without_precisions));
+                        // no skip_lines() needed again
+                        auto header = string_header(obtain_header_and_<skip_header>(reader, a));
+                        update_result_header(header);
+#if 0
+                        reader.run_rows([&](auto span) {
+                            auto col = 0u;
+                            using elem_type = typename std::decay_t<decltype(span.back())>::reader_type::template typed_span<csv_co::unquoted>;
+                            for (auto & e : span) {
+                                fill_func(elem_type{e}, header[col++], types_and_blanks, a)
+                            }
+                        });
+#endif
+                    }
+                }, variants);
             }
+        }
+
+        for (auto & e : result_header) {
+            std::cout << e << ' ';
         }
     }
 }
