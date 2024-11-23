@@ -128,11 +128,8 @@ namespace in2csv::detail::json {
 
         std::visit([&](auto & reader) {
             if constexpr(!std::is_same_v<std::decay_t<decltype(reader)>, std::monostate>) {
-                skip_lines(reader, a);
-
                 auto types_and_blanks = std::get<1>(typify(reader, a, typify_option::typify_without_precisions));
 
-                skip_lines(reader, a);
                 auto const header = obtain_header_and_<skip_header>(reader, a);
                 std::ostream & os = std::cout;
                 print_head(a, header, os);
