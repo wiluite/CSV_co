@@ -3,6 +3,7 @@
 #include <iostream>
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/csv/csv.hpp>
+#include "header_printer.h"
 
 using namespace ::csvkit::cli;
 
@@ -133,25 +134,8 @@ namespace in2csv::detail::json {
 
                 skip_lines(reader, a);
                 auto const header = obtain_header_and_<skip_header>(reader, a);
-
-                std::vector<std::string> string_header(header.size());
-                std::transform(header.cbegin(), header.cend(), string_header.begin(), [&](auto & elem) {
-                    return optional_quote(elem);
-                });
-
                 std::ostream & os = std::cout;
- 
-                auto write_header = [&]() {
-                    if (a.linenumbers)
-                        os << "line_number,";
-
-                    std::for_each(string_header.begin(), string_header.end() - 1, [&](auto const & elem) {
-                        os << elem << ',';
-                    });
-                    os << string_header.back() << '\n';
-                };
-
-                write_header();
+                print_head(a, header, os);
 
                 std::size_t line_nums = 0;
                 reader.run_rows(

@@ -3,6 +3,7 @@
 #include <iostream>
 #include "common_datetime_excel.h"
 #include "common_time_point.h"
+#include "header_printer.h"
 
 using namespace ::csvkit::cli;
 
@@ -97,27 +98,9 @@ namespace in2csv::detail::csv {
 
             skip_lines(reader, args);
             auto const header = obtain_header_and_<skip_header>(reader, args);
-
-            std::vector<std::string> string_header(header.size());
-            std::transform(header.cbegin(), header.cend(), string_header.begin(), [&](auto & elem) {
-                return optional_quote(elem);
-            });
-
             get_date_and_datetime_columns(args, header, use_date_datetime_excel::yes);
-
             std::ostream & os = std::cout;
-
-            auto write_header = [&string_header, &args] {
-                if (args.linenumbers)
-                    os << "line_number,";
-
-                std::for_each(string_header.begin(), string_header.end() - 1, [&](auto const & elem) {
-                    os << elem << ',';
-                });
-                os << string_header.back() << '\n';
-            };
-
-            write_header();
+            print_head(args, header, os);
 
             is1904 = args.is1904;
 
