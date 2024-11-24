@@ -93,14 +93,14 @@ namespace {
         }
         assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
 
-        using func_type = std::function<std::string(elem_type const &, std::any const &)>;
+        using func_type = std::function<std::string(elem_type const &)>;
 
 #if !defined(BOOST_UT_DISABLE_MODULE)
         static
 #endif
         std::array<func_type, static_cast<std::size_t>(column_type::sz)> type2func {
                 compose_bool<elem_type>
-                , [&](elem_type const & e, std::any const & info) {
+                , [&](elem_type const & e) {
                     assert(!e.is_null());
 
                     static std::ostringstream ss;
@@ -125,13 +125,13 @@ namespace {
                 }
                 , compose_datetime<elem_type>
                 , compose_date<elem_type>
-                , [](elem_type const & e, std::any const &) {
+                , [](elem_type const & e) {
                     auto str = std::get<1>(e.timedelta_tuple());
                     return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
                 }
         };
         auto const type_index = static_cast<std::size_t>(types[col]) - 1;
-        os << type2func[type_index](elem, std::any{});
+        os << type2func[type_index](elem);
     }
 
     void transform_csv(auto & args, std::ostringstream & from, std::ostream & to) {

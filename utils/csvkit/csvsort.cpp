@@ -108,11 +108,11 @@ namespace csvsort {
                     return;
                 }
 
-                using func_type = std::function<std::string(UElemType const &, std::any const&)>;
+                using func_type = std::function<std::string(UElemType const &)>;
 
                 static std::array<func_type, static_cast<std::size_t>(column_type::sz) - 1> type2func {
                         compose_bool<UElemType>
-                        , [&args](UElemType const & e, std::any const & info) {
+                        , [&args](UElemType const & e) {
 
                             static std::ostringstream ss;
                             ss.str({});
@@ -140,14 +140,14 @@ namespace csvsort {
                         }
                         , compose_datetime<UElemType>
                         , compose_date<UElemType>
-                        , [](UElemType const & e, std::any const &) {
+                        , [](UElemType const & e) {
                             auto const str = std::get<1>(e.timedelta_tuple());
                             return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
                         }
                 };
 
                 auto const type_index = static_cast<std::size_t>(types[col]) - 1;
-                print_func_impl(type2func[type_index](unquoted_elem, std::any{}));
+                print_func_impl(type2func[type_index](unquoted_elem));
             };
 
             if (args.linenumbers) {

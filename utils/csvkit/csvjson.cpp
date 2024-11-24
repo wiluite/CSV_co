@@ -144,21 +144,21 @@ namespace csvjson {
 
         }
 
-        using output_func_type = std::function<std::string(elem_type const &, std::any const&)>;
+        using output_func_type = std::function<std::string(elem_type const &)>;
         struct json_rep {};
         static std::array<output_func_type, static_cast<std::size_t>(column_type::sz) - 1> type2output_func {
                 compose_bool<elem_type,json_rep>
-                , [&](auto const & elem, std::any const&) {
+                , [&](auto const & elem) {
                     assert(!elem.is_null());
                     return carefully_adjusted_number<1u>(elem);
                 }
                 , compose_datetime<elem_type,json_rep>
                 , compose_date<elem_type,json_rep>
-                , [&](auto const & elem, std::any const&) {
+                , [&](auto const & elem) {
                     typename elem_type::template rebind<unquoted>::other const & another_rep = elem;
                     return "\"" + std::get<1>(another_rep.timedelta_tuple()) +'"';
                 }
-                , [&](auto const & elem, std::any const&) {
+                , [&](auto const & elem) {
                     std::stringstream ss;
                     ss << std::quoted(compose_text(elem));
                     return ss.str();
@@ -183,7 +183,7 @@ namespace csvjson {
                     return !args.blanks && is_null ? (!args.no_inference ? print_func_impl(std::string("null")) : print_func_impl(std::string(""), true)) : print_func_impl(elem.str(), true);
 
                 assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
-                return print_func_impl(f(elem, std::any{}));
+                return print_func_impl(f(elem));
             }
             private:
                 args_type const & args;
