@@ -11,8 +11,15 @@ namespace in2csv::detail::ndjson {
     using column_name_type = std::string;
     using column_values_type = std::vector<std::string>;
     std::unordered_map<column_name_type, column_values_type> csv_map;
+    std::size_t total_rows = 0;
 
     void fill_func (auto && elem, auto const & header, unsigned col, auto && types_n_blanks, auto const & args) {
+
+        auto align_columns = [&] {
+            while(csv_map[header[col]].size() < total_rows)
+                csv_map[header[col]].push_back("");
+        };
+
         using elem_type = std::decay_t<decltype(elem)>;
         auto & [types, blanks] = types_n_blanks;
         bool const is_null = elem.is_null();
@@ -24,8 +31,8 @@ namespace in2csv::detail::ndjson {
                 else
                     return another_rep.str();
             };
+            align_columns();
             csv_map[header[col]].push_back(!args.blanks && is_null ? "" : compose_text(elem));
-            //os << (!args.blanks && is_null ? "" : compose_text(elem));
             return;
         }
         assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
@@ -67,9 +74,8 @@ namespace in2csv::detail::ndjson {
                     return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
                 }
         };
-        auto const type_index = static_cast<std::size_t>(types[col]) - 1;
-        //os << type2func[type_index](elem);
-        csv_map[header[col]].push_back(type2func[type_index](elem));
+        align_columns();
+        csv_map[header[col]].push_back(type2func[static_cast<unsigned>(types[col]) - 1](elem));
     }
 
     void impl::convert() {
@@ -119,8 +125,6 @@ namespace in2csv::detail::ndjson {
                     result_header.push_back(e);
         };
 
-        std::size_t total_rows = 0;
-
         while (!doc.reader().eof())
         {
             doc.reader().read_next();
@@ -150,7 +154,7 @@ namespace in2csv::detail::ndjson {
                         // no skip_lines() needed again
                         auto header = string_header(obtain_header_and_<skip_header>(reader, a));
                         update_result_header(header);
-#if 1
+
                         reader.run_rows([&](auto span) {
                             unsigned col = 0;
                             using elem_type = typename std::decay_t<decltype(span.back())>::reader_type::template typed_span<csv_co::unquoted>;
@@ -158,15 +162,24 @@ namespace in2csv::detail::ndjson {
                                 fill_func(elem_type{e}, header, col++, types_and_blanks, a);
                             
                             total_rows++;
+                            for (auto & e : result_header)
+                                if (csv_map[e].size() != total_rows)
+                                    csv_map[e].push_back("");
+
                         });
-#endif
                     }
                 }, variants);
             }
         }
 
-        for (auto & e : result_header) {
-            std::cout << e << ' ';
+        std::cout << result_header.front();
+        std::for_each(std::cbegin(result_header) + 1, std::cend(result_header), [](auto & e) { std::cout << ',' << e; });
+        std::cout << '\n';
+
+        for (auto i = 0u; i < total_rows; i++) {
+            std::cout << csv_map[result_header.front()][i];
+            std::for_each(std::cbegin(result_header) + 1, std::cend(result_header), [&](auto & e) { std::cout << ',' << csv_map[e][i]; });
+            std::cout << '\n';
         }
     }
 }
