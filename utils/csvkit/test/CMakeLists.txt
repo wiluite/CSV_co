@@ -643,6 +643,17 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/foo2.csv
         ${CMAKE_CURRENT_BINARY_DIR}/foo2.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_locale.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_locale.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_locale_converted.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_locale_converted.csv)
+
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
 target_include_directories(in2csv_test

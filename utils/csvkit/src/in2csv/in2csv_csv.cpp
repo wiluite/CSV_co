@@ -126,7 +126,32 @@ namespace in2csv::detail::csv {
     void impl::convert() {
         try {
             impl_args args = a; // basic_reader_configurator_and_runner macro's requirement
-            basic_reader_configurator_and_runner(read_standard_input, detail::convert_impl)
+
+            if (args.file.empty())
+                args.file = "_";
+
+            if (!args.skip_init_space) {
+                if (!(args.file == "_")) {
+                    notrimming_reader_type r(std::filesystem::path{args.file});
+                    recode_source(r, args);
+                    detail::convert_impl(r, args);
+                } else {
+                    notrimming_reader_type r(read_standard_input(args));
+                    recode_source(r, args);
+                    detail::convert_impl(r, args);
+                }
+            } else {
+                if (!(args.file == "_")) {
+                    skipinitspace_reader_type r(std::filesystem::path{args.file});
+                    recode_source(r, args);
+                    detail::convert_impl(r, args);
+                } else {
+                    skipinitspace_reader_type r(read_standard_input(args));
+                    recode_source(r, args);
+                    detail::convert_impl(r, args);
+                }
+            }
+
         }  catch (ColumnIdentifierError const& e) {
             std::cout << e.what() << '\n';
         }

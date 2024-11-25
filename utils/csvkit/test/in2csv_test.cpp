@@ -84,4 +84,19 @@ int main() {
 
     };
 
+    auto assert_converted = [](std::string const & source, std::string const & pattern_filename) {
+        std::ifstream ifs(pattern_filename);
+        std::string result {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
+        expect(result == source);
+    };
+
+    "exceptions"_test = [&] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+            Args() { file = "test_locale.csv"; num_locale = "de_DE"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            assert_converted(cout_buffer.str(), "test_locale_converted.csv");
+        }));
+    };
 }
