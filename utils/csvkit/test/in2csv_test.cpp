@@ -36,8 +36,8 @@ int main() {
         std::string write_sheets;
         bool use_sheet_names = false;
         std::string encoding_xls = "UTF-8";
-        std::string d_excel;
-        std::string dt_excel;
+        std::string d_excel = "none";
+        std::string dt_excel = "none";
         bool is1904;
     };
 
@@ -90,13 +90,49 @@ int main() {
         expect(result == source);
     };
 
-    "exceptions"_test = [&] {
+    bool locale_support = detect_locale_support();
+    if (locale_support) {
+        "locale"_test = [&] {
+            struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+                Args() { file = "test_locale.csv"; num_locale = "de_DE"; }
+            } args;
+            expect(nothrow([&] {
+                CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+                assert_converted(cout_buffer.str(), "test_locale_converted.csv");
+            }));
+        };
+    }
+
+    "no blanks"_test = [&] {
         struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
-            Args() { file = "test_locale.csv"; num_locale = "de_DE"; }
+            Args() { file = "blanks.csv"; }
         } args;
         expect(nothrow([&] {
             CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
-            assert_converted(cout_buffer.str(), "test_locale_converted.csv");
+            assert_converted(cout_buffer.str(), "blanks_converted.csv");
         }));
     };
+
+    "blanks"_test = [&] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+            Args() { file = "blanks.csv"; blanks = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            assert_converted(cout_buffer.str(), "blanks.csv");
+        }));
+    };
+
+    "null value"_test = [&] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+            Args() { file = "_"; format = "csv"; null_value = {"\\N"}; }
+        } args;
+
+        std::istringstream iss("a,b\nn/a,\\N");
+        stdin_subst new_cin(iss);
+
+        CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+        expect(cout_buffer.str() == "a,b\n,\n");
+    };
+
 }

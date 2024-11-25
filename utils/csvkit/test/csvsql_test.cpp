@@ -316,7 +316,6 @@ int main() {
             Args() = default; // NOTE: now we do not use '_' placeholder to help. We read a csv file and pipe it with us.
         } args;
 
-        std::istringstream iss(" ");
         stdin_redir sr("piped_stdin");
 
         CALL_TEST_AND_REDIRECT_TO_COUT(
