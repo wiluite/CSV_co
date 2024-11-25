@@ -32,7 +32,11 @@ set(IGNORE_ME ${CMAKE_C_COMPILER}) # Suppress CMake warning message
 #=======================================================================================================================
 option(OPENXLSX_COMPACT_MODE "Build library in compact mode (slower, but uses less memory)" OFF)
 set(OPENXLSX_LIBRARY_TYPE "STATIC" CACHE STRING "Set the library type to SHARED or STATIC")
-
+if (MSVC)
+    add_definitions(/wd4456)
+    add_definitions(/wd4242)
+    add_definitions(/wd4702)
+endif()
 #=======================================================================================================================
 # EXTERNAL LIBRARIES
 #   Define external libraries used by OpenXLSX. The libraries (Zippy, PugiXML, and NoWide) are header-only, so

@@ -267,8 +267,8 @@ XLWorksheet::XLWorksheet(XLXmlData* xmlData) : XLSheetBase(xmlData)
             uint16_t min {};
             uint16_t max {};
             try {
-                min = std::stoi(currentNode.attribute("min").value());
-                max = std::stoi(currentNode.attribute("max").value());
+                min = static_cast<uint16_t>(std::stoi(currentNode.attribute("min").value()));
+                max = static_cast<uint16_t>(std::stoi(currentNode.attribute("max").value()));
             }
             catch (...) {
                 throw XLInternalError("Worksheet column min and/or max attributes are invalid.");
@@ -500,8 +500,8 @@ XLColumn XLWorksheet::column(uint16_t columnNumber) const
     uint16_t minColumn {};
     uint16_t maxColumn {};
     if (not columnNode.empty()) {
-        minColumn = columnNode.attribute("min").as_int();    // only look it up once for multiple access
-        maxColumn = columnNode.attribute("max").as_int();    //   "
+        minColumn = static_cast<uint16_t>(columnNode.attribute("min").as_int());    // only look it up once for multiple access
+        maxColumn = static_cast<uint16_t>(columnNode.attribute("max").as_int());    //   "
     }
 
     // ===== If the node exists for the column, and only spans that column, then continue...

@@ -1177,16 +1177,16 @@ namespace csvkit::cli {
     };
 
     template <typename T, typename Q=void>
-    std::string compose_bool(T const & elem, ... /*std::any const &*/) {
+    std::string compose_bool(T const & elem, std::any const &) {
         assert(!elem.is_null());
         static bool_stringstream<Q> ss;
         ss.rdbuf()->str("");
         ss << std::boolalpha << (elem.is_boolean(), elem.unsafe_bool());
         return ss.str();
     }
-    
+
     template <typename T, typename Q=void>             
-    std::string compose_datetime(T const & elem, ... /*std::any const &*/) {
+    std::string compose_datetime(T const & elem, std::any const &) {
         assert(!elem.is_null());
         if constexpr(std::is_same_v<Q,void>)
             return datetime_s(elem);
@@ -1195,7 +1195,34 @@ namespace csvkit::cli {
     }
 
     template <typename T, typename Q=void>
-    std::string compose_date(T const & elem, ... /*std::any const &*/) {
+    std::string compose_date(T const & elem, std::any const &) {
+        assert(!elem.is_null());
+        if constexpr(std::is_same_v<Q,void>)
+            return date_s(elem);
+        else
+            return std::string("\"") + date_s(elem) + '"';
+    }
+
+    template <typename T, typename Q=void>
+    std::string compose_bool2(T const & elem) {
+        assert(!elem.is_null());
+        static bool_stringstream<Q> ss;
+        ss.rdbuf()->str("");
+        ss << std::boolalpha << (elem.is_boolean(), elem.unsafe_bool());
+        return ss.str();
+    }
+
+    template <typename T, typename Q=void>
+    std::string compose_datetime2(T const & elem) {
+        assert(!elem.is_null());
+        if constexpr(std::is_same_v<Q,void>)
+            return datetime_s(elem);
+        else
+            return std::string("\"") + datetime_s_json(elem) + '"';
+    }
+
+    template <typename T, typename Q=void>
+    std::string compose_date2(T const & elem) {
         assert(!elem.is_null());
         if constexpr(std::is_same_v<Q,void>)
             return date_s(elem);

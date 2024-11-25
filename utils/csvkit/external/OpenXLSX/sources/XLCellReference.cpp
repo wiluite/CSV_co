@@ -341,7 +341,7 @@ uint16_t XLCellReference::columnAsNumber(const std::string& column)
 
     // ===== If the full string was decoded and colNo is within allowed range [1;MAX_COLS]
     if(letterCount == column.length() && colNo > 0 && colNo <= MAX_COLS)
-        return colNo;
+        return static_cast<uint16_t>(colNo);
     throw XLInputError("XLCellReference::columnAsNumber - column \"" + column + "\" is invalid");
 
     /* 2024-06-19 OBSOLETE CODE:
@@ -382,7 +382,7 @@ XLCoordinates XLCellReference::coordinatesFromAddress(const std::string& address
         for (; pos < address.length() && std::isdigit(address[pos]); ++pos) // check digits
             rowNo = rowNo * 10 + (address[pos] - '0');
         if (pos == address.length() && rowNo <= MAX_ROWS)    // full address was < 4 letters + only digits
-            return std::make_pair(rowNo, colNo);
+            return std::make_pair(static_cast<uint32_t>(rowNo), static_cast<uint16_t>(colNo));
     }
     throw XLInputError("XLCellReference::coordinatesFromAddress - address \"" + address + "\" is invalid");
 

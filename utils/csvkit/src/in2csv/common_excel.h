@@ -5,11 +5,15 @@ namespace {
         return std::all_of(name.begin(), name.end(), [](auto c) {return std::isdigit(c);});
     };
 
-    std::vector<std::string> header;
+    std::vector<std::string> & get_header() {
+        static std::vector<std::string> header;
+        return header;
+    }
+
     unsigned header_cell_index = 0;
     std::vector<unsigned> can_be_number;
 
-    static void OutputHeaderNumber(std::ostringstream & oss, const double number, unsigned) {
+    void OutputHeaderNumber(std::ostringstream & oss, const double number, unsigned) {
         // now we have native header, and so "1" does not influence on the nature of this column
         can_be_number.push_back(1);
 
@@ -17,8 +21,8 @@ namespace {
         csvkit::cli::tune_format(header_cell, "%.16g");
 
         header_cell << number;
-        header.push_back(header_cell.str());
-        oss << header.back();
+        get_header().push_back(header_cell.str());
+        oss << get_header().back();
         ++header_cell_index;
     }
 
@@ -30,9 +34,9 @@ namespace {
         return can_be_number[column] and std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
     }
 
-    inline static void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
+    inline void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
         // now we have first line of the body, and so "1" really influence on the nature of this column
-        if (can_be_number.size() < header.size())
+        if (can_be_number.size() < get_header().size())
             can_be_number.push_back(1);
 
         if (number == 1.0) {
@@ -67,11 +71,11 @@ namespace {
 
     void generate_and_print_header(std::ostream & oss, auto const & args, unsigned column_count, use_date_datetime_excel use_d_dt) {
         if (args.no_header) {
-            header = generate_header(column_count);
-            for (auto & e : header)
-                oss << (std::addressof(e) == std::addressof(header.front()) ? e : "," + e);
+            get_header() = generate_header(column_count);
+            for (auto & e : get_header())
+                oss << (std::addressof(e) == std::addressof(get_header().front()) ? e : "," + e);
             oss << '\n';
-            get_date_and_datetime_columns(args, header, use_d_dt);
+            get_date_and_datetime_columns(args, get_header(), use_d_dt);
         }
     }
 
@@ -99,7 +103,7 @@ namespace {
         static
 #endif
         std::array<func_type, static_cast<std::size_t>(column_type::sz)> type2func {
-                compose_bool<elem_type>
+                compose_bool2<elem_type>
                 , [&](elem_type const & e) {
                     assert(!e.is_null());
 
@@ -123,8 +127,8 @@ namespace {
                     }
                     return ss.str();
                 }
-                , compose_datetime<elem_type>
-                , compose_date<elem_type>
+                , compose_datetime2<elem_type>
+                , compose_date2<elem_type>
                 , [](elem_type const & e) {
                     auto str = std::get<1>(e.timedelta_tuple());
                     return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
@@ -154,11 +158,11 @@ namespace {
                             if (args.linenumbers)
                                 to << "line_number,";
 
-                            std::for_each(header.begin(), header.end() - 1, [&](auto const & elem) {
+                            std::for_each(get_header().begin(), get_header().end() - 1, [&](auto const & elem) {
                                 to << elem << ',';
                             });
 
-                            to << header.back() << '\n';
+                            to << get_header().back() << '\n';
                         }
                         ,[&](auto rowspan) {
                             if (args.linenumbers)

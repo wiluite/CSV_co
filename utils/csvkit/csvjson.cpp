@@ -147,13 +147,13 @@ namespace csvjson {
         using output_func_type = std::function<std::string(elem_type const &)>;
         struct json_rep {};
         static std::array<output_func_type, static_cast<std::size_t>(column_type::sz) - 1> type2output_func {
-                compose_bool<elem_type,json_rep>
+                compose_bool2<elem_type,json_rep>
                 , [&](auto const & elem) {
                     assert(!elem.is_null());
                     return carefully_adjusted_number<1u>(elem);
                 }
-                , compose_datetime<elem_type,json_rep>
-                , compose_date<elem_type,json_rep>
+                , compose_datetime2<elem_type,json_rep>
+                , compose_date2<elem_type,json_rep>
                 , [&](auto const & elem) {
                     typename elem_type::template rebind<unquoted>::other const & another_rep = elem;
                     return "\"" + std::get<1>(another_rep.timedelta_tuple()) +'"';

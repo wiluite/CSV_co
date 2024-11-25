@@ -82,7 +82,7 @@ namespace in2csv::detail::csv {
                     , compose_date<elem_type>
                     , [](elem_type const & e, std::any const &) {
                         auto str = std::get<1>(e.timedelta_tuple());
-                        return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
+                        return str.find(',') != std::string::npos ? R"(\")" + str + '"' : str;
                     }
 
             };

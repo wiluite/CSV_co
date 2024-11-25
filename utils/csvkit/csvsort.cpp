@@ -111,7 +111,7 @@ namespace csvsort {
                 using func_type = std::function<std::string(UElemType const &)>;
 
                 static std::array<func_type, static_cast<std::size_t>(column_type::sz) - 1> type2func {
-                        compose_bool<UElemType>
+                        compose_bool2<UElemType>
                         , [&args](UElemType const & e) {
 
                             static std::ostringstream ss;
@@ -138,8 +138,8 @@ namespace csvsort {
                             }
                             return ss.str();
                         }
-                        , compose_datetime<UElemType>
-                        , compose_date<UElemType>
+                        , compose_datetime2<UElemType>
+                        , compose_date2<UElemType>
                         , [](UElemType const & e) {
                             auto const str = std::get<1>(e.timedelta_tuple());
                             return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;

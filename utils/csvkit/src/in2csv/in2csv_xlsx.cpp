@@ -28,17 +28,17 @@ namespace in2csv::detail::xlsx {
         }
         if (header_cell.str().empty()) {
             std::cerr << "UnnamedColumnWarning: Column " << header_cell_index << " has no name. Using " << '"' << letter_name(header_cell_index) << "\".\n"; 
-            header.push_back(letter_name(header_cell_index));
+            get_header().push_back(letter_name(header_cell_index));
         }
         else
-            header.push_back(header_cell.str());
-        oss << header.back();
+            get_header().push_back(header_cell.str());
+        oss << get_header().back();
         ++header_cell_index;
     }
 
     inline static void OutputString(std::ostringstream & oss, std::string const & str) {
         // now we have first line of the body, and so "0" really influence on the nature of this column
-        if (can_be_number.size() < header.size())
+        if (can_be_number.size() < get_header().size())
             can_be_number.push_back(0);
 
         oss << stringSeparator;
@@ -133,7 +133,7 @@ namespace in2csv::detail::xlsx {
 
             auto wks = static_cast<XLDocument&>(doc).workbook().worksheet(sheet_name_by_index(std::to_string(sheet_idx)));
 
-            header.clear();
+            get_header().clear();
             header_cell_index = 0;
             can_be_number.clear();
             dates_ids.clear();
@@ -160,7 +160,7 @@ namespace in2csv::detail::xlsx {
                     oss << '\n';
 
                 if (j == args.skip_lines + 1 and !args.no_header) // now we have really the native header
-                    get_date_and_datetime_columns(args, header, use_d_dt);
+                    get_date_and_datetime_columns(args, get_header(), use_d_dt);
 
                 static void (*output_string_func)(std::ostringstream &, std::string const &) = OutputString;
                 static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;

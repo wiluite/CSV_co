@@ -1827,7 +1827,7 @@ XLAlignmentStyle XLAlignment::vertical() const { return XLAlignmentStyleFromStri
 /**
  * @details Returns the text rotation
  */
-uint16_t XLAlignment::textRotation() const { return m_alignmentNode->attribute("textRotation").as_uint(); }
+uint16_t XLAlignment::textRotation() const { return static_cast<uint16_t>(m_alignmentNode->attribute("textRotation").as_uint()); }
 
 /**
  * @details check if text wrapping is enabled
