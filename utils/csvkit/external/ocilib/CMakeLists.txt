@@ -7,7 +7,7 @@ if (MSVC)
     add_definitions(/wd4273)
 else()
     remove_definitions(-Wno-old-style-cast -fcoroutines -Wno-reorder)
-    add_definitions(-Wno-error -Wno-cast-function-type -Wno-attributes )
+    add_definitions(-Wno-error -Wno-cast-function-type -Wno-attributes)
 endif()
 
 add_library(ociliba SHARED src/agent.c
