@@ -103,7 +103,7 @@ namespace {
         static
 #endif
         std::array<func_type, static_cast<std::size_t>(column_type::sz)> type2func {
-                compose_bool2<elem_type>
+                compose_bool_1_arg<elem_type>
                 , [&](elem_type const & e) {
                     assert(!e.is_null());
 
@@ -127,8 +127,8 @@ namespace {
                     }
                     return ss.str();
                 }
-                , compose_datetime2<elem_type>
-                , compose_date2<elem_type>
+                , compose_datetime_1_arg<elem_type>
+                , compose_date_1_arg<elem_type>
                 , [](elem_type const & e) {
                     auto str = std::get<1>(e.timedelta_tuple());
                     return str.find(',') != std::string::npos ? R"(")" + str + '"' : str;
