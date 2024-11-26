@@ -160,4 +160,34 @@ int main() {
         }));
     };
 
+    "date format default"_test = [&] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+            Args() { file = "test_date_format.csv";}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            assert_converted(cout_buffer.str(), "test_date_format.csv");
+        }));
+    };
+
+    "numeric date format default"_test = [&] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+            Args() { file = "test_numeric_date_format.csv";}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            assert_converted(cout_buffer.str(), "test_numeric_date_format.csv");
+        }));
+    };
+
+    "date like number"_test = [&] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+            Args() { file = "date_like_number.csv";}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            assert_converted(cout_buffer.str(), "date_like_number.csv");
+        }));
+    };
+
 }

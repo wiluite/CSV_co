@@ -668,16 +668,52 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_no_leading_zeroes.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_no_leading_zeroes.csv)
-
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_date_format.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_date_format.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_numeric_date_format.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_numeric_date_format.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/date_like_number.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/date_like_number.csv)
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
 target_include_directories(in2csv_test
         PRIVATE
         ../external/jsoncons/include
 )
-
-
 add_test(in2csv_test in2csv_test)
+
+add_executable(in2csv_test_date in2csv_test_date.cpp ../src/in2csv/in2csv_csv.cpp)
+add_custom_command(
+        TARGET in2csv_test_date POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_date_format.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_date_format.csv)
+add_custom_command(
+        TARGET in2csv_test_date POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_date_format_converted.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_date_format_converted.csv)
+add_custom_command(
+        TARGET in2csv_test_date POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_numeric_date_format.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_numeric_date_format.csv)
+
+target_link_libraries(in2csv_test_date libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
+target_include_directories(in2csv_test_date
+        PRIVATE
+        ../external/jsoncons/include
+)
+add_test(in2csv_test_date in2csv_test_date)
 
 endif()
 
