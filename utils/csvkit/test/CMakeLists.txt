@@ -663,6 +663,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/blanks_converted.csv
         ${CMAKE_CURRENT_BINARY_DIR}/blanks_converted.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_no_leading_zeroes.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/test_no_leading_zeroes.csv)
 
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
