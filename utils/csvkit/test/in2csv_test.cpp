@@ -190,4 +190,14 @@ int main() {
         }));
     };
 
+    "convert csv"_test = [&] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+            Args() { file = "testfixed_converted.csv";}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            assert_converted(cout_buffer.str(), "testfixed_converted.csv");
+        }));
+    };
+
 }

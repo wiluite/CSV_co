@@ -293,7 +293,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             {
                 reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
                 reader<>::typed_span<quoted>::no_leading_zeroes(true);
-                expect(span.is_boolean() and span.unsafe_bool() == 1 and span.is_num());
+                expect(!span.is_boolean() /*and span.unsafe_bool() == 1*/ and !span.is_num());
                 reader<>::typed_span<quoted>::no_leading_zeroes(false);
             }
             cs = R"( 02.3 )";

@@ -78,7 +78,7 @@ namespace in2csv::detail::csv {
                         }
                         return ss.str();
                     }
-                    , compose_datetime<elem_type>
+                    , compose_datetime<elem_type,in2csv_conversion_datetime>
                     , compose_date<elem_type>
                     , [](elem_type const & e, std::any const &) {
                         auto str = std::get<1>(e.timedelta_tuple());

@@ -57,8 +57,6 @@ int main() {
         }));
     };
 
-///// This is not supported at all (neither standard library nor date library supports format specifiers with no separating marks)
-#if 0
     "numeric date format default"_test = [&] {
         struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
             Args() { file = "test_numeric_date_format.csv"; skip_init_space = true; date_fmt = R"(%Y%m%d)"; }
@@ -68,7 +66,6 @@ int main() {
             assert_converted(cout_buffer.str(), "test_date_format_converted.csv");
         }));
     };
-#endif
 
 }
 

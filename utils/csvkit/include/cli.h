@@ -966,6 +966,20 @@ namespace csvkit::cli {
                 task_vec[c] = column_type::timedelta_t;
                 return;
             }
+            if (std::all_of(table[c].begin(), table[c].end(), [&args, &blanks, &c](auto & e) {
+                SETUP_BLANKS
+                return n || (!args.no_inference && std::get<0>(e.datetime(args.datetime_fmt)));
+            })) {
+                task_vec[c] = column_type::datetime_t;
+                return;
+            }
+            if (std::all_of(table[c].begin(), table[c].end(), [&args, &blanks, &c](auto &e) {
+                SETUP_BLANKS
+                return n || (!args.no_inference && std::get<0>(e.date(args.date_fmt)));
+            })) {
+                task_vec[c] = column_type::date_t;
+                return;
+            }
             if (option == typify_option::typify_with_precisions) {
                 if (std::all_of(table[c].begin(), table[c].end(), [&blanks, &c, &args, &precisions](auto & e) {
                     SETUP_BLANKS
@@ -987,20 +1001,6 @@ namespace csvkit::cli {
                     task_vec[c] = column_type::number_t;
                     return;
                 }
-            }
-            if (std::all_of(table[c].begin(), table[c].end(), [&args, &blanks, &c](auto & e) {
-                SETUP_BLANKS
-                return n || (!args.no_inference && std::get<0>(e.datetime(args.datetime_fmt)));
-            })) {
-                task_vec[c] = column_type::datetime_t;
-                return;
-            }
-            if (std::all_of(table[c].begin(), table[c].end(), [&args, &blanks, &c](auto &e) {
-                SETUP_BLANKS
-                return n || (!args.no_inference && std::get<0>(e.date(args.date_fmt)));
-            })) {
-                task_vec[c] = column_type::date_t;
-                return;
             }
             // Text type: check ALL rows for an absent.
             if (std::all_of(table[c].begin(), table[c].end(), [&](auto &e) {

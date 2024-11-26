@@ -424,16 +424,11 @@ namespace csv_co {
                         date::sys_seconds tp;
                         std::string ccs_trimmed = ccs;
                         ccs_trimmed.erase(0, ccs_trimmed.find_first_not_of(' '));
-                        std::stringstream ss; 
-
-                        for (auto const &fmt : formats) { 
-                            ss << ccs_trimmed; 
-                            ss >> date::parse(fmt, tp);
-                            if (ss.fail() or ss.bad()) {
-                                ss.str({});
-                                ss.clear();
+                        for (auto const &fmt : formats) {
+                            std::istringstream in {ccs_trimmed};
+                            in >> date::parse(fmt, tp);
+                            if (in.fail() or in.bad())
                                 continue;
-                            }
                             return std::tuple{true, tp};
                         }
                         return std::tuple{false, date::sys_seconds{}};

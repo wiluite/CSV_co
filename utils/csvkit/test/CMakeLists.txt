@@ -683,6 +683,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/date_like_number.csv
         ${CMAKE_CURRENT_BINARY_DIR}/date_like_number.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testfixed_converted.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/testfixed_converted.csv)
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
 target_include_directories(in2csv_test
