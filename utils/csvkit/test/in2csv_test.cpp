@@ -150,4 +150,14 @@ int main() {
     };
     #endif
 
+    "no leading zeroes"_test = [&] {
+        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+            Args() { file = "test_no_leading_zeroes.csv"; no_leading_zeroes = true;}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            assert_converted(cout_buffer.str(), "test_no_leading_zeroes.csv");
+        }));
+    };
+
 }
