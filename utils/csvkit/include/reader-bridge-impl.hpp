@@ -280,15 +280,32 @@ namespace csv_co {
         return none_set;
     }
 
+    constexpr const bool also_match_null_value_option = true;
+
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_null() const {
-        auto const _ = is_nil();
-        if (!_) {
+    bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_null(bool match_null_value_option) const {
+        auto already_null = is_nil();
+        if (!already_null) {
             if (type_ == vince_csv::DataType::CSV_STRING)
-                return (get_none_set().find(toupper_cell_string<T, Unquoted>(*this)) != get_none_set().end());
-        }
-        return _;
+                already_null = (get_none_set().find(toupper_cell_string<T, Unquoted>(*this)) != get_none_set().end());
+            return !already_null and match_null_value_option ? is_null_value() : already_null;
+#if 0
+            if (type_ == vince_csv::DataType::CSV_STRING) {
+                already_null = (get_none_set().find(toupper_cell_string<T, Unquoted>(*this)) != get_none_set().end());
+                if (!already_null and match_null_value_option)
+                    return is_null_value();
+                else
+                    return already_null;
+            } else {
+                if (match_null_value_option)
+                    return is_null_value();
+                else
+                    return already_null;
+            }
+#endif
+        } else
+            return true;
     }
 
     inline auto & get_null_value_set() {

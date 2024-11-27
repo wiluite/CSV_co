@@ -949,7 +949,9 @@ namespace csvkit::cli {
 
         //TODO: for now e.is_null() calling first is obligate. Can we do better?
 
-        #define SETUP_BLANKS auto const n = e.is_null() && !args.blanks; if (!blanks[c] && n) blanks[c] = 1;
+        #define SETUP_BLANKS auto const n = e.is_null(csv_co::also_match_null_value_option) && !args.blanks; \
+                             if (!blanks[c] && n)                                                            \
+                                 blanks[c] = 1;
 
         auto task = transwarp::for_each(exec, column_numbers.cbegin(), column_numbers.cend(), [&](auto c) {
             if (std::all_of(table[c].begin(), table[c].end(), [&blanks, &c, &args](auto & e)  {
@@ -1004,7 +1006,7 @@ namespace csvkit::cli {
             }
             // Text type: check ALL rows for an absent.
             if (std::all_of(table[c].begin(), table[c].end(), [&](auto &e) {
-                if (e.is_null() && !blanks[c] && !args.blanks)
+                if (e.is_null(csv_co::also_match_null_value_option) && !blanks[c] && !args.blanks)
                     blanks[c] = true;
                 return true;
             })) {
@@ -1178,7 +1180,6 @@ namespace csvkit::cli {
 
     template <typename T, typename Q=void>
     std::string compose_bool(T const & elem, std::any const &) {
-        assert(!elem.is_null());
         static bool_stringstream<Q> ss;
         ss.rdbuf()->str("");
         ss << std::boolalpha << (elem.is_boolean(), elem.unsafe_bool());
@@ -1188,7 +1189,6 @@ namespace csvkit::cli {
     struct in2csv_conversion_datetime;
     template <typename T, typename Q=void>             
     std::string compose_datetime(T const & elem, std::any const &) {
-        assert(!elem.is_null());
         if constexpr(std::is_same_v<Q,void>)
             return datetime_s(elem);
         else
@@ -1200,7 +1200,6 @@ namespace csvkit::cli {
 
     template <typename T, typename Q=void>
     std::string compose_date(T const & elem, std::any const &) {
-        assert(!elem.is_null());
         if constexpr(std::is_same_v<Q,void>)
             return date_s(elem);
         else
@@ -1209,7 +1208,6 @@ namespace csvkit::cli {
 
     template <typename T, typename Q=void>
     std::string compose_bool_1_arg(T const & elem) {
-        assert(!elem.is_null());
         static bool_stringstream<Q> ss;
         ss.rdbuf()->str("");
         ss << std::boolalpha << (elem.is_boolean(), elem.unsafe_bool());
@@ -1218,7 +1216,6 @@ namespace csvkit::cli {
 
     template <typename T, typename Q=void>
     std::string compose_datetime_1_arg(T const & elem) {
-        assert(!elem.is_null());
         if constexpr(std::is_same_v<Q,void>)
             return datetime_s(elem);
         else
@@ -1230,7 +1227,6 @@ namespace csvkit::cli {
 
     template <typename T, typename Q=void>
     std::string compose_date_1_arg(T const & elem) {
-        assert(!elem.is_null());
         if constexpr(std::is_same_v<Q,void>)
             return date_s(elem);
         else

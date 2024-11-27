@@ -1621,8 +1621,8 @@ namespace csv_co {
             /// Returns true if it is an empty string or a string of whitespace characters
             constexpr bool is_nil() const;
 
-            /// Check if it is any null rep.
-            inline bool is_null() const;
+            /// Checks if it is any null rep. False means: "do not match anything except for predefined values"
+            inline bool is_null(bool = false) const;
 
             /// Checks if it is a used-defined null value
             inline bool is_null_value() const;

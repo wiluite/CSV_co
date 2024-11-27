@@ -33,7 +33,7 @@ expect(nothrow ([&] { csvstat::stat(r, args, "en_US"); }));     \
 
 int main() {
     using namespace boost::ut;
-    namespace tf = csvkit::test_facilities;
+    namespace tf = ::csvkit::test_facilities;
 
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
@@ -323,7 +323,6 @@ Decode error: simdutf can't decode byte 0xa9 in position 16.
     "json"_test = [] {
         using namespace rapidjson;
 
-        namespace tf = csvkit::test_facilities;
         struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::spread_args, csvstat_specific_args {
             Args() {
                 file = "ks_1033_data.csv";
