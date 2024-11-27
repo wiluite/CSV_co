@@ -431,13 +431,6 @@ namespace csvstat {
                             task_vec[c] = column_type::timedelta_t;
                             return;
                         }
-                        if (std::all_of(table[c].cbegin(), table[c].cend(), [&blanks, &c, &args](auto & e) {
-                            SETUP_BLANKS
-                            return n || (!args.no_inference && e.is_num());
-                        })) {
-                            task_vec[c] = column_type::number_t;
-                            return;
-                        }
                         if (std::all_of(table[c].cbegin(), table[c].cend(), [&args, &blanks, &c](auto & e) {
                             SETUP_BLANKS
                             return n || (!args.no_inference && std::get<0>(e.datetime(args.datetime_fmt)));
@@ -450,6 +443,13 @@ namespace csvstat {
                             return n || (!args.no_inference && std::get<0>(e.date(args.date_fmt)));
                         })) {
                             task_vec[c] = column_type::date_t;
+                            return;
+                        }
+                        if (std::all_of(table[c].cbegin(), table[c].cend(), [&blanks, &c, &args](auto & e) {
+                            SETUP_BLANKS
+                            return n || (!args.no_inference && e.is_num());
+                        })) {
+                            task_vec[c] = column_type::number_t;
                             return;
                         }
                         // Text type: check ALL rows for an absent.

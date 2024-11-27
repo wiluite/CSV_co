@@ -15,7 +15,7 @@ namespace csvsort {
     struct Args final : ARGS_positional_1 {
         std::string & num_locale = kwarg("L,locale","Specify the locale (\"C\") of any formatted numbers.").set_default(std::string("C"));
         bool & blanks = flag("blanks",R"(Do not convert "", "na", "n/a", "none", "null", "." to NULL.)");
-        std::vector<std::string> & null_value = kwarg("null-value NULL_VALUES [NULL_VALUES ...]", "Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
+        std::vector<std::string> & null_value = kwarg("null-value", "Convert this value to NULL. --null-value can be specified multiple times.").multi_argument().set_default(std::vector<std::string>{});
         std::string & date_fmt = kwarg("date-format","Specify an strptime date format string like \"%m/%d/%Y\".").set_default(R"(%m/%d/%Y)");
         std::string & datetime_fmt = kwarg("datetime-format","Specify an strptime datetime format string like \"%m/%d/%Y %I:%M %p\".").set_default(R"(%m/%d/%Y %I:%M %p)");
         bool & no_leading_zeroes = flag("no-leading-zeroes", "Do not convert a numeric value with leading zeroes to a number.");
@@ -95,6 +95,11 @@ namespace csvsort {
                 static_assert(e_type::is_quoted());
                 using UElemType = typename e_type::template rebind<csv_co::unquoted>::other;
                 auto & unquoted_elem = elem.operator UElemType const&();
+
+                if (unquoted_elem.is_null_value()) {
+                    os << "";
+                    return;
+                }
 
                 bool const is_null = unquoted_elem.is_null();
                 if (types[col] == column_type::text_t or (!args.blanks && is_null)) {

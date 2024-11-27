@@ -177,6 +177,9 @@ namespace csvjson {
                         return std::string(elem_str);
                 };
 
+                if (elem.is_null_value())
+                    return print_func_impl(std::string("null"));
+
                 bool const is_null = elem.is_null();
 
                 if (types[col] == column_type::text_t or (!args.blanks && is_null))
@@ -218,10 +221,13 @@ namespace csvjson {
                     return std::string(elem_str);
                 }
             };
+
+            if (elem.is_null_value())
+                return print_func_impl(std::string(R"("None")"));
+
             bool const is_null = elem.is_null();
-            if (types[col] == column_type::text_t or (!args.blanks && is_null)) {
+            if (types[col] == column_type::text_t or (!args.blanks && is_null))
                 return !args.blanks && is_null ? print_func_impl(std::string(R"("None")")) : print_func_impl(elem.str(), true);
-            }
 
             assert(!is_null && (!args.blanks || (args.blanks && !blanks[col])) && !args.no_inference);
             return print_func_impl(f(elem));

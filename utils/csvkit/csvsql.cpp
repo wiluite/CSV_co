@@ -14,6 +14,7 @@ using namespace ocilib;
 
 // TODO:
 //  2. get rid of blanks calculations in typify() for csvsql  (--no-constraints mode)
+//  3. implement null_value (while printing results?) (see how this is done in original utility)
 
 using namespace ::csvkit::cli;
 
@@ -226,15 +227,14 @@ namespace csvsql::detail {
 
                 // re-fill precisions with varchar lengths if needed
 
-                auto * has = dynamic_cast<varchar_precision*>(printer_map[dialect].get());
-                if (has) {
+                if (dynamic_cast<varchar_precision*>(printer_map[dialect].get())) {
                     using reader_type = std::decay_t<decltype(reader)>;
                     using elem_type = typename reader_type::template typed_span<csv_co::unquoted>;
                     reader.run_rows([&](auto & row_span) {
                         auto col = 0ull;
                         for (auto & elem : row_span) {
                             if (types[col] == column_type::text_t) {
-                                auto candidate_size = elem_type{elem}.str_size_in_symbols();
+                                auto const candidate_size = elem_type{elem}.str_size_in_symbols();
                                 if (candidate_size > precisions[col])
                                     precisions[col] = candidate_size;
                             }
