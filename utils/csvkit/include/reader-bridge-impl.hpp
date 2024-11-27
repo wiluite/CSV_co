@@ -291,6 +291,17 @@ namespace csv_co {
         return _;
     }
 
+    inline auto & get_null_value_set() {
+        static std::unordered_set<std::string_view> null_value_set {};
+        return null_value_set;
+    }
+
+    template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
+    template<bool Unquoted>
+    bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_null_value() const {
+        return (get_null_value_set().find(toupper_cell_string<T, Unquoted>(*this)) != get_null_value_set().end());
+    }
+
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_str() const {

@@ -1624,6 +1624,9 @@ namespace csv_co {
             /// Check if it is any null rep.
             inline bool is_null() const;
 
+            /// Checks if it is a used-defined null value
+            inline bool is_null_value() const;
+
             /// Returns true if it is a non-numeric, non-empty string
             constexpr bool is_str() const;
 

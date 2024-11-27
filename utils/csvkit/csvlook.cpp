@@ -101,6 +101,8 @@ namespace csvlook {
                     for (auto & elem : row_span) {
                         args.precision_locally = precisions[i];
                         auto max_size_func = [&](auto && elem) {
+                            if (elem.is_null_value())
+                                return std::max(std::min(max_sizes[i], args.max_column_width), micro_ellipsis_len);
                             auto const is_null = elem.is_null();
                             if (types[i] == column_type::text_t or (!args.blanks && is_null)) {
                                 return !args.blanks && is_null ? std::max(std::min(max_sizes[i], args.max_column_width), micro_ellipsis_len) :
@@ -166,9 +168,9 @@ namespace csvlook {
         auto print_func_impl = [&] (auto && elem_str, unsigned max_size, std::size_t row) {
             auto const refactor_elem = [&]() -> std::tuple<unsigned, unsigned, std::string> {
                 auto const str = csv_co::csvkit::to_basic_string_32(elem_str);
-                if (str.size() <= max_size) {
+                if (str.size() <= max_size)
                     return std::tuple{str.size(), elem_str.size(), elem_str};
-                } else {
+                else {
                     auto newstr = str.substr(0, max_size);
                     if (row != args.max_rows) {
                         auto const offset = max_size - native_ellipsis_len;
@@ -190,9 +192,8 @@ namespace csvlook {
 
         auto print_hdr = [&] {
             oss_ << "| ";
-            if (args.linenumbers) {
+            if (args.linenumbers)
                 print_func_impl(std::string(linenumbers_header), std::min(linenumbers_header_length, args.max_column_width), max_size_t_limit - 1);
-            }
 
             auto col = 0u;
             for (auto &elem: header) {
@@ -254,6 +255,11 @@ namespace csvlook {
         try {
             auto print_body = [&] {
                 auto print_func = [&](auto && elem, std::size_t col, std::size_t row) {
+                    if (elem.is_null_value()) {
+                        oss_.setf(std::ios::left, std::ios::adjustfield);
+                        print_func_impl(std::string{}, max_sizes[col], row);
+                        return;
+                    }
                     bool const is_null = elem.is_null();
                     if (types[col] == column_type::text_t or (!args.blanks && is_null)) {
                         oss_.setf(std::ios::left, std::ios::adjustfield);
