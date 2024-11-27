@@ -134,21 +134,18 @@ int main() {
         CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
         expect(cout_buffer.str() == "a,b\n,\n");
     };
-    //TODO fixme. blanks influences to standard blanks but not to --null-value;
-    #if 0
+
     "null value blanks"_test = [&] {
         struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
-            Args() { file = "_"; format = "csv"; null_value = {"N"}; blanks = true;}
+            Args() { file = "_"; format = "csv"; null_value = {"\\N"}; blanks = true;}
         } args;
 
-        std::istringstream iss("a,b\nn/a,N");
+        std::istringstream iss("a,b\nn/a,\\N");
         stdin_subst new_cin(iss);
 
         CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
-        expect(cout_buffer.str() == "a,b\n,n/a,\n");
-        std::cout << cout_buffer.str() << std::endl;
+        expect(cout_buffer.str() == "a,b\nn/a,\n");
     };
-    #endif
 
     "no leading zeroes"_test = [&] {
         struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {

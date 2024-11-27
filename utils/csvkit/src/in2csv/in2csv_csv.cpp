@@ -18,6 +18,11 @@ namespace in2csv::detail::csv {
         }
 
         void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
+            if (elem.is_null_value()) {
+                os << "";
+                return;
+            }
+
             using elem_type = std::decay_t<decltype(elem)>;
             auto & [types, blanks] = types_n_blanks;
             bool const is_null = elem.is_null();
