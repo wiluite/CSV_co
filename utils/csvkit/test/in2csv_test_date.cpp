@@ -1,7 +1,7 @@
 ///
-/// \file   test/in2csv_test.cpp
+/// \file   test/in2csv_test_date.cpp
 /// \author wiluite
-/// \brief  Tests for the in2csv utility.
+/// \brief  Additional tests for the in2csv utility.
 
 #define BOOST_UT_DISABLE_MODULE
 #include "ut.hpp"
@@ -41,6 +41,8 @@ int main() {
         bool is1904;
     };
 
+    struct in2csv_args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {};
+
     auto assert_converted = [](std::string const & source, std::string const & pattern_filename) {
         std::ifstream ifs(pattern_filename);
         std::string result {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
@@ -48,7 +50,7 @@ int main() {
     };
 
     "date format"_test = [&] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+        struct Args : in2csv_args {
             Args() { file = "test_date_format.csv"; date_fmt = R"(%d/%m/%Y)";}
         } args;
         expect(nothrow([&] {
@@ -58,7 +60,7 @@ int main() {
     };
 
     "numeric date format default"_test = [&] {
-        struct Args : tf::single_file_arg, tf::common_args, tf::type_aware_args, tf::output_args, in2csv_specific_args {
+        struct Args : in2csv_args {
             Args() { file = "test_numeric_date_format.csv"; skip_init_space = true; date_fmt = R"(%Y%m%d)"; }
         } args;
         expect(nothrow([&] {
