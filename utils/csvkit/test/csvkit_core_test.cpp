@@ -179,7 +179,8 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
                 expect(not span.is_nil());
                 expect(not span.is_boolean());
                 expect(throws([&] { span.num(); }));
-            } {
+            }
+            {
                 reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
                 expect(span.type() == vince_csv::DataType::CSV_INT32);
                 expect(span.is_num());
@@ -199,6 +200,71 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
                     expect(float_span.num() >= 1234567.8 and float_span.num() <= 1234567.9);
                 }
             }
+            cs = " \"-123456789  \"         ";
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                expect(span.type() == vince_csv::DataType::CSV_STRING);
+                expect(not span.is_num());
+                expect(span.is_str());
+                expect(not span.is_float());
+                expect(not span.is_int());
+                expect(not span.is_nil());
+                expect(not span.is_boolean());
+                expect(throws([&] { span.num(); }));
+            }
+            {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                expect(span.type() == vince_csv::DataType::CSV_INT32);
+                expect(span.is_num());
+                expect(not span.is_str());
+                expect(not span.is_float());
+                expect(span.is_int());
+                expect(not span.is_nil());
+                expect(not span.is_boolean());
+                expect(nothrow([&] { span.num(); }));
+                expect(span.num() == -123456789);
+                expect(span.precision() == 0);
+
+                cs = " \"-12345678e-1  \"         ";
+                {
+                    reader<>::typed_span<unquoted> float_span{reader<>::cell_span{cs}};
+                    expect(float_span.is_float());
+                    expect(float_span.num() <= -1234567.8 and float_span.num() >= -1234567.9);
+                }
+            }
+            cs = " \"+123456789  \"         ";
+            {
+                reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
+                expect(span.type() == vince_csv::DataType::CSV_STRING);
+                expect(not span.is_num());
+                expect(span.is_str());
+                expect(not span.is_float());
+                expect(not span.is_int());
+                expect(not span.is_nil());
+                expect(not span.is_boolean());
+                expect(throws([&] { span.num(); }));
+            }
+            {
+                reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
+                expect(span.type() == vince_csv::DataType::CSV_INT32);
+                expect(span.is_num());
+                expect(not span.is_str());
+                expect(not span.is_float());
+                expect(span.is_int());
+                expect(not span.is_nil());
+                expect(not span.is_boolean());
+                expect(nothrow([&] { span.num(); }));
+                expect(span.num() == +123456789);
+                expect(span.precision() == 0);
+
+                cs = " \"+12345678e-1  \"         ";
+                {
+                    reader<>::typed_span<unquoted> float_span{reader<>::cell_span{cs}};
+                    expect(float_span.is_float());
+                    expect(float_span.num() >= +1234567.8 and float_span.num() <= +1234567.9);
+                }
+            }
+
         };
 
         "nils and nulls tests"_test = [&cs] {

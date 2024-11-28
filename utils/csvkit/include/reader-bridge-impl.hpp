@@ -172,16 +172,9 @@ namespace csv_co {
             auto postprocess_num = [this, &s_]() {
                 if (no_leading_zeroes_) {
                     assert(type_ > vince_csv::DataType::CSV_STRING);
-#if 0
-                    // if not boolean
-                    if (!(type_ == vince_csv::DataType::CSV_INT8 && (value == 0 or value == 1))) {
-#endif
-                        auto const pos = s_.find_first_not_of(' ');
-                        if (pos != std::string::npos and s_[pos] == '0')
-                            type_ = vince_csv::DataType::CSV_STRING;
-#if 0
-                    }
-#endif
+                    auto const pos = s_.find_first_not_of(' ');
+                    if (pos != std::string::npos and s_[pos] == '0')
+                        type_ = vince_csv::DataType::CSV_STRING;
                 }
             };
 
