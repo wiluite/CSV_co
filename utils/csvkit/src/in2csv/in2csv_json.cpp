@@ -10,6 +10,11 @@ using namespace ::csvkit::cli;
 namespace in2csv::detail::json {
 
     void print_func (auto && elem, std::size_t col, auto && types_n_blanks, auto const & args, std::ostream & os) {
+        if (elem.is_null_value()) {
+            os << "";
+            return;
+        }
+
         using elem_type = std::decay_t<decltype(elem)>;
         auto & [types, blanks] = types_n_blanks;
         bool const is_null = elem.is_null();
@@ -56,7 +61,7 @@ namespace in2csv::detail::json {
                     }
                     return ss.str();
                 }
-                , compose_datetime_1_arg < elem_type >
+                , compose_datetime_1_arg < elem_type, in2csv_conversion_datetime >
                 , compose_date_1_arg < elem_type >
                 , [](elem_type const & e) {
                     auto str = std::get<1>(e.timedelta_tuple());

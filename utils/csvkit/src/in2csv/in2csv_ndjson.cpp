@@ -14,7 +14,7 @@ namespace in2csv::detail::ndjson {
     std::size_t total_rows = 0;
 
     void fill_func (auto && elem, auto const & header, unsigned col, auto && types_n_blanks, auto const & args) {
-
+         
         auto align_columns = [&] {
             while(csv_map[header[col]].size() < total_rows)
                 csv_map[header[col]].push_back("");
@@ -22,6 +22,7 @@ namespace in2csv::detail::ndjson {
 
         using elem_type = std::decay_t<decltype(elem)>;
         auto & [types, blanks] = types_n_blanks;
+        //TODO: Check whether we need to call is_null_value() as well.
         bool const is_null = elem.is_null();
         if (types[col] == column_type::text_t or (!args.blanks and is_null)) {
             auto compose_text = [&](auto const & e) -> std::string {
@@ -67,7 +68,7 @@ namespace in2csv::detail::ndjson {
                     }
                     return ss.str();
                 }
-                , compose_datetime_1_arg < elem_type >
+                , compose_datetime_1_arg < elem_type, in2csv_conversion_datetime >
                 , compose_date_1_arg < elem_type >
                 , [](elem_type const & e) {
                     auto str = std::get<1>(e.timedelta_tuple());

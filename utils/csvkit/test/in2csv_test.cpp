@@ -209,4 +209,15 @@ int main() {
         }));
     };
 
+    "convert dbf"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "testdbf.dbf";}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            std::cout << cout_buffer.str() << std::endl; 
+            assert_converted(cout_buffer.str(), "testdbf_converted.csv");
+        }));
+    };
+
 }

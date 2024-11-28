@@ -128,32 +128,32 @@ namespace in2csv::detail::csv {
 
         }
     }
+
     void impl::convert() {
         try {
-            impl_args args = a; // basic_reader_configurator_and_runner macro's requirement
 
-            if (args.file.empty())
-                args.file = "_";
+            if (a.file.empty())
+                a.file = "_";
 
-            if (!args.skip_init_space) {
-                if (!(args.file == "_")) {
-                    notrimming_reader_type r(std::filesystem::path{args.file});
-                    recode_source(r, args);
-                    detail::convert_impl(r, args);
+            if (!a.skip_init_space) {
+                if (!(a.file == "_")) {
+                    notrimming_reader_type r(std::filesystem::path{a.file});
+                    recode_source(r, a);
+                    detail::convert_impl(r, a);
                 } else {
-                    notrimming_reader_type r(read_standard_input(args));
-                    recode_source(r, args);
-                    detail::convert_impl(r, args);
+                    notrimming_reader_type r(read_standard_input(a));
+                    recode_source(r, a);
+                    detail::convert_impl(r, a);
                 }
             } else {
-                if (!(args.file == "_")) {
-                    skipinitspace_reader_type r(std::filesystem::path{args.file});
-                    recode_source(r, args);
-                    detail::convert_impl(r, args);
+                if (!(a.file == "_")) {
+                    skipinitspace_reader_type r(std::filesystem::path{a.file});
+                    recode_source(r, a);
+                    detail::convert_impl(r, a);
                 } else {
-                    skipinitspace_reader_type r(read_standard_input(args));
-                    recode_source(r, args);
-                    detail::convert_impl(r, args);
+                    skipinitspace_reader_type r(read_standard_input(a));
+                    recode_source(r, a);
+                    detail::convert_impl(r, a);
                 }
             }
 

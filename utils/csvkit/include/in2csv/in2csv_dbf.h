@@ -12,8 +12,23 @@ namespace in2csv::detail {
 
     namespace dbf {
         struct impl_args {
+            unsigned maxfieldsize;
+            std::string encoding; // always UTF-8
+            bool skip_init_space;
+            bool no_header;
+            unsigned skip_lines;
             bool linenumbers;
-            std::string encoding;
+            bool zero;
+            std::string num_locale;
+            bool blanks;
+            mutable std::vector<std::string> null_value;
+            std::string date_fmt;
+            std::string datetime_fmt;
+            bool no_leading_zeroes;
+            bool no_inference;
+            bool date_lib_parser;
+            bool asap;
+
             std::filesystem::path file;
         };
 
@@ -29,8 +44,25 @@ namespace in2csv::detail {
     template <class Args2>
     struct dbf_client final : converter_client {
         explicit dbf_client(Args2 & args) {
-            dbf::pimpl = std::make_shared<dbf::impl>
-                (dbf::impl_args(args.linenumbers, args.encoding, args.file));
+            dbf::pimpl = std::make_shared<dbf::impl>(dbf::impl_args(
+                args.maxfieldsize
+                , args.encoding
+                , args.skip_init_space
+                , args.no_header
+                , args.skip_lines
+                , args.linenumbers
+                , args.zero
+                , args.num_locale
+                , args.blanks
+                , args.null_value
+                , args.date_fmt
+                , args.datetime_fmt
+                , args.no_leading_zeroes
+                , args.no_inference
+                , args.date_lib_parser
+                , args.asap
+
+                , args.file));
         }
         void convert() override {
             dbf::pimpl->convert();
