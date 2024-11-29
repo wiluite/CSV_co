@@ -250,10 +250,11 @@ namespace vince_csv {
         constexpr
         DataType data_type(std::string_view in, long double* const out) {
             // Empty string --> NULL
-            if (in.find_first_not_of(' ') == std::string::npos)
+            std::size_t start_pos;
+            if ((start_pos = in.find_first_not_of(' ')) == std::string::npos)
                 return DataType::CSV_NULL;
 
-            bool ws_allowed = false,
+            bool ws_allowed = true,
                 neg_allowed = true,
                 dot_allowed = true,
                 digit_allowed = true,
@@ -262,11 +263,13 @@ namespace vince_csv {
 
             unsigned places_after_decimal = 0;
             long double integral_part = 0, decimal_part = 0;
-            auto start_pos = in.find_first_not_of(" +");
-            if (start_pos == std::string::npos)
+            start_pos = in.find_first_not_of('+', start_pos);
+            if (start_pos == std::string::npos) {
+                // there we only +++
                 return DataType::CSV_STRING;
+            }
 
-            for (size_t i = start_pos, ilen = in.size() - start_pos; i < ilen; i++) {
+            for (size_t i = start_pos, ilen = in.size(); i < ilen; i++) {
                 const char& current = in[i];
 
                 switch (current) {
