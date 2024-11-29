@@ -41,7 +41,7 @@ namespace in2csv::detail::csv {
 
             using func_type = std::function<std::string(elem_type const &, std::any const &)>;
 
-#if !defined(BOOST_UT_DISABLE_MODULE)
+#if !defined(CSVKIT_UNIT_TEST)
             static
 #endif
             std::array<func_type, static_cast<std::size_t>(column_type::sz)> type2func {

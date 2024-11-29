@@ -9,7 +9,6 @@
 #include "../utils/csvkit/in2csv.cpp"
 #include "common_args.h"
 #include "strm_redir.h"
-#include "stdin_subst.h"
 
 #define CALL_TEST_AND_REDIRECT_TO_COUT(call)    \
     std::stringstream cout_buffer;              \
