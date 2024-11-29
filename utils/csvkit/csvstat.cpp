@@ -824,7 +824,7 @@ namespace csvstat {
     void number_class<B>::prepare() {
         auto &&slice = B::dim_2().get()[B::column()];
         long double current_rolling_mean = 0, current_rolling_var = 0, current_n = 0, sum = 0;
-        long double min_ = std::numeric_limits<long double>::max(), max_ = std::numeric_limits<long double>::min();
+        long double min_ = std::numeric_limits<long double>::max(), max_ = std::numeric_limits<long double>::lowest();
 
         std::function<void(long double const &elem_val)> common_lambda;
 
