@@ -224,4 +224,14 @@ int main() {
         }));
     };
 
+    "convert json"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "testjson.json";}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("testjson_converted.csv"));
+        }));
+    };
+
 }
