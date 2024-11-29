@@ -234,4 +234,15 @@ int main() {
         }));
     };
 
+    //TODO: Adjust test_geojson.csv to canonical version.
+    "convert geojson"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "test_geojson.json"; format = "geojson"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("test_geojson.csv"));
+        }));
+    };
+
 }
