@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include "geojson.hh"
+#include <cmath>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //geojson_t::convert
@@ -305,10 +306,15 @@ int geojson_t::parse_coordinates(JsonValue value, const std::string &type, featu
 void geojson_t::dump_value(JsonValue & o, std::stringstream & ss, int indent)
 {
   const int SHIFT_WIDTH = 0;
+  double num;
   switch (o.getTag())
   {
   case JSON_NUMBER:
-    ss << o.toNumber();
+    num = o.toNumber();
+    if (num == std::round(num))
+        ss << o.toNumber() << ".0";
+    else
+        ss << o.toNumber();
     break;
   case JSON_STRING:
     dump_string(o.toString(), ss);
@@ -323,7 +329,7 @@ void geojson_t::dump_value(JsonValue & o, std::stringstream & ss, int indent)
     for (auto i : o)
     {
       dump_value(i->value, ss, indent + SHIFT_WIDTH);
-      ss << (i->next ? "," : "");
+      ss << (i->next ? ", " : "");
     }
     ss << "]";
     break;
@@ -339,7 +345,7 @@ void geojson_t::dump_value(JsonValue & o, std::stringstream & ss, int indent)
       dump_string(i->key, ss);
       ss << ": ";
       dump_value(i->value, ss, indent + SHIFT_WIDTH);
-      ss << (i->next ? "," : "");
+      ss << (i->next ? ", " : "");
     }
     ss << "}";
     break;

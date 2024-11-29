@@ -234,7 +234,6 @@ int main() {
         }));
     };
 
-    //TODO: Adjust test_geojson.csv to canonical version.
     "convert geojson"_test = [&] {
         struct Args : in2csv_args {
             Args() { file = "test_geojson.json"; format = "geojson"; }

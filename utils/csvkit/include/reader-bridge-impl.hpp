@@ -283,20 +283,6 @@ namespace csv_co {
             if (type_ == vince_csv::DataType::CSV_STRING)
                 already_null = (get_none_set().find(toupper_cell_string<T, Unquoted>(*this)) != get_none_set().end());
             return !already_null and match_null_value_option ? is_null_value() : already_null;
-#if 0
-            if (type_ == vince_csv::DataType::CSV_STRING) {
-                already_null = (get_none_set().find(toupper_cell_string<T, Unquoted>(*this)) != get_none_set().end());
-                if (!already_null and match_null_value_option)
-                    return is_null_value();
-                else
-                    return already_null;
-            } else {
-                if (match_null_value_option)
-                    return is_null_value();
-                else
-                    return already_null;
-            }
-#endif
         } else
             return true;
     }

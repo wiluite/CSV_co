@@ -82,7 +82,6 @@ namespace in2csv::detail::geojson {
         assert(geojson_it != header.cend());
         for (auto & feature : geojson.m_feature) {
             //print properties
-            //auto h_count = header.size();
             std::for_each(header.cbegin(), geojson_it, [&](auto & field) {
                 for (auto & prop : feature.props) {
                     if (field == prop.name) {
@@ -99,8 +98,12 @@ namespace in2csv::detail::geojson {
             std::cout << geom.m_type << ',';
             if (geom.m_type == "Point") {
                 auto & polyg = geom.m_polygons[geom.m_polygons.size()-1];
-                std::cout << polyg.m_coord[polyg.m_coord.size()-1].x << ','
-                    << polyg.m_coord[polyg.m_coord.size()-1].y;
+                std::cout << polyg.m_coord[polyg.m_coord.size()-1].x;
+                if (std::round(polyg.m_coord[polyg.m_coord.size()-1].x) == polyg.m_coord[polyg.m_coord.size()-1].x)
+                    std::cout << ".0";
+                std::cout << ',' << polyg.m_coord[polyg.m_coord.size()-1].y;
+                if (std::round(polyg.m_coord[polyg.m_coord.size()-1].y) == polyg.m_coord[polyg.m_coord.size()-1].y)
+                    std::cout << ".0";
             } else
                 std::cout << ',';
             std::cout << '\n';
