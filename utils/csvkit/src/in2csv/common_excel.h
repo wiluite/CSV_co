@@ -55,8 +55,11 @@ namespace {
             using date::operator<<;
             std::ostringstream local_oss;
             oss << to_chrono_time_point(number);
-        } else
+        } else {
             oss << number;
+            if (std::round(number) == number)
+                oss << ".0";
+        }
     }
 
     std::vector<std::string> generate_header(unsigned length) {

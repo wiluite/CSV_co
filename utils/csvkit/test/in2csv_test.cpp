@@ -254,4 +254,14 @@ int main() {
         }));
     };
 
+    "convert xls"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "test.xls"; d_excel = "2"; dt_excel = "6"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("testxls_converted.csv"));
+        }));
+    };
+
 }
