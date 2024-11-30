@@ -730,6 +730,16 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_geojson.csv
         ${CMAKE_CURRENT_BINARY_DIR}/test_geojson.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testjson_multiline.json
+        ${CMAKE_CURRENT_BINARY_DIR}/testjson_multiline.json)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testjson_multiline_converted.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/testjson_multiline_converted.csv)
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
 target_include_directories(in2csv_test

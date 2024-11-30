@@ -244,4 +244,14 @@ int main() {
         }));
     };
 
+    "convert ndjson"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "testjson_multiline.json"; format = "ndjson"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("testjson_multiline_converted.csv"));
+        }));
+    };
+
 }
