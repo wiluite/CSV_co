@@ -163,10 +163,10 @@ namespace in2csv::detail::xlsx {
                     get_date_and_datetime_columns(args, get_header(), use_d_dt);
 
                 static void (*output_string_func)(std::ostringstream &, std::string const &) = OutputString;
-                static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber;
+                static void (*output_number_func)(std::ostringstream &, const double, unsigned) = OutputNumber<false>;
 
                 output_string_func = (!args.no_header and j == args.skip_lines) ? OutputHeaderString : OutputString;
-                output_number_func = (!args.no_header and j == args.skip_lines) ? OutputHeaderNumber : OutputNumber;
+                output_number_func = (!args.no_header and j == args.skip_lines) ? OutputHeaderNumber : OutputNumber<false>;
 
                 readValues = row.values();
                 if (readValues.size() != column_count)

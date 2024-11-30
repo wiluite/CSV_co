@@ -34,15 +34,16 @@ namespace {
         return can_be_number[column] and std::find(datetimes_ids.begin(), datetimes_ids.end(), column) != std::end(datetimes_ids);
     }
 
+    template <bool DecimalForInts>
     inline void OutputNumber(std::ostringstream & oss, const double number, unsigned column) {
         // now we have first line of the body, and so "1" really influence on the nature of this column
         if (can_be_number.size() < get_header().size())
             can_be_number.push_back(1);
 
-        if (number == 1.0) {
-            oss << "1.0";
-            return;
-        }
+//        if (number == 1.0) {
+//            oss << "1.0";
+//            return;
+//        }
 
         if (is_date_column(column)) {
             using date::operator<<;
@@ -57,8 +58,10 @@ namespace {
             oss << to_chrono_time_point(number);
         } else {
             oss << number;
-            if (std::round(number) == number)
-                oss << ".0";
+            if constexpr(DecimalForInts) {
+                if (std::round(number) == number)
+                    oss << ".0";
+            }
         }
     }
 

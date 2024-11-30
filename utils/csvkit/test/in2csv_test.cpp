@@ -254,6 +254,7 @@ int main() {
         }));
     };
 
+    // TODO: FOR THIS ONE AND FOR THE NEXT ONE add tests with different data shifts absent at Python kit.
     "convert xls"_test = [&] {
         struct Args : in2csv_args {
             Args() { file = "test.xls"; d_excel = "2"; dt_excel = "6"; }
@@ -261,6 +262,16 @@ int main() {
         expect(nothrow([&] {
             CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
             expect(cout_buffer.str() == get_source("testxls_converted.csv"));
+        }));
+    };
+
+    "convert xlsx"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "test.xlsx"; d_excel = "2"; dt_excel = "6"; is1904 = true;}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("testxlsx_converted.csv"));
         }));
     };
 
