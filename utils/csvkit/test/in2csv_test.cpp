@@ -265,6 +265,16 @@ int main() {
         }));
     };
 
+    "convert xls with sheet"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xls"; d_excel = "2"; dt_excel = "6"; sheet = "data"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("testxls_converted.csv"));
+        }));
+    };
+
     "convert xlsx"_test = [&] {
         struct Args : in2csv_args {
             Args() { file = "test.xlsx"; d_excel = "2"; dt_excel = "6"; is1904 = true;}

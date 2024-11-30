@@ -753,6 +753,11 @@ add_custom_command(
 add_custom_command(
         TARGET in2csv_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/sheets.xls
+        ${CMAKE_CURRENT_BINARY_DIR}/sheets.xls)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test.xlsx
         ${CMAKE_CURRENT_BINARY_DIR}/test.xlsx)
 add_custom_command(
