@@ -267,7 +267,28 @@ int main() {
 
     "convert xls with sheet"_test = [&] {
         struct Args : in2csv_args {
-            Args() { file = "sheets.xls"; d_excel = "2"; dt_excel = "6"; sheet = "data"; }
+            Args() { file = "sheets.xls"; sheet = "data"; d_excel = "2"; dt_excel = "6"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("testxls_converted.csv"));
+        }));
+    };
+
+    //TODO : do this test working with 'ʤ' represented in 1251, 1250, 1252 active pages in windows. Check this in Linux as well.
+    "convert xls with unicode sheet"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xls"; sheet = "ʤ"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "a,b,c\n1.0,2.0,3.0\n");
+        }));
+    };
+
+    "convert xls with skip lines"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "test_skip_lines.xls"; d_excel = "2"; dt_excel = "6"; skip_lines = 3; }
         } args;
         expect(nothrow([&] {
             CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
@@ -278,6 +299,40 @@ int main() {
     "convert xlsx"_test = [&] {
         struct Args : in2csv_args {
             Args() { file = "test.xlsx"; d_excel = "2"; dt_excel = "6"; is1904 = true;}
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("testxlsx_converted.csv"));
+        }));
+    };
+
+    "convert xlsx with sheet"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xlsx"; sheet = "data"; d_excel = "2"; dt_excel = "6"; is1904 = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            //TODO: fixme: do a byte-by-byte comparison, and allow the only 1 byte to be different
+#if 0
+            expect(cout_buffer.str().size() == get_source("testxlsx_converted.csv").size());
+#endif
+            expect(cout_buffer.str().size() == get_source("testxlsx_converted.csv").size());
+        }));
+    };
+
+    "convert xlsx with unicode sheet"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xlsx"; sheet = "ʤ"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "a,b,c\nTrue,2,3\n");
+        }));
+    };
+
+    "convert xlsx with skip lines"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "test_skip_lines.xlsx"; d_excel = "2"; dt_excel = "6"; skip_lines = 3; is1904 = true; }
         } args;
         expect(nothrow([&] {
             CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))

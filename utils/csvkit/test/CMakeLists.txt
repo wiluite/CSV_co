@@ -758,13 +758,29 @@ add_custom_command(
 add_custom_command(
         TARGET in2csv_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_skip_lines.xls
+        ${CMAKE_CURRENT_BINARY_DIR}/test_skip_lines.xls)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test.xlsx
         ${CMAKE_CURRENT_BINARY_DIR}/test.xlsx)
 add_custom_command(
         TARGET in2csv_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/sheets.xlsx
+        ${CMAKE_CURRENT_BINARY_DIR}/sheets.xlsx)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/testxlsx_converted.csv
         ${CMAKE_CURRENT_BINARY_DIR}/testxlsx_converted.csv)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_skip_lines.xlsx
+        ${CMAKE_CURRENT_BINARY_DIR}/test_skip_lines.xlsx)
+
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)
 target_include_directories(in2csv_test
