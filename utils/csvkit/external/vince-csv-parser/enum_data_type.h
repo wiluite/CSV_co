@@ -11,7 +11,7 @@ namespace vince_csv {
      *  @note Overflowing integers will be stored and classified as doubles.
      *  @note Unlike previous releases, integer enums here are platform agnostic.
      */
-    enum class DataType {
+    enum class DataType : signed char {
         UNKNOWN = -1,
         CSV_NULL,   /**< Empty string */
         CSV_STRING, /**< Non-numeric string */

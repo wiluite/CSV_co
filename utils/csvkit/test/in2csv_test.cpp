@@ -370,4 +370,24 @@ int main() {
         }));
     };
 
+    "xls no inference"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "dummy.xls"; no_inference = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "a,b,c\n1.0,2.0,3.0\n");
+        }));
+    };
+
+    "xlsx no inference"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "dummy.xlsx"; no_inference = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "a,b,c\n1,2,3\n");
+        }));
+    };
+
 }

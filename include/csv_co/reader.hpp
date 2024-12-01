@@ -18,7 +18,6 @@
     #endif
 #endif
 
-#include "external/vince-csv-parser/enum_data_type.h"
 #include "external/has_member.hpp"
 #include "external/ezgz/ezgz.hpp"
 #include "external/bz2_connector/bz2_connector.h"
@@ -1540,12 +1539,15 @@ namespace csv_co {
                 skip_rows<ParseChunkSize>(rows_to_skip);
         }
 
-        /// Bridge from cell_span to the csv kit cell span with type support 
+        /// Bridge from cell_span to the cell span with type-aware support.
+        /// Note: we can use Fast PIMPL for value and type_ to preserve contiguous memory space
+        /// and escape redundant recompilations, but we surely can *not* use Fast PIMPL for
+        /// typed_span within cell_span, because this would lead to unnecessary memory consumption.
         template <bool Unquoted>
         class typed_span : public cell_span {
         private:
             mutable long double value = 0;                                    /**< Cached numeric value */
-            mutable vince_csv::DataType type_ = vince_csv::DataType::UNKNOWN; /**< Cached data type value */
+            mutable signed char type_ = -1;
             mutable bool rebind_conversion {false};
             mutable unsigned char prec = 0;
 #if defined(_MSC_VER)
@@ -1593,13 +1595,7 @@ namespace csv_co {
             };
 
             /// Convert typed_span<false> to typed_span<true>, reset data type only once!
-            operator typed_span<!Unquoted> const & () const {
-                if (!rebind_conversion) {
-                    type_ = vince_csv::DataType::UNKNOWN;
-                    rebind_conversion = true;
-                }
-                return reinterpret_cast<typed_span<!Unquoted> const &>(*this);
-            }
+            operator typed_span<!Unquoted> const & () const;
 
             friend std::ostream& operator<< (std::ostream& os, typed_span const& cs) {
                 if constexpr (!Unquoted)
@@ -1643,7 +1639,7 @@ namespace csv_co {
             constexpr bool is_float() const;
 
             /// Returns the type of the underlying CSV data 
-            constexpr vince_csv::DataType type() const;
+            constexpr signed char type() const;
 
             /// Returns cell size in utf8 characters
             constexpr unsigned str_size_in_symbols() const;
@@ -1730,7 +1726,6 @@ namespace csv_co {
         static_assert(sizeof(typed_span<false>) == 48);
         static_assert(sizeof(long double) == 16);
 #endif
-        static_assert(sizeof(vince_csv::DataType) == 4);
         static_assert(sizeof(cell_span) == 16);
 
     }; //reader<>
@@ -1747,10 +1742,5 @@ namespace csv_co {
 
     static_assert(std::is_move_constructible<reader<>>::value);
     static_assert(std::is_move_assignable<reader<>>::value);
-
-    inline std::ostream& operator<< (std::ostream& os, vince_csv::DataType const & d) {
-        os << static_cast<int>(d);
-        return os;
-    }
 
 } // namespace csv_co

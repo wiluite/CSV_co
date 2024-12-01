@@ -15,6 +15,7 @@ int main() {
     using namespace csv_co;
     using namespace ::csvkit::cli;
     using namespace ::csvkit::test_facilities;
+    using namespace vince_csv;
 
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
@@ -170,7 +171,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             cs = " \"123456789  \"         ";
             {
                 reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
-                expect(span.type() == vince_csv::DataType::CSV_STRING);
+                expect(static_cast<DataType>(span.type()) == DataType::CSV_STRING);
                 expect(not span.is_num());
                 expect(span.is_str());
                 expect(not span.is_float());
@@ -181,7 +182,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             }
             {
                 reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
-                expect(span.type() == vince_csv::DataType::CSV_INT32);
+                expect(static_cast<DataType>(span.type()) == DataType::CSV_INT32);
                 expect(span.is_num());
                 expect(not span.is_str());
                 expect(not span.is_float());
@@ -202,7 +203,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             cs = " \"-123456789  \"         ";
             {
                 reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
-                expect(span.type() == vince_csv::DataType::CSV_STRING);
+                expect(static_cast<DataType>(span.type()) == DataType::CSV_STRING);
                 expect(not span.is_num());
                 expect(span.is_str());
                 expect(not span.is_float());
@@ -213,7 +214,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             }
             {
                 reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
-                expect(span.type() == vince_csv::DataType::CSV_INT32);
+                expect(static_cast<DataType>(span.type()) == DataType::CSV_INT32);
                 expect(span.is_num());
                 expect(not span.is_str());
                 expect(not span.is_float());
@@ -234,7 +235,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             cs = " \"+123456789  \"         ";
             {
                 reader<>::typed_span<quoted> span{reader<>::cell_span{cs}};
-                expect(span.type() == vince_csv::DataType::CSV_STRING);
+                expect(static_cast<DataType>(span.type()) == DataType::CSV_STRING);
                 expect(not span.is_num());
                 expect(span.is_str());
                 expect(not span.is_float());
@@ -245,7 +246,7 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             }
             {
                 reader<>::typed_span<unquoted> span{reader<>::cell_span{cs}};
-                expect(span.type() == vince_csv::DataType::CSV_INT32);
+                expect(static_cast<DataType>(span.type()) == DataType::CSV_INT32);
                 expect(span.is_num());
                 expect(not span.is_str());
                 expect(not span.is_float());
@@ -516,24 +517,24 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
 
             cell_string cs = " \"-1.234.567,89e-1  \"   ";
             {
-                reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_DOUBLE);
+                reader_type::typed_span <unquoted> typed_field{reader_type::cell_span{cs.begin(), cs.end()}};
+                expect(static_cast<DataType>(typed_field.type()) == DataType::CSV_DOUBLE);
 
-                expect(std::abs(csvkit_field.num() - -123456.789) <= 0.000000001);
-                expect(csvkit_field.num() != -123456.789);
-                expect(csvkit_field.precision() == 3);
+                expect(std::abs(typed_field.num() - -123456.789) <= 0.000000001);
+                expect(typed_field.num() != -123456.789);
+                expect(typed_field.precision() == 3);
             }
 
             cs = " \"-1.234.567,89d  \"";
             {
-                reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
+                reader_type::typed_span <unquoted> typed_field{reader_type::cell_span{cs.begin(), cs.end()}};
                 // It depends
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_DOUBLE || csvkit_field.type() == vince_csv::DataType::CSV_STRING);
+                expect(static_cast<DataType>(typed_field.type()) == DataType::CSV_DOUBLE || static_cast<DataType>(typed_field.type()) == DataType::CSV_STRING);
             }
             cs = " \"-1.234.567,89 EUR  \"";
             {
                 reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_DOUBLE);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_DOUBLE);
                 expect(std::abs(csvkit_field.num() - -1234567.89) <= 0.000000001);
                 expect(std::round(csvkit_field.num()) == -1234568);
                 expect(csvkit_field.precision() == 2);
@@ -543,49 +544,49 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
             cs = " \"-1.234.567,89 $  \"";
             {
                 reader_type::typed_span<unquoted> csvkit_field {reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_STRING);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_STRING);
             }
 #endif
             cs = " \"-1.234.567,8 EUR  \"";
             {
                 reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_STRING);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_STRING);
             }
             cs = " \"-1.234.5678 EUR  \"";
             {
                 reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_STRING);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_STRING);
             }
 
             cs = " \"-1.234.555   \"";
             {
                 reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_INT32);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_INT32);
                 expect(csvkit_field.num() == -1234555);
                 expect(csvkit_field.precision() == 0);
             }
             cs = " \"-1.234.555,01 €  \"";
             {
                 reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_DOUBLE);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_DOUBLE);
                 expect(std::abs(csvkit_field.num() - -1234555.01) < 0.000000001);
                 expect(csvkit_field.precision() == 2);
             }
             cs = " \"-1.234.555,00 €  \"";
             {
                 reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_DOUBLE);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_DOUBLE);
                 expect(csvkit_field.num() == -1234555.00);
                 expect(csvkit_field.precision() == 0);
             }
             cs = " NAN"; {
                 reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_DOUBLE);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_DOUBLE);
                 expect(std::isnan(csvkit_field.num()));
             }
             cs = " -infinity"; {
                 reader_type::typed_span <unquoted> csvkit_field{reader_type::cell_span{cs.begin(), cs.end()}};
-                expect(csvkit_field.type() == vince_csv::DataType::CSV_DOUBLE);
+                expect(static_cast<DataType>(csvkit_field.type()) == DataType::CSV_DOUBLE);
                 expect(std::isinf(csvkit_field.num()));
             }
         };

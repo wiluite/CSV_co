@@ -35,6 +35,7 @@ namespace csv_co::csvkit {
 }
 
 namespace csv_co {
+    using DataType = vince_csv::DataType;
     constexpr const bool unquoted = true;
     constexpr const bool quoted = false;
 
@@ -47,10 +48,8 @@ namespace csv_co {
 
         auto const decimal_point = std::use_facet<std::numpunct<char>>(num_locale()).decimal_point();
 
-        if (decimal_point != '.' and s.find('.') != std::string::npos) {
-            type_ = vince_csv::DataType::CSV_STRING;
+        if (decimal_point != '.' and s.find('.') != std::string::npos)
             return false;
-        }
 
         if (auto const pos = s.find(decimal_point); pos != std::string::npos)
             s[pos] = '.';
@@ -126,14 +125,14 @@ namespace csv_co {
             r = std::from_chars(double_rep.data(), double_rep.data()+double_rep.size(), value, std::chars_format::general);
             if (static_cast<int>(r.ec) == 0) {
                 prec = get_precision(double_rep);
-                type_ = vince_csv::DataType::CSV_DOUBLE;
+                type_ = static_cast<signed char>(DataType::CSV_DOUBLE);
             }
 #else
             std::stringstream in2(double_rep);
             in2.imbue(std::locale("C"));
             in2 >> value;
             prec = get_precision(double_rep);
-            type_ = vince_csv::DataType::CSV_DOUBLE;
+            type_ = static_cast<signed char>(DataType::CSV_DOUBLE);
 #endif
         }
     }
@@ -166,57 +165,64 @@ namespace csv_co {
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     void reader<T, Q, D, L, M, E>::typed_span<Unquoted>::get_value() const {
+        using namespace vince_csv::internals;
         // Check to see if value has been cached previously, if not evaluate it
-        if (type_ == vince_csv::DataType::UNKNOWN) {
-            auto s_ = str();
+        if (static_cast<DataType>(type_) != DataType::UNKNOWN)
+            return;
 
-            auto postprocess_num = [this, &s_]() {
-                if (no_leading_zeroes_) {
-                    assert(type_ > vince_csv::DataType::CSV_STRING);
-                    auto const pos = s_.find_first_not_of(' ');
-                    if (pos != std::string::npos and s_[pos] == '0')
-                        type_ = vince_csv::DataType::CSV_STRING;
-                }
-            };
+        auto s_ = str();
 
-            if (num_locale().name() == "C") {
-                if ((type_ = vince_csv::internals::data_type(s_, &value)) > vince_csv::DataType::CSV_STRING) {
-                    prec = (type_ == vince_csv::DataType::CSV_DOUBLE) ? get_precision(s_) : 0;
-                    postprocess_num();
+        auto postprocess_num = [&] {
+            if (no_leading_zeroes_) {
+                assert(static_cast<DataType>(type_) > DataType::CSV_STRING);
+                auto const pos = s_.find_first_not_of(' ');
+                if (pos != std::string::npos and s_[pos] == '0')
+                    type_ = static_cast<signed char>(DataType::CSV_STRING);
+            }
+        };
+
+        auto detect_num_type = [&] {
+            if ((type_ = static_cast<signed char>(data_type(s_, &value))) > static_cast<signed char>(DataType::CSV_STRING)) {
+                prec = (static_cast<DataType>(type_) == DataType::CSV_DOUBLE) ? get_precision(s_) : 0;
+                postprocess_num();
+                return true;
+            }
+            return false;
+        };
+
+        if (num_locale().name() == "C") {
+            if (detect_num_type())
+                return;
+        } else {
+            if (to_C_locale(s_)) {
+                if (detect_num_type())
                     return;
-                }
-            } else {
-                if (to_C_locale(s_)) {
-                    if ((type_ = vince_csv::internals::data_type(s_, &value)) > vince_csv::DataType::CSV_STRING) {
-                        prec = (type_ == vince_csv::DataType::CSV_DOUBLE) ? get_precision(s_) : 0;
-                        postprocess_num();
-                        return;
-                    } else if (type_ ==  vince_csv::DataType::CSV_STRING) {
-                        if (can_be_money(s_))
-                            get_num_from_money();
-                    }
-                }
+                else 
+                if (static_cast<DataType>(type_) == DataType::CSV_STRING and can_be_money(s_))
+                    get_num_from_money();
+            } else
+                type_ = static_cast<signed char>(DataType::CSV_STRING);
+        }
+
+        if (static_cast<DataType>(type_) == DataType::CSV_STRING) {
+            auto const iter = get_inf_nan_set().find(toupper_cell_string<T, Unquoted>(*this));
+            if (iter != get_inf_nan_set().end()) {
+                value = *iter == "NAN" ? std::nanl("nan") : ((*iter)[0] == '-' ? -INFINITY : INFINITY);
+                type_ = static_cast<signed char>(DataType::CSV_DOUBLE);
+                prec = 0;
             }
-            if (type_ ==  vince_csv::DataType::CSV_STRING) {
-                auto const iter = get_inf_nan_set().find(toupper_cell_string<T, Unquoted>(*this));
-                if (iter != get_inf_nan_set().end()) {
-                    value = *iter == "NAN" ? std::nanl("nan") : ((*iter)[0] == '-' ? -INFINITY : INFINITY);
-                    type_ = vince_csv::DataType::CSV_DOUBLE;
-                    prec = 0;
-                }
-            }
-        } // type_ == vince_csv::DataType::UNKNOWN
+        }
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     reader<T, Q, D, L, M, E>::typed_span<Unquoted>::typed_span(cell_span const &cs)
-        : cell_span(cs.b, cs.e), type_{vince_csv::DataType::UNKNOWN} {}
+        : cell_span(cs.b, cs.e), type_{static_cast<signed char>(DataType::UNKNOWN)} {}
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     reader<T, Q, D, L, M, E>::typed_span<Unquoted>::typed_span(std::string const & s)
-        : cell_span(s.begin(), s.end()), type_{vince_csv::DataType::UNKNOWN} {}
+        : cell_span(s.begin(), s.end()), type_{static_cast<signed char>(DataType::UNKNOWN)} {}
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
@@ -224,7 +230,7 @@ namespace csv_co {
     reader<T, Q, D, L, M, E>::typed_span<Unquoted>::operator=(cell_span const &cs) noexcept {
         b = cs.b;
         e = cs.e;
-        type_ = vince_csv::DataType::UNKNOWN;
+        type_ = static_cast<signed char>(DataType::UNKNOWN);
         return *this;
     }
 
@@ -239,18 +245,16 @@ namespace csv_co {
     template<bool Unquoted>
     long double reader<T, Q, D, L, M, E>::typed_span<Unquoted>::num() const {
         auto maybe_exception_l = [&] {
-            if (type_ < vince_csv::DataType::CSV_INT8) {
-                std::string s;
+            if (static_cast<DataType>(type_) < DataType::CSV_INT8) {
                 if constexpr (!Unquoted)
-                    s = cell_string(*this);
+                    throw exception(std::string("Cell ") + cell_string(*this) + " is not numeric");
                 else
-                    s = unquoted_cell_string(*this);
-                throw exception(std::string("Cell ") + s + " is not numeric");
+                    throw exception(std::string("Cell ") + unquoted_cell_string(*this) + " is not numeric");
             }
         };
-        if (type_ == vince_csv::DataType::UNKNOWN) {
+        if (static_cast<DataType>(type_) == DataType::UNKNOWN) {
             type_ = type();
-            assert(vince_csv::DataType::UNKNOWN != type_);
+            assert(DataType::UNKNOWN != static_cast<DataType>(type_));
         }
         maybe_exception_l();
         return value;
@@ -259,19 +263,19 @@ namespace csv_co {
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     inline bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::unsafe_bool() const noexcept {
-        assert(type_ != vince_csv::DataType::UNKNOWN);
+        assert(static_cast<DataType>(type_) != DataType::UNKNOWN);
         return value;
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_nil() const {
-        return type() == vince_csv::DataType::CSV_NULL;
+        return type() == static_cast<signed char>(DataType::CSV_NULL);
     }
 
     inline auto & get_none_set() {
-        static std::unordered_set<std::string_view> none_set {"NA", "N/A", "NONE", "NULL", "."};
-        return none_set;
+        static std::unordered_set<std::string_view> default_none_set {"NA", "N/A", "NONE", "NULL", "."};
+        return default_none_set;
     }
 
     constexpr const bool also_match_null_value_option = true;
@@ -281,7 +285,7 @@ namespace csv_co {
     bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_null(bool match_null_value_option) const {
         auto already_null = is_nil();
         if (!already_null) {
-            if (type_ == vince_csv::DataType::CSV_STRING)
+            if (static_cast<DataType>(type_) == DataType::CSV_STRING)
                 already_null = (get_none_set().find(toupper_cell_string<T, Unquoted>(*this)) != get_none_set().end());
             return !already_null and match_null_value_option ? is_null_value() : already_null;
         } else
@@ -302,13 +306,13 @@ namespace csv_co {
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_str() const {
-        return type() == vince_csv::DataType::CSV_STRING;
+        return type() == static_cast<signed char>(DataType::CSV_STRING);
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_num() const {
-        return type() >= vince_csv::DataType::CSV_INT8;
+        return type() >= static_cast<signed char>(DataType::CSV_INT8);
     }
 
     inline auto & get_bool_set() {
@@ -320,16 +324,16 @@ namespace csv_co {
     template<bool Unquoted>
     bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_boolean() const {
         type();
-        if (type_ == vince_csv::DataType::CSV_INT8 && (value == 0 or value == 1))
+        if (static_cast<DataType>(type_) == DataType::CSV_INT8 && (value == 0 or value == 1))
             return true;
-        else if (type_ == vince_csv::DataType::CSV_STRING) {
+        else if (static_cast<DataType>(type_) == DataType::CSV_STRING) {
             auto const str = toupper_cell_string<T,Unquoted>(*this);
             auto const result = get_bool_set().find(str) != get_bool_set().end();
             if (result) {
                 // update value for get_bool() function use.
                 value = (str == "F" || str == "FALSE" || str == "\"0\"" || str == "N" || str == "NO") ? 0 : 1;
                 // we now are able to change inner type for better caching.
-                type_ = vince_csv::DataType::CSV_INT8;
+                type_ = static_cast<signed char>(DataType::CSV_INT8);
             }
             return result;
         } else
@@ -339,18 +343,18 @@ namespace csv_co {
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_int() const {
-        return (type() >= vince_csv::DataType::CSV_INT8) && (type() <= vince_csv::DataType::CSV_INT64);
+        return (type() >= static_cast<signed char>(DataType::CSV_INT8)) && (type() <= static_cast<signed char>(DataType::CSV_INT64));
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     constexpr bool reader<T, Q, D, L, M, E>::typed_span<Unquoted>::is_float() const {
-        return type() == vince_csv::DataType::CSV_DOUBLE;
+        return type() == static_cast<signed char>(DataType::CSV_DOUBLE);
     }
 
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
-    constexpr vince_csv::DataType reader<T, Q, D, L, M, E>::typed_span<Unquoted>::type() const {
+    constexpr signed char reader<T, Q, D, L, M, E>::typed_span<Unquoted>::type() const {
         get_value();
         return type_;
     }
@@ -365,7 +369,7 @@ namespace csv_co {
     template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
     template<bool Unquoted>
     constexpr unsigned reader<T, Q, D, L, M, E>::typed_span<Unquoted>::unsafe_str_size_in_symbols() const {
-        assert(type_ != vince_csv::DataType::UNKNOWN);
+        assert(static_cast<DataType>(type_) != DataType::UNKNOWN);
         return csvkit::str_symbols(str());
     }
 
@@ -834,6 +838,16 @@ namespace csv_co {
         time_parser t_parser;
         t_parser.parse((*this).str());
         return t_parser;
+    }
+
+    template<TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
+    template<bool Unquoted>
+    reader<T, Q, D, L, M, E>::typed_span<Unquoted>::operator typed_span<!Unquoted> const & () const {
+        if (!rebind_conversion) {
+            type_ = static_cast<signed char>(DataType::UNKNOWN);
+            rebind_conversion = true;
+        }
+        return reinterpret_cast<typed_span<!Unquoted> const &>(*this);
     }
 
 } /// namespace

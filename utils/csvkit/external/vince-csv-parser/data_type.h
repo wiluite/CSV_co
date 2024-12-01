@@ -9,7 +9,7 @@
 #include <cctype>
 #include <string>
 #include <cassert>
-#include "../../../../include/csv_co/external/vince-csv-parser/enum_data_type.h"
+#include "enum_data_type.h"
 
 namespace vince_csv {
     static_assert(DataType::CSV_STRING < DataType::CSV_INT8, "String type should come before numeric types.");
