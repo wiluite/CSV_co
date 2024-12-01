@@ -6,7 +6,7 @@
 #pragma once
 
 #include <csv_co/reader.hpp>
-#include <csv_co/external/vince-csv-parser/data_type.h>
+#include <../external/vince-csv-parser/data_type.h>
 #include <unordered_set>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <deque>

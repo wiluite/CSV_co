@@ -1,7 +1,7 @@
 ///
 /// \file   include/csv_co/external/enum_data_type.h
 /// \author From Vince's CSV Parser
-/// \brief  Type name detection, borrowed from Howard Hinnant's code base.
+/// \brief  Possible types detected for all typed spans. Borrowed from VINCE CSV parser implementation.
 
 #pragma once
 namespace vince_csv {

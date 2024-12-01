@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "csv_co/external/mmap.hpp"
-#include "csv_co/external/type_name.h"
+#include "external/mmap.hpp"
+#include "external/type_name.h"
 #include <charconv>
 
 #ifndef _MSC_VER
@@ -18,10 +18,10 @@
     #endif
 #endif
 
-#include "csv_co/external/vince-csv-parser/enum_data_type.h"
+#include "external/vince-csv-parser/enum_data_type.h"
 #include "external/has_member.hpp"
 #include "external/ezgz/ezgz.hpp"
-#include "csv_co/external/bz2_connector/bz2_connector.h"
+#include "external/bz2_connector/bz2_connector.h"
 //-----------------------------
 
 #if (IS_CLANG==0)
