@@ -780,6 +780,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/test_skip_lines.xlsx
         ${CMAKE_CURRENT_BINARY_DIR}/test_skip_lines.xlsx)
+add_custom_command(
+        TARGET in2csv_test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/utils/csvkit/test/examples/no_header_row.csv
+        ${CMAKE_CURRENT_BINARY_DIR}/no_header_row.csv)
 
 
 target_link_libraries(in2csv_test libcppp-reiconv.static simdutf dbf xls geojson OpenXLSX::OpenXLSX bz2_connector -lpthread)

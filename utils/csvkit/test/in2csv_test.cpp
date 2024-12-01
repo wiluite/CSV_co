@@ -340,4 +340,34 @@ int main() {
         }));
     };
 
+    "names"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xlsx"; names = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "not this one\ndata\nʤ\n");
+        }));
+    };
+
+    "csv no header"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "no_header_row.csv"; no_header = true; no_inference = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == get_source("dummy.csv"));
+        }));
+    };
+
+    "csv no inference"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "dummy.csv"; no_inference = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "a,b,c\n1,2,3\n");
+        }));
+    };
+
 }

@@ -19,7 +19,6 @@ int main() {
 #if defined (WIN32)
     cfg < override > = {.colors={.none="", .pass="", .fail=""}};
 #endif
-
     bool locale_support = detect_locale_support();
 
     if (locale_support) {
@@ -261,7 +260,16 @@ Either use/reuse the -K option for alignment, or use the csvclean utility to fix
                 {
                     reader<>::typed_span<unquoted> float_span{reader<>::cell_span{cs}};
                     expect(float_span.is_float());
-                    expect(float_span.num() >= +1234567.8 and float_span.num() <= +1234567.9);
+                    expect(float_span.num() >= 1234567.8 and float_span.num() < 1234567.9);
+                    expect(float_span.precision() == 1);
+                }
+                cs = " \"+1e-  1  \"  ";  //strange string rep. Considered as number.
+                {
+                    reader<>::typed_span<unquoted> float_span{reader<>::cell_span{cs}};
+                    expect(float_span.is_num());
+                    expect(float_span.is_float());
+                    expect(float_span.num() >= 0.1 and float_span.num() < 0.2);
+                    expect(float_span.precision() == 1);
                 }
             }
 
