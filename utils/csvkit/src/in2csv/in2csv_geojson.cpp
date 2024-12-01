@@ -94,18 +94,22 @@ namespace in2csv::detail::geojson {
             // print geojson
             std::cout << std::quoted(feature.gjson, '"','"') << ',';
             // print rest
-            auto & geom = feature.m_geometry[feature.m_geometry.size()-1];
-            std::cout << geom.m_type << ',';
-            if (geom.m_type == "Point") {
-                auto & polyg = geom.m_polygons[geom.m_polygons.size()-1];
-                std::cout << polyg.m_coord[polyg.m_coord.size()-1].x;
-                if (std::round(polyg.m_coord[polyg.m_coord.size()-1].x) == polyg.m_coord[polyg.m_coord.size()-1].x)
-                    std::cout << ".0";
-                std::cout << ',' << polyg.m_coord[polyg.m_coord.size()-1].y;
-                if (std::round(polyg.m_coord[polyg.m_coord.size()-1].y) == polyg.m_coord[polyg.m_coord.size()-1].y)
-                    std::cout << ".0";
+
+            if (feature.m_geometry.size()) {
+                auto & geom = feature.m_geometry.back();
+                std::cout << geom.m_type << ',';
+                if (geom.m_type == "Point") {
+                    auto & polyg = geom.m_polygons.back();
+                    std::cout << polyg.m_coord.back().x;
+                    if (std::round(polyg.m_coord.back().x) == polyg.m_coord.back().x)
+                        std::cout << ".0";
+                    std::cout << ',' << polyg.m_coord.back().y;
+                    if (std::round(polyg.m_coord.back().y) == polyg.m_coord.back().y)
+                        std::cout << ".0";
+                } else
+                    std::cout << ',';
             } else
-                std::cout << ',';
+                std::cout << ",,";
             std::cout << '\n';
         }
     }
