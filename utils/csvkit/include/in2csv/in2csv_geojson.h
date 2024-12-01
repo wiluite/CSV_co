@@ -14,21 +14,8 @@ namespace in2csv::detail {
             unsigned maxfieldsize;
             std::string encoding; // always UTF-8
             bool skip_init_space;
-#if 0
-            bool no_header;
-            unsigned skip_lines;
-            bool linenumbers;
-            bool zero;
-            std::string num_locale;
-            bool blanks;
-            mutable std::vector<std::string> null_value;
-            std::string date_fmt;
-            std::string datetime_fmt;
-            bool no_leading_zeroes;
             bool no_inference;
-            bool date_lib_parser;
-            bool asap;
-#endif
+
             std::filesystem::path file;
         };
 
@@ -48,21 +35,8 @@ namespace in2csv::detail {
                 args.maxfieldsize
                 , args.encoding
                 , args.skip_init_space
-#if 0
-                , args.no_header
-                , args.skip_lines
-                , args.linenumbers
-                , args.zero
-                , args.num_locale
-                , args.blanks
-                , args.null_value
-                , args.date_fmt
-                , args.datetime_fmt
-                , args.no_leading_zeroes
                 , args.no_inference
-                , args.date_lib_parser
-                , args.asap
-#endif
+
                 , args.file));
         }
         void convert() override {

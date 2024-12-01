@@ -101,10 +101,10 @@ namespace in2csv::detail::geojson {
                 if (geom.m_type == "Point") {
                     auto & polyg = geom.m_polygons.back();
                     std::cout << polyg.m_coord.back().x;
-                    if (std::round(polyg.m_coord.back().x) == polyg.m_coord.back().x)
+                    if (!a.no_inference and std::round(polyg.m_coord.back().x) == polyg.m_coord.back().x)
                         std::cout << ".0";
                     std::cout << ',' << polyg.m_coord.back().y;
-                    if (std::round(polyg.m_coord.back().y) == polyg.m_coord.back().y)
+                    if (!a.no_inference and std::round(polyg.m_coord.back().y) == polyg.m_coord.back().y)
                         std::cout << ".0";
                 } else
                     std::cout << ',';

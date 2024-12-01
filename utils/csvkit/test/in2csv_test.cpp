@@ -390,4 +390,17 @@ int main() {
         }));
     };
 
+    "geojson no inference"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "_"; format = "geojson"; no_inference = true; }
+        } args;
+        expect(nothrow([&] {
+            std::istringstream iss(R"({"a": 1, "b": 2, "type": "FeatureCollection", "features": [{"geometry": {}, "properties": {"a": 1, "b": 2, "c": 3}}]})");
+            stdin_subst new_cin(iss);
+
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "id,a,b,c,geojson,type,longitude,latitude\n,1.0,2.0,3.0,\"{}\",,,\n");
+        }));
+    };
+
 }
