@@ -438,4 +438,72 @@ int main() {
         }));
     };
 
+    "convert xls with write sheets"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xls"; sheet = "data"; d_excel = "2"; dt_excel = "6"; write_sheets = "ʤ,1"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(get_source("sheets_0.csv") == get_source("testxls_unicode_converted.csv"));
+            expect(get_source("sheets_1.csv") ==
+R"(text,date,integer,boolean,float,datetime,empty_column,h
+Chicago Reader,24472.0,40.0,True,1.0,24472.17638888889,,
+Chicago Sun-Times,16071.0,63.0,True,1.27,16071.62306712963,,Extra data beyond headers will be trimmed
+Chicago Tribune,5844.0,164.0,False,41800000.01,5844.0,,
+This row has blanks,,,,,,,
+Unicode! Σ,,,,,,,
+)");
+            expect(!std::filesystem::exists("sheets_2.csv"));
+
+            std::remove("sheets_0.csv");
+            std::remove("sheets_1.csv");
+        }));
+    };
+
+    "convert xlsx with write sheets"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xlsx"; no_inference = true; sheet = "data"; d_excel = "2"; dt_excel = "6"; write_sheets = "ʤ,1"; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(get_source("sheets_0.csv") == get_source("testxlsx_unicode_converted.csv"));
+            expect(get_source("sheets_1.csv") ==
+R"(text,date,integer,boolean,float,datetime,empty_column,h
+Chicago Reader,24472,40,True,1,24472.17638888889,,
+Chicago Sun-Times,16071,63,True,1.27,16071.62306712963,,Extra data beyond headers will be trimmed
+Chicago Tribune,5844,164,False,41800000.01,5844,,
+This row has blanks,,,,,,,
+Unicode! Σ,,,,,,,
+)");
+            expect(!std::filesystem::exists("sheets_2.csv"));
+
+            std::remove("sheets_0.csv");
+            std::remove("sheets_1.csv");
+        }));
+    };
+
+    "convert xls with write sheets with names"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xls"; sheet = "data"; d_excel = "2"; dt_excel = "6"; write_sheets = "ʤ,1"; use_sheet_names = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(get_source("sheets_ʤ.csv") == get_source("testxls_unicode_converted.csv"));
+            expect(get_source("sheets_data.csv") ==
+R"(text,date,integer,boolean,float,datetime,empty_column,h
+Chicago Reader,24472.0,40.0,True,1.0,24472.17638888889,,
+Chicago Sun-Times,16071.0,63.0,True,1.27,16071.62306712963,,Extra data beyond headers will be trimmed
+Chicago Tribune,5844.0,164.0,False,41800000.01,5844.0,,
+This row has blanks,,,,,,,
+Unicode! Σ,,,,,,,
+)");
+            expect(!std::filesystem::exists("sheets_0.csv"));
+            expect(!std::filesystem::exists("sheets_1.csv"));
+            expect(!std::filesystem::exists("sheets_2.csv"));
+
+            //std::remove("sheets_ʤ.csv");
+            std::remove("sheets_data.csv");
+        }));
+    };
+
 }
