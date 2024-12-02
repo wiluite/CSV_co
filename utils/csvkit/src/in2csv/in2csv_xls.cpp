@@ -117,7 +117,7 @@ namespace in2csv::detail::xls {
         if (a.names) {
             auto v = fill_sheets();
             for (auto const & e : v)
-                printf("%s\n", e.c_str());
+                std::cout << e << '\n';
             return;
         }
 

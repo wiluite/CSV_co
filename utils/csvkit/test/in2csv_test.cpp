@@ -339,7 +339,17 @@ int main() {
         }));
     };
 
-    "names"_test = [&] {
+    "names xls"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "sheets.xls"; names = true; }
+        } args;
+        expect(nothrow([&] {
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "not this one\ndata\nʤ\n");
+        }));
+    };
+
+    "names xlsx"_test = [&] {
         struct Args : in2csv_args {
             Args() { file = "sheets.xlsx"; names = true; }
         } args;
