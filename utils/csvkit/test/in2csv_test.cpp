@@ -399,7 +399,7 @@ int main() {
             stdin_subst new_cin(iss);
 
             CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
-            expect(cout_buffer.str() == "id,a,b,c,geojson,type,longitude,latitude\n,1.0,2.0,3.0,\"{}\",,,\n");
+            expect(cout_buffer.str() == "id,a,b,c,geojson,type,longitude,latitude\n,1,2,3,\"{}\",,,\n");
         }));
     };
 

@@ -300,6 +300,9 @@ int geojson_t::parse_coordinates(JsonValue value, const std::string &type, featu
   return 0;
 }
 
+namespace args_ns {
+    bool no_inference;
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //geojson_t::dump_value
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,7 +314,7 @@ void geojson_t::dump_value(JsonValue & o, std::stringstream & ss, int indent)
   {
   case JSON_NUMBER:
     num = o.toNumber();
-    if (num == std::round(num))
+    if (!args_ns::no_inference and num == std::round(num))
         ss << o.toNumber() << ".0";
     else
         ss << o.toNumber();

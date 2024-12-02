@@ -6,6 +6,10 @@
 
 using namespace ::csvkit::cli;
 
+namespace args_ns {
+    extern bool no_inference;
+}
+
 namespace in2csv::detail::geojson {
     namespace detail {
         std::vector<std::string> build_header(geojson_t & geojson) {
@@ -53,6 +57,9 @@ namespace in2csv::detail::geojson {
 
     void impl::convert() {
         using namespace detail;
+
+        args_ns::no_inference = a.no_inference;
+
         geojson_t geojson;
         if (a.file.empty() or a.file == "_") {
             std::string stream;
