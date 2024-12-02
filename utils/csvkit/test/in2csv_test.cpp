@@ -403,4 +403,17 @@ int main() {
         }));
     };
 
+    "json no inference"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "_"; format = "json"; no_inference = true; }
+        } args;
+        expect(nothrow([&] {
+            std::istringstream iss(R"([{"a": 1, "b": 2, "c": 3}])");
+            stdin_subst new_cin(iss);
+
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "a,b,c\n1,2,3\n");
+        }));
+    };
+
 }
