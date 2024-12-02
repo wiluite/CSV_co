@@ -138,7 +138,7 @@ int main() {
         CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
         expect(cout_buffer.str() == "a,b\n,\n");
     };
-#if 1
+
     "null value blanks"_test = [&] {
         struct Args : in2csv_args {
             // TODO : fixme with argument "\N"
@@ -152,7 +152,6 @@ int main() {
         CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
         expect(cout_buffer.str() == "a,b\nn/a,\n");
     };
-#endif
 
     "no leading zeroes"_test = [&] {
         struct Args : in2csv_args {
@@ -409,6 +408,19 @@ int main() {
         } args;
         expect(nothrow([&] {
             std::istringstream iss(R"([{"a": 1, "b": 2, "c": 3}])");
+            stdin_subst new_cin(iss);
+
+            CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
+            expect(cout_buffer.str() == "a,b,c\n1,2,3\n");
+        }));
+    };
+
+    "ndjson no inference"_test = [&] {
+        struct Args : in2csv_args {
+            Args() { file = "_"; format = "ndjson"; no_inference = true; }
+        } args;
+        expect(nothrow([&] {
+            std::istringstream iss(R"({"a": 1, "b": 2, "c": 3})");
             stdin_subst new_cin(iss);
 
             CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))

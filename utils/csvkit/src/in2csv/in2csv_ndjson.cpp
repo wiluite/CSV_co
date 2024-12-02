@@ -11,7 +11,7 @@ namespace in2csv::detail::ndjson {
     using column_name_type = std::string;
     using column_values_type = std::vector<std::string>;
     std::unordered_map<column_name_type, column_values_type> csv_map;
-    std::size_t total_rows = 0;
+    std::size_t total_rows;
 
     void fill_func (auto && elem, auto const & header, unsigned col, auto && types_n_blanks, auto const & args) {
          
@@ -90,6 +90,7 @@ namespace in2csv::detail::ndjson {
                 [&a, this] {
                     if (a.file.empty() or a.file == "_") {
                         static std::stringstream ss;
+                        ss.str({});
 #ifndef __linux__
                         _setmode(_fileno(stdin), _O_BINARY);
 #endif
@@ -126,6 +127,8 @@ namespace in2csv::detail::ndjson {
                     result_header.push_back(e);
         };
 
+        total_rows = 0;
+        csv_map.clear();
         while (!doc.reader().eof())
         {
             doc.reader().read_next();
