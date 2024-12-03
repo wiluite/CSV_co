@@ -78,8 +78,8 @@ namespace in2csv::detail::json {
         class ojson_holder {
             std::shared_ptr<ojson> ptr;
         public:
-            ojson_holder(impl_args const & a) : ptr (
-                [&a, this] {
+            explicit ojson_holder(impl_args const & a) : ptr (
+                [&a] {
                     if (a.file.empty() or a.file == "_") {
                         std::string foo;
 #ifndef __linux__

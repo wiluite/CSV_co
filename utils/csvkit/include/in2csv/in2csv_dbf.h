@@ -3,6 +3,7 @@
 #include "converter_client.h"
 #include <memory>
 #include <filesystem>
+#include <vector>
 
 namespace in2csv::detail {
 

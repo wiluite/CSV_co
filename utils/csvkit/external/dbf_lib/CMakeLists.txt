@@ -6,6 +6,9 @@ else()
         add_definitions(-Wno-stringop-truncation)
     else() #CLANG
         add_definitions(-Wno-deprecated-non-prototype)
+        if ((_SANITY_CHECK) AND (IS_CLANG))
+            add_definitions(-Wno-unused-command-line-argument)
+        endif()
     endif()
 endif()
 

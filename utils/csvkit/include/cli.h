@@ -855,6 +855,7 @@ namespace csvkit::cli {
     }
 
     static void update_null_values(std::vector<std::string> & null_values) {
+        csv_co::get_null_value_set().clear();
         for (auto & e: null_values) {
             std::transform(e.begin(), e.end(), e.begin(), ::toupper);
             csv_co::get_null_value_set().insert(e);

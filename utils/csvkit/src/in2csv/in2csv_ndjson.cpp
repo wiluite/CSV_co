@@ -86,7 +86,7 @@ namespace in2csv::detail::ndjson {
             json_decoder<ojson> decoder_;
             std::shared_ptr<json_stream_reader> reader_ptr;
         public:
-            holder(impl_args const & a) : reader_ptr (
+            explicit holder(impl_args const & a) : reader_ptr (
                 [&a, this] {
                     if (a.file.empty() or a.file == "_") {
                         static std::stringstream ss;

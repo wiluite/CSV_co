@@ -1,5 +1,6 @@
 #include "../bzip2/bzlib.h"
 #include <stdexcept>
+#include <string>
 
 #if defined(__unix__)
 #define BZ_UNIX 1

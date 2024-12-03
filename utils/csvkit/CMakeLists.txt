@@ -126,7 +126,7 @@ endif()
 add_subdirectory(external/libxls)
 add_subdirectory(external/dbf_lib)
 add_subdirectory(external/lib_geojson)
-add_subdirectory(external/openXLSX)
+add_subdirectory(external/OpenXLSX)
 add_executable(in2csv in2csv.cpp src/in2csv/in2csv_fixed.cpp src/in2csv/in2csv_dbf.cpp src/in2csv/in2csv_xls.cpp
         src/in2csv/in2csv_geojson.cpp src/in2csv/in2csv_csv.cpp src/in2csv/in2csv_xlsx.cpp src/in2csv/in2csv_json.cpp
         src/in2csv/in2csv_ndjson.cpp)

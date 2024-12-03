@@ -36,6 +36,9 @@ if (MSVC)
     add_definitions(/wd4456)
     add_definitions(/wd4242)
     add_definitions(/wd4702)
+else()
+    add_definitions(-Wno-error)
+    add_definitions(-Wno-sign-conversion)
 endif()
 #=======================================================================================================================
 # EXTERNAL LIBRARIES

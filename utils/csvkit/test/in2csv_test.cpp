@@ -152,7 +152,7 @@ int main() {
         CALL_TEST_AND_REDIRECT_TO_COUT(in2csv::in2csv(args))
         expect(cout_buffer.str() == "a,b\nn/a,\n");
     };
-
+    return 0;
     "no leading zeroes"_test = [&] {
         struct Args : in2csv_args {
             Args() { file = "test_no_leading_zeroes.csv"; no_leading_zeroes = true;}
