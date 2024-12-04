@@ -189,7 +189,7 @@ namespace OpenXLSX
         const pugi::char_t* child_value() const { return xml_node::child_value(); }
         const pugi::char_t* child_value(const pugi::char_t* name_) const { return xml_node::child_value(NAMESPACED_NAME(name_, false)); }
         bool set_name(const pugi::char_t* rhs, bool force_ns = false) { return xml_node::set_name(NAMESPACED_NAME(rhs, force_ns)); }
-        bool set_name(const pugi::char_t* rhs, size_t size, bool force_ns = false) { return xml_node::set_name(NAMESPACED_NAME(rhs, force_ns), size + name_begin); }
+        bool set_name(const pugi::char_t* rhs, size_t size, bool force_ns = false) { return xml_node::set_name(NAMESPACED_NAME(rhs, force_ns), size + static_cast<std::size_t>(name_begin)); }
         XMLNode append_child(pugi::xml_node_type type_) { return xml_node::append_child(type_); }
         XMLNode prepend_child(pugi::xml_node_type type_) { return xml_node::prepend_child(type_); }
         XMLNode append_child(const pugi::char_t* name_, bool force_ns = false) { return xml_node::append_child(NAMESPACED_NAME(name_, force_ns)); }

@@ -107,7 +107,7 @@ const char* XLSharedStrings::getString(int32_t index) const
         using namespace std::literals::string_literals;
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
-    return (*m_stringCache)[index].c_str();
+    return (*m_stringCache)[static_cast<std::size_t>(index)].c_str();
 }
 
 /**
@@ -148,7 +148,7 @@ void XLSharedStrings::clearString(int32_t index)    // 2024-04-30: whitespace su
         throw XLInternalError("XLSharedStrings::"s + __func__ + ": index "s + std::to_string(index) + " is out of range"s);
     }
 
-    (*m_stringCache)[index] = "";
+    (*m_stringCache)[static_cast<std::size_t>(index)] = "";
     // auto iter            = xmlDocument().document_element().children().begin();
     // std::advance(iter, index);
     // iter->text().set(""); // 2024-04-30: BUGFIX: this was never going to work, <si> entries can be plenty that need to be cleared,

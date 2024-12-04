@@ -109,7 +109,9 @@ namespace in2csv::detail::dbf {
             dbf_setposition(handle, i);
             for (auto j = 0u; j < cols; j++) {
                 char temp[1024] = "";
-                dbf_getfield(handle, dbf_getfieldptr(handle, j), temp, sizeof(temp), DBF_DATA_TYPE_ANY);
+                std::cout << "iter\n";
+                auto _ = dbf_getfieldptr(handle, j);
+                dbf_getfield(handle, _, temp, sizeof(temp), DBF_DATA_TYPE_ANY);
                 contents += (j ? "," : "") + recode_source(std::string(temp), a);
             }
             contents += '\n';

@@ -437,12 +437,14 @@ namespace csvkit::cli {
 
     /// Detects that not only C/Posix locale supported
     static bool detect_locale_support() noexcept {
+        auto curr = std::locale();
         try {
             std::locale::global(std::locale("en_US"));
         } catch (...) {
             // "Wide-spread locales are not supported!";
             return false;
         }
+        std::locale::global(curr);
         return true;
     }
 
