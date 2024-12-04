@@ -1,4 +1,4 @@
-include_directories(../include ../utils/csvkit/external/multiprecision/include)
+include_directories(../include)
 
 if (MSVC)
 else()

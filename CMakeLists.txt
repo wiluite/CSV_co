@@ -19,17 +19,9 @@ message(${CMAKE_SYSTEM_PROCESSOR})
 option (_SANITY_CHECK "Build all with Clang sanitizers" OFF)
 option (_STDLIB_LIBCPP "Build all with Clang STL (if Clang)" OFF)
 option (_LLD_LINKER_FLAG "Build all lld linker" OFF)
-option (IO_CSVKIT_UTILS "Build with csvsql, sql2csv, in2csv" ON)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
-endif()
-
-if (IO_CSVKIT_UTILS AND NOT _SANITY_CHECK) # Some C stuff (before any added C++ definitions)
-configure_file(CMakeLists.txt.soci.obligate.dependency1.in external_deps/CMakeLists.txt)
-file(COPY ${CMAKE_SOURCE_DIR}/utils/csvkit/external/local_sqlite3/src DESTINATION "${CMAKE_BINARY_DIR}/external_deps")
-execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" . WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/external_deps" )
-execute_process(COMMAND "${CMAKE_COMMAND}" --build . WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/external_deps" )
 endif()
 
 if ((_SANITY_CHECK) AND (UNIX) AND (NOT (CMAKE_SYSTEM_NAME STREQUAL "CYGWIN")))
@@ -140,8 +132,6 @@ else()
     endif()
 endif()
 
-include_directories(utils/csvkit/external/multiprecision/include)
-
 add_subdirectory(include/csv_co/external/bz2_connector)
 add_subdirectory(example)
 add_subdirectory(benchmark)
@@ -149,5 +139,4 @@ if (MSVC)
     add_compile_options(/utf-8)
 endif()
 
-add_subdirectory(utils/csvkit)
 add_subdirectory(test)

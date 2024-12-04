@@ -571,7 +571,7 @@ int main() {
         ) << "it shouldn't throw";
     };
 
-    "Read an utf8-BOM file from csvkit package"_test = [] {
+    "Read an utf8-BOM file"_test = [] {
 
         auto rows{0u};
         std::vector<cell_string> v;
