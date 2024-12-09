@@ -1538,7 +1538,7 @@ namespace csv_co {
             if (rows_to_skip)
                 skip_rows<ParseChunkSize>(rows_to_skip);
         }
-
+#if defined(CSVSUITE)
         /// Bridge from cell_span to the cell span with type-aware support.
         /// Note: we can use Fast PIMPL for value and type_ to preserve contiguous memory space
         /// and escape redundant recompilations, but we surely can *not* use Fast PIMPL for
@@ -1719,15 +1719,15 @@ namespace csv_co {
         static_assert(std::is_copy_constructible_v<typed_span<false>>);
         static_assert(std::is_copy_assignable_v<typed_span<false>>);
         static_assert(sizeof(typed_span<false>) == sizeof(typed_span<true>));
-#if defined(_MSC_VER)
-        static_assert(sizeof(typed_span<false>) == 32);
+    #if defined(_MSC_VER)
         static_assert(sizeof(long double) == 8);
-#else
-        static_assert(sizeof(typed_span<false>) == 48);
+        static_assert(sizeof(typed_span<false>) == 32);
+    #else
         static_assert(sizeof(long double) == 16);
+        static_assert(sizeof(typed_span<false>) == 48);
+    #endif
 #endif
         static_assert(sizeof(cell_span) == 16);
-
     }; //reader<>
 
     template <TrimPolicyConcept T, QuoteConcept Q, DelimiterConcept D, LineBreakConcept L, MaxFieldSizePolicyConcept M, EmptyRowsPolicyConcept E>
