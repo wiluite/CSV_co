@@ -1694,7 +1694,10 @@ namespace csv_co {
 
             inline static std::locale * num_locale_ {nullptr};
             inline static bool no_maxprec_ {false};
+            /// Long double precision calculation by string based on boost::multiprecision lib (slow, probably redundant)
             inline unsigned char get_precision(std::string & rep) const;
+            /// Long double precision calculation with a simpler method
+            inline unsigned char get_precision() const;
             inline bool can_be_money(std::string const & s) const;
             inline void get_num_from_money() const;
             inline static bool no_leading_zeroes_ {false};
