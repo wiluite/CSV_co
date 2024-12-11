@@ -1618,10 +1618,13 @@ namespace csv_co {
             constexpr bool is_nil() const;
 
             /// Checks if it is any null rep. False means: "do not match anything except for predefined values"
-            inline bool is_null(bool = false) const;
+            inline bool is_null() const;
 
             /// Checks if it is a used-defined null value
             inline bool is_null_value() const;
+
+            /// Checks if it is any null value
+            inline bool is_null_or_null_value() const;
 
             /// Returns true if it is a non-numeric, non-empty string
             constexpr bool is_str() const;
