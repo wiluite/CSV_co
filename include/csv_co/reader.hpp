@@ -453,6 +453,7 @@ namespace csv_co {
     public:
         /// Row span class definition
         struct row_span : protected std::span<cell_span> {
+            using std::span<cell_span>::span;
 
             using std::span<cell_span>::front;
             using std::span<cell_span>::back;
@@ -659,10 +660,17 @@ namespace csv_co {
 #else
         static_assert(sizeof(cell_span) == 16);
 #endif
+        static_assert(std::is_default_constructible_v<cell_span>);
         static_assert(std::is_move_constructible_v<cell_span>);
         static_assert(std::is_move_assignable<cell_span>::value);
         static_assert(std::is_copy_constructible<cell_span>::value);
         static_assert(std::is_copy_assignable<cell_span>::value);
+
+        static_assert(std::is_default_constructible_v<row_span>);
+        static_assert(std::is_move_constructible_v<row_span>);
+        static_assert(std::is_move_assignable<row_span>::value);
+        static_assert(std::is_copy_constructible<row_span>::value);
+        static_assert(std::is_copy_assignable<row_span>::value);
 
         using coroutine_stream_value_type = mio::ro_mmap::value_type;
         using coroutine_stream_const_pointer_type = coroutine_stream_value_type const *;
