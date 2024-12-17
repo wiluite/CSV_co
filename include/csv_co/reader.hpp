@@ -453,7 +453,6 @@ namespace csv_co {
     public:
         /// Row span class definition
         struct row_span : protected std::span<cell_span> {
-            using std::span<cell_span>::span;
 
             using std::span<cell_span>::front;
             using std::span<cell_span>::back;
@@ -660,13 +659,12 @@ namespace csv_co {
 #else
         static_assert(sizeof(cell_span) == 16);
 #endif
-        static_assert(std::is_default_constructible_v<cell_span>);
         static_assert(std::is_move_constructible_v<cell_span>);
         static_assert(std::is_move_assignable<cell_span>::value);
         static_assert(std::is_copy_constructible<cell_span>::value);
         static_assert(std::is_copy_assignable<cell_span>::value);
 
-        static_assert(std::is_default_constructible_v<row_span>);
+        static_assert(!std::is_default_constructible_v<row_span>);
         static_assert(std::is_move_constructible_v<row_span>);
         static_assert(std::is_move_assignable<row_span>::value);
         static_assert(std::is_copy_constructible<row_span>::value);
@@ -1554,10 +1552,15 @@ namespace csv_co {
         template <bool Unquoted>
         class typed_span : public cell_span {
         private:
-            mutable long double value = 0;                                    /**< Cached numeric value */
+            /// Cached numeric value or a value assumed to cast
+            mutable long double value = 0;
+            /// Cached Type, initially unknown
             mutable signed char type_ = -1;
+            /// Flag that allows to rebind between typed_span<quoted> and typed_span<unquoted>
             mutable bool rebind_conversion {false};
+            /// Holds numeric precision
             mutable unsigned char prec = 0;
+            mutable signed char datetime_type = -1;
 #if defined(_MSC_VER)
             mutable bool reserved[2] {};
 #else
@@ -1571,13 +1574,19 @@ namespace csv_co {
             using class_type = typed_span<Unquoted>;
             using reader_type = reader;
 
-            /// What can be migrated may be migrated
-            using cell_span::operator unquoted_cell_string;
-            using cell_span::operator cell_string;
-            using cell_span::raw_string;
-            using cell_span::raw_string_view;
+            /// Migrated as deleted
+            [[nodiscard]] cell_string raw_string() const = delete;
+            template<typename T>
+            T as() const requires std::is_arithmetic_v<T> = delete;
+            bool operator==(std::string const &cs) const noexcept = delete;
+            template<typename T>
+            constexpr bool operator==(T const &other) const requires std::is_arithmetic_v<T> = delete;
+            template<typename T>
+            constexpr T operator-(T const &other) const requires std::is_floating_point_v<T> = delete;
+            [[nodiscard]] bool empty() const = delete;
+            [[nodiscard]] size_t size() const = delete;
 
-            /// Construction by defaault
+            /// Construction by default
             typed_span() = default;
 
             /// Construction from the cell_span
@@ -1594,8 +1603,8 @@ namespace csv_co {
                 return !Unquoted;
             }
 
-            /// Comparison of two typeaware cells
-            [[nodiscard]] auto compare(typed_span const &other) const -> int;
+            /// Comparison of two text-typed cells
+            [[nodiscard]] auto text_compare(typed_span const &other) const -> int;
 
             template <bool U>
             struct rebind {
@@ -1619,8 +1628,8 @@ namespace csv_co {
             /// Obtains numeric value of it
             long double num() const;
 
-            /// Knowing it is bool, obtains bool value
-            inline bool unsafe_bool() const noexcept;
+            /// Knowing it has type, returns the underlying value
+            inline auto unsafe() const noexcept;
 
             /// Returns true if it is an empty string or a string of whitespace characters
             constexpr bool is_nil() const;
@@ -1687,7 +1696,7 @@ namespace csv_co {
             static void no_leading_zeroes(bool) noexcept;
             static void case_insensitivity(bool) noexcept;
         private:
-            static inline auto date_datetime_call_operator_implementation(auto const & ccs, auto & formats);
+            static inline auto datetime_call_operator_impl(auto const &, auto &);
 
             struct datetime_format_proc {
                 explicit datetime_format_proc(std::string const & extra_dt_fmt);
